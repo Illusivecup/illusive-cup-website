@@ -43,6 +43,7 @@ async function initializeApp() {
 function initializeEventListeners() {
     // Навигационные кнопки
     document.getElementById('teamsDropdownBtn').addEventListener('click', toggleDropdown);
+    document.getElementById('groupStageBtn').addEventListener('click', showGroupStage);
     document.getElementById('bracketBtn').addEventListener('click', showBracket);
     document.getElementById('scheduleBtn').addEventListener('click', showSchedule);
     
@@ -62,6 +63,7 @@ function initializeEventListeners() {
     document.getElementById('saveBracketBtn').addEventListener('click', saveBracketChanges);
     document.getElementById('saveScheduleBtn').addEventListener('click', saveScheduleChanges);
     document.getElementById('addScheduleMatchBtn').addEventListener('click', addScheduleMatch);
+    document.getElementById('saveGroupStageBtn').addEventListener('click', saveGroupStageSettings);
     
     // Табы админ панели
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -261,13 +263,19 @@ function createDemoData() {
 
 // === ОТОБРАЖЕНИЕ ГРУППОВОГО ЭТАПА ===
 function displayGroupStage() {
-    const container = document.getElementById('groupStageContent');
-    if (!container || !tournamentData.groupStage) return;
+    const container = document.getElementById('groupStageContainer');
+    if (!container || !tournamentData.groupStage) {
+        container.innerHTML = '<p>Групповой этап пока не сформирован</p>';
+        return;
+    }
 
     let groupHTML = '';
 
     Object.keys(tournamentData.groupStage).forEach(groupName => {
         const group = tournamentData.groupStage[groupName];
+        
+        // Сортируем команды по очкам (по убыванию)
+        const sortedTeams = [...group.teams].sort((a, b) => b.points - a.points);
         
         groupHTML += `
             <div class="group-container">
@@ -280,13 +288,13 @@ function displayGroupStage() {
                         <div>Поражения</div>
                         <div>Очки</div>
                     </div>
-                    ${group.teams.map(team => `
-                        <div class="table-row">
-                            <div>${team.name}</div>
+                    ${sortedTeams.map((team, index) => `
+                        <div class="table-row ${index < tournamentData.settings.advancingTeams ? 'qualifying' : ''}">
+                            <div class="team-name">${team.name}</div>
                             <div>${team.wins + team.losses}</div>
                             <div>${team.wins}</div>
                             <div>${team.losses}</div>
-                            <div>${team.points}</div>
+                            <div class="points">${team.points}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -484,6 +492,12 @@ function showTeams() {
     }
 }
 
+function showGroupStage() {
+    hideAllSections();
+    document.getElementById('groupStageContent').classList.remove('hidden');
+    currentDisplayedTeamId = null;
+}
+
 function showBracket() {
     hideAllSections();
     document.getElementById('bracketContent').classList.remove('hidden');
@@ -561,126 +575,4 @@ function editTeam(teamId) {
 
 function addPlayerField(name = '', role = '') {
     const container = document.getElementById('playersEditContainer');
-    const playerDiv = document.createElement('div');
-    playerDiv.className = 'player-edit-row';
-    playerDiv.innerHTML = `
-        <input type="text" placeholder="Имя игрока" value="${name}" class="player-name-input">
-        <input type="text" placeholder="Роль" value="${role}" class="player-role-input">
-        <button type="button" class="remove-player">🗑️</button>
-    `;
-    
-    // Добавляем обработчик для кнопки удаления
-    playerDiv.querySelector('.remove-player').addEventListener('click', function() {
-        playerDiv.remove();
-    });
-    
-    container.appendChild(playerDiv);
-}
-
-function saveTeamChanges() {
-    if (!currentEditingTeamId) return;
-    
-    const name = document.getElementById('editTeamName').value;
-    const slogan = document.getElementById('editTeamSlogan').value;
-    const mmr = document.getElementById('editTeamMMR').value;
-    
-    const players = [];
-    document.querySelectorAll('.player-edit-row').forEach(row => {
-        const nameInput = row.querySelector('.player-name-input');
-        const roleInput = row.querySelector('.player-role-input');
-        if (nameInput.value.trim()) {
-            players.push({
-                name: nameInput.value,
-                role: roleInput.value || 'Игрок'
-            });
-        }
-    });
-    
-    // Обновление в Firebase
-    database.ref('teams/' + currentEditingTeamId).update({
-        name: name,
-        slogan: slogan,
-        mmr: mmr,
-        players: players
-    });
-    
-    closeEditTeamModal();
-    alert('✅ Команда сохранена!');
-}
-
-function closeEditTeamModal() {
-    document.getElementById('editTeamModal').classList.add('hidden');
-    currentEditingTeamId = null;
-}
-
-// === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
-function loadInitialData() {
-    console.log('🔄 Загрузка начальных данных...');
-    // Данные уже загружаются через слушатели
-}
-
-// === ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ===
-function updateTeamsSettings() {
-    alert('Функция управления командами в разработке');
-}
-
-function saveBracketChanges() {
-    alert('Функция сохранения сетки в разработке');
-}
-
-function saveScheduleChanges() {
-    alert('Функция сохранения расписания в разработке');
-}
-
-function addScheduleMatch() {
-    alert('Функция добавления матча в разработке');
-}
-
-console.log('🚀 Приложение Illusive Cup инициализировано!');
-                role: roleInput.value || 'Игрок'
-            });
-        }
-    });
-    
-    // Обновление в Firebase
-    database.ref('teams/' + currentEditingTeamId).update({
-        name: name,
-        slogan: slogan,
-        mmr: mmr,
-        players: players
-    });
-    
-    closeEditTeamModal();
-    alert('✅ Команда сохранена!');
-}
-
-function closeEditTeamModal() {
-    document.getElementById('editTeamModal').classList.add('hidden');
-    currentEditingTeamId = null;
-}
-
-// === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
-function loadInitialData() {
-    console.log('🔄 Загрузка начальных данных...');
-    // Данные уже загружаются через слушатели
-}
-
-// === ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ===
-function updateTeamsSettings() {
-    alert('Функция управления командами в разработке');
-}
-
-function saveBracketChanges() {
-    alert('Функция сохранения сетки в разработке');
-}
-
-function saveScheduleChanges() {
-    alert('Функция сохранения расписания в разработке');
-}
-
-function addScheduleMatch() {
-    alert('Функция добавления матча в разработке');
-}
-
-console.log('🚀 Приложение Illusive Cup инициализировано!');
-
+    const playerDiv
