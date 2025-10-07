@@ -31,9 +31,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeApp() {
     createAnimatedBackground();
+    initializeEventListeners();
     checkEditorAccess();
     setupRealTimeListeners();
     loadInitialData();
+}
+
+// === ИНИЦИАЛИЗАЦИЯ ОБРАБОТЧИКОВ СОБЫТИЙ ===
+function initializeEventListeners() {
+    // Навигационные кнопки
+    document.getElementById('teamsDropdownBtn').addEventListener('click', toggleDropdown);
+    document.getElementById('bracketBtn').addEventListener('click', showBracket);
+    document.getElementById('scheduleBtn').addEventListener('click', showSchedule);
+    
+    // Кнопки модальных окон
+    document.getElementById('closeEditTeamModal').addEventListener('click', closeEditTeamModal);
+    document.getElementById('closeAdminPanel').addEventListener('click', closeAdminPanel);
+    document.getElementById('addPlayerBtn').addEventListener('click', addPlayerField);
+    document.getElementById('saveTeamBtn').addEventListener('click', saveTeamChanges);
+    document.getElementById('cancelEditTeamBtn').addEventListener('click', closeEditTeamModal);
+    
+    // Админ панель
+    const adminBtn = document.getElementById('adminBtn');
+    if (adminBtn) {
+        adminBtn.addEventListener('click', showAdminPanel);
+    }
+    document.getElementById('updateTeamsBtn').addEventListener('click', updateTeamsSettings);
+    document.getElementById('saveBracketBtn').addEventListener('click', saveBracketChanges);
+    document.getElementById('saveScheduleBtn').addEventListener('click', saveScheduleChanges);
+    document.getElementById('addScheduleMatchBtn').addEventListener('click', addScheduleMatch);
+    
+    // Табы админ панели
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            openAdminTab(this.getAttribute('data-tab'));
+        });
+    });
+    
+    // Закрытие модальных окон по клику вне области
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.add('hidden');
+        }
+    });
 }
 
 // === ПРОВЕРКА ПРАВ РЕДАКТОРА ===
@@ -75,6 +115,11 @@ function setupRealTimeListeners() {
         updateTeamsDropdown();
         displayTeamsCards();
         updateConnectionStatus(true);
+        
+        // Если данных нет, создаем демо-данные
+        if (Object.keys(teamsData).length === 0) {
+            createDemoData();
+        }
     }, (error) => {
         console.error('❌ Ошибка загрузки команд:', error);
         updateConnectionStatus(false);
@@ -84,15 +129,74 @@ function setupRealTimeListeners() {
     database.ref('bracket').on('value', (snapshot) => {
         const bracketData = snapshot.val();
         console.log('📥 Загружена сетка:', bracketData);
-        // Здесь будет отображение сетки
+        displayBracket(bracketData);
     });
 
     // Слушатель для расписания
     database.ref('schedule').on('value', (snapshot) => {
         const scheduleData = snapshot.val();
         console.log('📥 Загружено расписание:', scheduleData);
-        // Здесь будет отображение расписания
+        displaySchedule(scheduleData);
     });
+}
+
+// === СОЗДАНИЕ ДЕМО-ДАННЫХ ===
+function createDemoData() {
+    console.log('🔄 Создание демо-данных...');
+    
+    const demoTeams = {
+        team1: {
+            name: "DRAGON SLAYERS",
+            slogan: "Огненные победы!",
+            mmr: 4500,
+            players: [
+                { name: "Shadow", role: "Капитан" },
+                { name: "Blaze", role: "Керри" },
+                { name: "Frost", role: "Мидер" },
+                { name: "Storm", role: "Саппорт" },
+                { name: "Stone", role: "Оффлейнер" }
+            ]
+        },
+        team2: {
+            name: "NIGHT WOLVES", 
+            slogan: "Охотимся ночью!",
+            mmr: 4200,
+            players: [
+                { name: "Alpha", role: "Капитан" },
+                { name: "Luna", role: "Керри" },
+                { name: "Fang", role: "Мидер" },
+                { name: "Howl", role: "Саппорт" },
+                { name: "Claw", role: "Оффлейнер" }
+            ]
+        }
+    };
+
+    // Сохраняем демо-команды в Firebase
+    database.ref('teams').set(demoTeams);
+    
+    // Создаем демо-сетку
+    const demoBracket = {
+        quarterfinals: [
+            { team1: "DRAGON SLAYERS", team2: "NIGHT WOLVES", score1: 2, score2: 1 }
+        ],
+        semifinals: [
+            { team1: "Победитель 1/4", team2: "Победитель 1/4", score1: null, score2: null }
+        ],
+        final: [
+            { team1: "Победитель 1/2", team2: "Победитель 1/2", score1: null, score2: null }
+        ]
+    };
+    
+    database.ref('bracket').set(demoBracket);
+    
+    // Создаем демо-расписание
+    const demoSchedule = [
+        { time: "15:00", match: "DRAGON SLAYERS vs NIGHT WOLVES", stage: "Четвертьфинал" },
+        { time: "19:00", match: "Полуфинал 1", stage: "Полуфинал" },
+        { time: "21:00", match: "ГРАНД-ФИНАЛ", stage: "Финал" }
+    ];
+    
+    database.ref('schedule').set(demoSchedule);
 }
 
 // === ОБНОВЛЕНИЕ СТАТУСА ПОДКЛЮЧЕНИЯ ===
@@ -119,7 +223,7 @@ function updateTeamsDropdown() {
         const team = teamsData[teamId];
         const link = document.createElement('a');
         link.textContent = team.name || 'Без названия';
-        link.onclick = () => showTeamCard(teamId);
+        link.addEventListener('click', () => showTeamCard(teamId));
         dropdown.appendChild(link);
     });
 }
@@ -140,6 +244,18 @@ function displayTeamsCards() {
 function createTeamCard(teamId, team) {
     const card = document.createElement('div');
     card.className = 'team-visiting-card';
+    card.setAttribute('data-team-id', teamId);
+    
+    const playersHTML = (team.players || []).map((player, index) => `
+        <div class="player-card-bublas" style="animation-delay: ${0.3 + index * 0.2}s">
+            <div class="player-role-bublas">${player.role || 'Игрок'}</div>
+            <div class="player-name-bublas">${player.name || 'Неизвестно'}</div>
+        </div>
+    `).join('');
+    
+    const editButton = isEditor ? 
+        `<button class="edit-team-btn" data-team-id="${teamId}">✏️ Редактировать</button>` : '';
+    
     card.innerHTML = `
         <div class="card-header">
             <div class="header-highlight"></div>
@@ -150,12 +266,7 @@ function createTeamCard(teamId, team) {
             <div class="players-section-bublas">
                 <div class="section-title-bublas">Состав команды</div>
                 <div class="player-grid-bublas">
-                    ${(team.players || []).map(player => `
-                        <div class="player-card-bublas">
-                            <div class="player-role-bublas">${player.role || 'Игрок'}</div>
-                            <div class="player-name-bublas">${player.name || 'Неизвестно'}</div>
-                        </div>
-                    `).join('')}
+                    ${playersHTML}
                 </div>
             </div>
             <div class="stats-section-bublas">
@@ -171,10 +282,74 @@ function createTeamCard(teamId, team) {
         </div>
         <div class="team-footer-bublas">
             Зарегистрирована для участия в турнире
-            ${isEditor ? `<button onclick="editTeam('${teamId}')" class="edit-team-btn">✏️ Редактировать</button>` : ''}
+            ${editButton}
         </div>
     `;
+    
+    // Добавляем обработчик для кнопки редактирования
+    if (isEditor) {
+        const editBtn = card.querySelector('.edit-team-btn');
+        editBtn.addEventListener('click', () => editTeam(teamId));
+    }
+    
     return card;
+}
+
+// === ОТОБРАЖЕНИЕ ТУРНИРНОЙ СЕТКИ ===
+function displayBracket(bracketData) {
+    const container = document.getElementById('bracketContainer');
+    
+    if (!bracketData) {
+        container.innerHTML = '<p>Турнирная сетка пока не сформирована</p>';
+        return;
+    }
+    
+    let bracketHTML = '';
+    
+    Object.keys(bracketData).forEach(round => {
+        bracketHTML += `
+            <div class="bracket-round">
+                <h3>${getRoundName(round)}</h3>
+                ${bracketData[round].map(match => `
+                    <div class="match ${round === 'final' ? 'final' : ''}">
+                        <div>${match.team1 || 'TBD'}</div>
+                        <div>${match.score1 !== null ? match.score1 : '?'} - ${match.score2 !== null ? match.score2 : '?'}</div>
+                        <div>${match.team2 || 'TBD'}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    });
+    
+    container.innerHTML = bracketHTML;
+}
+
+// === ОТОБРАЖЕНИЕ РАСПИСАНИЯ ===
+function displaySchedule(scheduleData) {
+    const container = document.getElementById('scheduleList');
+    
+    if (!scheduleData || scheduleData.length === 0) {
+        container.innerHTML = '<p>Расписание матчей пока не опубликовано</p>';
+        return;
+    }
+    
+    container.innerHTML = scheduleData.map(match => `
+        <div class="match-slot">
+            <div class="time">${match.time}</div>
+            <div class="teams">${match.match}</div>
+            <div class="court">${match.stage}</div>
+        </div>
+    `).join('');
+}
+
+// === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+function getRoundName(round) {
+    const roundNames = {
+        'quarterfinals': 'Четвертьфиналы',
+        'semifinals': 'Полуфиналы', 
+        'final': 'Финал'
+    };
+    return roundNames[round] || round;
 }
 
 // === НАВИГАЦИЯ ===
@@ -184,10 +359,9 @@ function toggleDropdown() {
 
 function showTeamCard(teamId) {
     showTeams();
-    // Можно добавить скролл к конкретной карточке
     const card = document.querySelector(`[data-team-id="${teamId}"]`);
     if (card) {
-        card.scrollIntoView({ behavior: 'smooth' });
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 
@@ -206,27 +380,49 @@ function showSchedule() {
     document.getElementById('scheduleContent').classList.remove('hidden');
 }
 
-function showAdminPanel() {
-    document.getElementById('adminPanel').classList.remove('hidden');
-}
-
-function closeAdminPanel() {
-    document.getElementById('adminPanel').classList.add('hidden');
-}
-
 function hideAllSections() {
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.add('hidden');
     });
 }
 
-// === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
-function loadInitialData() {
-    console.log('🔄 Загрузка начальных данных...');
-    // Данные уже загружаются через слушатели
+// === АДМИН ПАНЕЛЬ ===
+function showAdminPanel() {
+    document.getElementById('adminPanel').classList.remove('hidden');
+    updateAdminTeamsList();
 }
 
-// === БАЗОВЫЕ ФУНКЦИИ РЕДАКТОРА ===
+function closeAdminPanel() {
+    document.getElementById('adminPanel').classList.add('hidden');
+}
+
+function openAdminTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+    
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(tabName).classList.add('active');
+}
+
+function updateAdminTeamsList() {
+    const container = document.getElementById('adminTeamsList');
+    container.innerHTML = '';
+    
+    Object.keys(teamsData).forEach(teamId => {
+        const team = teamsData[teamId];
+        const teamItem = document.createElement('div');
+        teamItem.className = 'team-admin-item';
+        teamItem.innerHTML = `
+            <span>${team.name}</span>
+            <button class="edit-team-btn" data-team-id="${teamId}">Редактировать</button>
+        `;
+        
+        teamItem.querySelector('.edit-team-btn').addEventListener('click', () => editTeam(teamId));
+        container.appendChild(teamItem);
+    });
+}
+
+// === РЕДАКТИРОВАНИЕ КОМАНД ===
 function editTeam(teamId) {
     console.log('Редактирование команды:', teamId);
     currentEditingTeamId = teamId;
@@ -240,7 +436,7 @@ function editTeam(teamId) {
     const playersContainer = document.getElementById('playersEditContainer');
     playersContainer.innerHTML = '';
     
-    (team.players || []).forEach((player, index) => {
+    (team.players || []).forEach((player) => {
         addPlayerField(player.name, player.role);
     });
     
@@ -254,8 +450,14 @@ function addPlayerField(name = '', role = '') {
     playerDiv.innerHTML = `
         <input type="text" placeholder="Имя игрока" value="${name}" class="player-name-input">
         <input type="text" placeholder="Роль" value="${role}" class="player-role-input">
-        <button type="button" onclick="this.parentElement.remove()" class="remove-player">🗑️</button>
+        <button type="button" class="remove-player">🗑️</button>
     `;
+    
+    // Добавляем обработчик для кнопки удаления
+    playerDiv.querySelector('.remove-player').addEventListener('click', function() {
+        playerDiv.remove();
+    });
+    
     container.appendChild(playerDiv);
 }
 
@@ -295,29 +497,27 @@ function closeEditTeamModal() {
     currentEditingTeamId = null;
 }
 
-function openAdminTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-    
-    document.querySelector(`[onclick="openAdminTab('${tabName}')"]`).classList.add('active');
-    document.getElementById(tabName).classList.add('active');
+// === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
+function loadInitialData() {
+    console.log('🔄 Загрузка начальных данных...');
+    // Данные уже загружаются через слушатели
 }
 
-// Заглушки для функций, которые еще не реализованы
+// === ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ===
 function updateTeamsSettings() {
-    alert('Функция в разработке');
+    alert('Функция управления командами в разработке');
 }
 
 function saveBracketChanges() {
-    alert('Функция в разработке');
+    alert('Функция сохранения сетки в разработке');
 }
 
 function saveScheduleChanges() {
-    alert('Функция в разработке');
+    alert('Функция сохранения расписания в разработке');
 }
 
 function addScheduleMatch() {
-    alert('Функция в разработке');
+    alert('Функция добавления матча в разработке');
 }
 
-console.log('🚀 Приложение инициализировано!');
+console.log('🚀 Приложение Illusive Cup инициализировано!');
