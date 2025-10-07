@@ -6,11 +6,21 @@
     <title>Illusive Cup 2025 - Турнир</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="container">
         <!-- Анимированный фон -->
         <div class="animated-bg" id="animatedBg"></div>
+        
+        <!-- Статус подключения -->
+        <div id="connectionStatus" class="connection-status">
+            <span class="status-dot"></span>
+            <span class="status-text">Подключение к турниру...</span>
+        </div>
         
         <header class="main-header">
             <h1 class="main-title">
@@ -67,24 +77,14 @@
                 <!-- Турнирная сетка -->
                 <div id="bracketContent" class="content-section hidden">
                     <div class="bracket-container">
-                        <h2>Турнирная сетка Illusive Cup</h2>
-                        <div class="bracket">
-                            <div class="bracket-round">
-                                <h3>1/4 финала</h3>
-                                <div class="match highlight-match">Bublas Team vs Фениксы</div>
-                                <div class="match">Тигры vs Волки</div>
-                                <div class="match">Орлы vs Медведи</div>
-                                <div class="match">Команда A vs Команда B</div>
-                            </div>
-                            <div class="bracket-round">
-                                <h3>1/2 финала</h3>
-                                <div class="match">Победитель 1 vs Победитель 2</div>
-                                <div class="match">Победитель 3 vs Победитель 4</div>
-                            </div>
-                            <div class="bracket-round">
-                                <h3>Финал</h3>
-                                <div class="match final">Чемпион Illusive Cup</div>
-                            </div>
+                        <div class="bracket-header">
+                            <h2>Турнирная сетка Illusive Cup</h2>
+                            <button id="editBracketBtn" class="edit-btn hidden" onclick="toggleEditMode()">
+                                ✏️ Редактировать
+                            </button>
+                        </div>
+                        <div class="bracket" id="bracketContainer">
+                            <!-- Турнирная сетка будет загружаться из Firebase -->
                         </div>
                     </div>
                 </div>
@@ -92,38 +92,79 @@
                 <!-- Расписание матчей -->
                 <div id="scheduleContent" class="content-section hidden">
                     <div class="schedule-container">
-                        <h2>Расписание матчей</h2>
-                        <div class="schedule-list">
-                            <div class="match-slot highlight">
-                                <span class="time">10:00</span>
-                                <span class="teams">Bublas Team vs Фениксы</span>
-                                <span class="court">Главная арена</span>
-                            </div>
-                            <div class="match-slot">
-                                <span class="time">11:30</span>
-                                <span class="teams">Тигры vs Волки</span>
-                                <span class="court">Корт 2</span>
-                            </div>
-                            <div class="match-slot">
-                                <span class="time">13:00</span>
-                                <span class="teams">Орлы vs Медведи</span>
-                                <span class="court">Корт 1</span>
-                            </div>
-                            <div class="match-slot">
-                                <span class="time">14:30</span>
-                                <span class="teams">Полуфинал 1</span>
-                                <span class="court">Центральный корт</span>
-                            </div>
-                            <div class="match-slot highlight">
-                                <span class="time">16:00</span>
-                                <span class="teams">ФИНАЛ Illusive Cup</span>
-                                <span class="court">Центральный корт</span>
-                            </div>
+                        <div class="schedule-header">
+                            <h2>Расписание матчей</h2>
+                            <button id="editScheduleBtn" class="edit-btn hidden" onclick="toggleScheduleEditMode()">
+                                ✏️ Редактировать
+                            </button>
+                        </div>
+                        <div class="schedule-list" id="scheduleList">
+                            <!-- Расписание будет загружаться из Firebase -->
                         </div>
                     </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Модальное окно редактирования турнирной сетки -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Редактирование турнирной сетки</h2>
+                <button class="close-modal" onclick="closeEditModal()">×</button>
+            </div>
+            
+            <div class="edit-form">
+                <div class="form-section">
+                    <h3>1/4 финала</h3>
+                    <div class="match-edit" id="quarterFinalsEdit">
+                        <!-- Динамически создастся через JS -->
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>1/2 финала</h3>
+                    <div class="match-edit" id="semiFinalsEdit">
+                        <!-- Динамически создастся через JS -->
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>Финал</h3>
+                    <div class="match-edit" id="finalEdit">
+                        <!-- Динамически создастся через JS -->
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button onclick="saveBracketToFirebase()" class="save-btn">💾 Сохранить для всех</button>
+                    <button onclick="closeEditModal()" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования расписания -->
+    <div id="editScheduleModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⏰ Редактирование расписания</h2>
+                <button class="close-modal" onclick="closeScheduleEditModal()">×</button>
+            </div>
+            
+            <div class="edit-form">
+                <div id="scheduleEditContainer">
+                    <!-- Расписание будет создаваться динамически -->
+                </div>
+                
+                <div class="form-actions">
+                    <button onclick="saveScheduleToFirebase()" class="save-btn">💾 Сохранить расписание</button>
+                    <button onclick="addScheduleItem()" class="add-btn">➕ Добавить матч</button>
+                    <button onclick="closeScheduleEditModal()" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
