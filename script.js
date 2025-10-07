@@ -58,7 +58,14 @@ function createAnimatedBackground() {
         const size = Math.random() * 10 + 5;
         particle.style.width = `${size}px`;
         particle.style.height = `${size}px`;
-        particle.style.left = `${Math.random
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.animationDelay = `${Math.random() * 20}s`;
+        particle.style.animationDuration = `${15 + Math.random() * 10}s`;
+        
+        bg.appendChild(particle);
+    }
+}
+
 // === REAL-TIME СЛУШАТЕЛИ FIREBASE ===
 function setupRealTimeListeners() {
     // Слушатель для команд
@@ -111,7 +118,7 @@ function updateTeamsDropdown() {
     Object.keys(teamsData).forEach(teamId => {
         const team = teamsData[teamId];
         const link = document.createElement('a');
-        link.textContent = team.name;
+        link.textContent = team.name || 'Без названия';
         link.onclick = () => showTeamCard(teamId);
         dropdown.appendChild(link);
     });
@@ -176,9 +183,12 @@ function toggleDropdown() {
 }
 
 function showTeamCard(teamId) {
-    // Показываем конкретную команду
     showTeams();
     // Можно добавить скролл к конкретной карточке
+    const card = document.querySelector(`[data-team-id="${teamId}"]`);
+    if (card) {
+        card.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 function showTeams() {
@@ -216,35 +226,73 @@ function loadInitialData() {
     // Данные уже загружаются через слушатели
 }
 
-// === ЗАВЕРШЕНИЕ АНИМИРОВАННОГО ФОНА ===
-function createAnimatedBackground() {
-    const bg = document.getElementById('animatedBg');
-    const particleCount = 15;
-    
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        
-        const size = Math.random() * 10 + 5;
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${Math.random() * 100}%`;
-        particle.style.animationDelay = `${Math.random() * 20}s`;
-        particle.style.animationDuration = `${15 + Math.random() * 10}s`;
-        
-        bg.appendChild(particle);
-    }
-}
-
 // === БАЗОВЫЕ ФУНКЦИИ РЕДАКТОРА ===
 function editTeam(teamId) {
     console.log('Редактирование команды:', teamId);
-    // Заглушка для редактора
-    alert('Редактор в разработке для команды: ' + teamId);
+    currentEditingTeamId = teamId;
+    const team = teamsData[teamId];
+    
+    document.getElementById('editTeamName').value = team.name || '';
+    document.getElementById('editTeamSlogan').value = team.slogan || '';
+    document.getElementById('editTeamMMR').value = team.mmr || '';
+    
+    // Заполнение игроков
+    const playersContainer = document.getElementById('playersEditContainer');
+    playersContainer.innerHTML = '';
+    
+    (team.players || []).forEach((player, index) => {
+        addPlayerField(player.name, player.role);
+    });
+    
+    document.getElementById('editTeamModal').classList.remove('hidden');
+}
+
+function addPlayerField(name = '', role = '') {
+    const container = document.getElementById('playersEditContainer');
+    const playerDiv = document.createElement('div');
+    playerDiv.className = 'player-edit-row';
+    playerDiv.innerHTML = `
+        <input type="text" placeholder="Имя игрока" value="${name}" class="player-name-input">
+        <input type="text" placeholder="Роль" value="${role}" class="player-role-input">
+        <button type="button" onclick="this.parentElement.remove()" class="remove-player">🗑️</button>
+    `;
+    container.appendChild(playerDiv);
+}
+
+function saveTeamChanges() {
+    if (!currentEditingTeamId) return;
+    
+    const name = document.getElementById('editTeamName').value;
+    const slogan = document.getElementById('editTeamSlogan').value;
+    const mmr = document.getElementById('editTeamMMR').value;
+    
+    const players = [];
+    document.querySelectorAll('.player-edit-row').forEach(row => {
+        const nameInput = row.querySelector('.player-name-input');
+        const roleInput = row.querySelector('.player-role-input');
+        if (nameInput.value.trim()) {
+            players.push({
+                name: nameInput.value,
+                role: roleInput.value || 'Игрок'
+            });
+        }
+    });
+    
+    // Обновление в Firebase
+    database.ref('teams/' + currentEditingTeamId).update({
+        name: name,
+        slogan: slogan,
+        mmr: mmr,
+        players: players
+    });
+    
+    closeEditTeamModal();
+    alert('✅ Команда сохранена!');
 }
 
 function closeEditTeamModal() {
     document.getElementById('editTeamModal').classList.add('hidden');
+    currentEditingTeamId = null;
 }
 
 function openAdminTab(tabName) {
@@ -253,6 +301,23 @@ function openAdminTab(tabName) {
     
     document.querySelector(`[onclick="openAdminTab('${tabName}')"]`).classList.add('active');
     document.getElementById(tabName).classList.add('active');
+}
+
+// Заглушки для функций, которые еще не реализованы
+function updateTeamsSettings() {
+    alert('Функция в разработке');
+}
+
+function saveBracketChanges() {
+    alert('Функция в разработке');
+}
+
+function saveScheduleChanges() {
+    alert('Функция в разработке');
+}
+
+function addScheduleMatch() {
+    alert('Функция в разработке');
 }
 
 console.log('🚀 Приложение инициализировано!');
