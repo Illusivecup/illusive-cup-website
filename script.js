@@ -24,6 +24,7 @@ let isEditor = false;
 let currentEditingTeamId = null;
 let teamsData = {};
 let currentDisplayedTeamId = null;
+let tournamentData = {};
 
 // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ===
 document.addEventListener('DOMContentLoaded', function() {
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeApp() {
     createAnimatedBackground();
-        initializeEventListeners();
+    initializeEventListeners();
     checkEditorAccess();
     setupRealTimeListeners();
     loadInitialData();
@@ -138,6 +139,13 @@ function setupRealTimeListeners() {
         console.log('📥 Загружено расписание:', scheduleData);
         displaySchedule(scheduleData);
     });
+
+    // Слушатель для турнирных данных
+    database.ref('tournament').on('value', (snapshot) => {
+        tournamentData = snapshot.val() || {};
+        console.log('📥 Загружены турнирные данные:', tournamentData);
+        displayGroupStage();
+    });
 }
 
 // === СОЗДАНИЕ ДЕМО-ДАННЫХ ===
@@ -146,39 +154,51 @@ function createDemoData() {
     
     const demoTeams = {
         team1: {
-            name: "DRAGON SLAYERS",
-            slogan: "Огненные победы!",
-            mmr: 4500,
+            name: "Labubu Team",
+            slogan: "Мы команда Labubu, мы милые такие, Но на пути к победе — мы просто стихия!",
+            mmr: 3820,
             players: [
-                { name: "Shadow", role: "Капитан" },
-                { name: "Blaze", role: "Керри" },
-                { name: "Frost", role: "Мидер" },
-                { name: "Storm", role: "Саппорт" },
-                { name: "Stone", role: "Оффлейнер" }
+                { name: "TheNotoriousPudge", role: "Керри" },
+                { name: "RTS", role: "Мидер" },
+                { name: "na paneli", role: "Оффлейнер" },
+                { name: "Insightful", role: "Саппорт" },
+                { name: "nency", role: "Саппорт" }
             ]
         },
         team2: {
-            name: "NIGHT WOLVES", 
-            slogan: "Охотимся ночью!",
-            mmr: 4200,
+            name: "unluck", 
+            slogan: "",
+            mmr: 2960,
             players: [
-                { name: "Alpha", role: "Капитан" },
-                { name: "Luna", role: "Керри" },
-                { name: "Fang", role: "Мидер" },
-                { name: "Howl", role: "Саппорт" },
-                { name: "Claw", role: "Оффлейнер" }
+                { name: "Ev1ri", role: "Керри" },
+                { name: "F4cker", role: "Мидер" },
+                { name: "bub1i-k", role: "Оффлейнер" },
+                { name: "DEM", role: "Саппорт 4" },
+                { name: "ДИКИЙ ОГУРЕЦ", role: "Саппорт" }
             ]
         },
         team3: {
-            name: "THUNDER GUARDIANS",
-            slogan: "Молния в наших руках!",
-            mmr: 4700,
+            name: "Команда 3",
+            slogan: "",
+            mmr: 0,
             players: [
-                { name: "Volt", role: "Капитан" },
-                { name: "Spark", role: "Керри" },
-                { name: "Bolt", role: "Мидер" },
-                { name: "Flash", role: "Саппорт" },
-                { name: "Surge", role: "Оффлейнер" }
+                { name: "Игрок 1", role: "Керри" },
+                { name: "Игрок 2", role: "Мидер" },
+                { name: "Игрок 3", role: "Оффлейнер" },
+                { name: "Игрок 4", role: "Саппорт" },
+                { name: "Игрок 5", role: "Саппорт" }
+            ]
+        },
+        team4: {
+            name: "Команда 4",
+            slogan: "",
+            mmr: 0,
+            players: [
+                { name: "Игрок 1", role: "Керри" },
+                { name: "Игрок 2", role: "Мидер" },
+                { name: "Игрок 3", role: "Оффлейнер" },
+                { name: "Игрок 4", role: "Саппорт" },
+                { name: "Игрок 5", role: "Саппорт" }
             ]
         }
     };
@@ -189,8 +209,8 @@ function createDemoData() {
     // Создаем демо-сетку
     const demoBracket = {
         quarterfinals: [
-            { team1: "DRAGON SLAYERS", team2: "NIGHT WOLVES", score1: 2, score2: 1 },
-            { team1: "THUNDER GUARDIANS", team2: "TEAM 4", score1: 2, score2: 0 }
+            { team1: "1 место группы", team2: "4 место группы", score1: null, score2: null },
+            { team1: "2 место группы", team2: "3 место группы", score1: null, score2: null }
         ],
         semifinals: [
             { team1: "Победитель 1/4", team2: "Победитель 1/4", score1: null, score2: null }
@@ -204,13 +224,77 @@ function createDemoData() {
     
     // Создаем демо-расписание
     const demoSchedule = [
-        { time: "15:00", match: "DRAGON SLAYERS vs NIGHT WOLVES", stage: "Четвертьфинал" },
-        { time: "17:00", match: "THUNDER GUARDIANS vs TEAM 4", stage: "Четвертьфинал" },
+        { time: "15:00", match: "Labubu Team vs unluck", stage: "Групповой этап" },
+        { time: "16:30", match: "Команда 3 vs Команда 4", stage: "Групповой этап" },
         { time: "19:00", match: "Полуфинал 1", stage: "Полуфинал" },
         { time: "21:00", match: "ГРАНД-ФИНАЛ", stage: "Финал" }
     ];
     
     database.ref('schedule').set(demoSchedule);
+
+    // Создаем турнирные данные
+    const demoTournament = {
+        format: "round_robin",
+        settings: {
+            totalTeams: 4,
+            groups: 1,
+            advancingTeams: 4
+        },
+        groupStage: {
+            groupA: {
+                teams: [
+                    { name: "Labubu Team", wins: 0, losses: 0, points: 0 },
+                    { name: "unluck", wins: 0, losses: 0, points: 0 },
+                    { name: "Команда 3", wins: 0, losses: 0, points: 0 },
+                    { name: "Команда 4", wins: 0, losses: 0, points: 0 }
+                ],
+                matches: [
+                    { team1: "Labubu Team", team2: "unluck", score1: 0, score2: 0, completed: false },
+                    { team1: "Команда 3", team2: "Команда 4", score1: 0, score2: 0, completed: false }
+                ]
+            }
+        }
+    };
+
+    database.ref('tournament').set(demoTournament);
+}
+
+// === ОТОБРАЖЕНИЕ ГРУППОВОГО ЭТАПА ===
+function displayGroupStage() {
+    const container = document.getElementById('groupStageContent');
+    if (!container || !tournamentData.groupStage) return;
+
+    let groupHTML = '';
+
+    Object.keys(tournamentData.groupStage).forEach(groupName => {
+        const group = tournamentData.groupStage[groupName];
+        
+        groupHTML += `
+            <div class="group-container">
+                <h3>${groupName}</h3>
+                <div class="group-table">
+                    <div class="table-header">
+                        <div>Команда</div>
+                        <div>Матчи</div>
+                        <div>Победы</div>
+                        <div>Поражения</div>
+                        <div>Очки</div>
+                    </div>
+                    ${group.teams.map(team => `
+                        <div class="table-row">
+                            <div>${team.name}</div>
+                            <div>${team.wins + team.losses}</div>
+                            <div>${team.wins}</div>
+                            <div>${team.losses}</div>
+                            <div>${team.points}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = groupHTML;
 }
 
 // === ОБНОВЛЕНИЕ СТАТУСА ПОДКЛЮЧЕНИЯ ===
@@ -271,7 +355,7 @@ function displayTeamsCards() {
     });
 }
 
-// === СОЗДАНИЕ КАРТОЧКИ КОМАНДЫ С НОВОЙ АНИМАЦИЕЙ ===
+// === СОЗДАНИЕ КАРТОЧКИ КОМАНДЫ ===
 function createTeamCard(teamId, team) {
     const card = document.createElement('div');
     card.className = 'team-visiting-card';
@@ -553,3 +637,50 @@ function addScheduleMatch() {
 }
 
 console.log('🚀 Приложение Illusive Cup инициализировано!');
+                role: roleInput.value || 'Игрок'
+            });
+        }
+    });
+    
+    // Обновление в Firebase
+    database.ref('teams/' + currentEditingTeamId).update({
+        name: name,
+        slogan: slogan,
+        mmr: mmr,
+        players: players
+    });
+    
+    closeEditTeamModal();
+    alert('✅ Команда сохранена!');
+}
+
+function closeEditTeamModal() {
+    document.getElementById('editTeamModal').classList.add('hidden');
+    currentEditingTeamId = null;
+}
+
+// === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
+function loadInitialData() {
+    console.log('🔄 Загрузка начальных данных...');
+    // Данные уже загружаются через слушатели
+}
+
+// === ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ===
+function updateTeamsSettings() {
+    alert('Функция управления командами в разработке');
+}
+
+function saveBracketChanges() {
+    alert('Функция сохранения сетки в разработке');
+}
+
+function saveScheduleChanges() {
+    alert('Функция сохранения расписания в разработке');
+}
+
+function addScheduleMatch() {
+    alert('Функция добавления матча в разработке');
+}
+
+console.log('🚀 Приложение Illusive Cup инициализировано!');
+
