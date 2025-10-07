@@ -23,6 +23,7 @@ const database = firebase.database();
 let isEditor = false;
 let currentEditingTeamId = null;
 let teamsData = {};
+let currentDisplayedTeamId = null;
 
 // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ===
 document.addEventListener('DOMContentLoaded', function() {
@@ -113,7 +114,6 @@ function setupRealTimeListeners() {
         teamsData = snapshot.val() || {};
         console.log('📥 Загружены команды:', teamsData);
         updateTeamsDropdown();
-        displayTeamsCards();
         updateConnectionStatus(true);
         
         // Если данных нет, создаем демо-данные
@@ -168,6 +168,18 @@ function createDemoData() {
                 { name: "Howl", role: "Саппорт" },
                 { name: "Claw", role: "Оффлейнер" }
             ]
+        },
+        team3: {
+            name: "THUNDER GUARDIANS",
+            slogan: "Молния в наших руках!",
+            mmr: 4700,
+            players: [
+                { name: "Volt", role: "Капитан" },
+                { name: "Spark", role: "Керри" },
+                { name: "Bolt", role: "Мидер" },
+                { name: "Flash", role: "Саппорт" },
+                { name: "Surge", role: "Оффлейнер" }
+            ]
         }
     };
 
@@ -177,7 +189,8 @@ function createDemoData() {
     // Создаем демо-сетку
     const demoBracket = {
         quarterfinals: [
-            { team1: "DRAGON SLAYERS", team2: "NIGHT WOLVES", score1: 2, score2: 1 }
+            { team1: "DRAGON SLAYERS", team2: "NIGHT WOLVES", score1: 2, score2: 1 },
+            { team1: "THUNDER GUARDIANS", team2: "TEAM 4", score1: 2, score2: 0 }
         ],
         semifinals: [
             { team1: "Победитель 1/4", team2: "Победитель 1/4", score1: null, score2: null }
@@ -192,6 +205,7 @@ function createDemoData() {
     // Создаем демо-расписание
     const demoSchedule = [
         { time: "15:00", match: "DRAGON SLAYERS vs NIGHT WOLVES", stage: "Четвертьфинал" },
+        { time: "17:00", match: "THUNDER GUARDIANS vs TEAM 4", stage: "Четвертьфинал" },
         { time: "19:00", match: "Полуфинал 1", stage: "Полуфинал" },
         { time: "21:00", match: "ГРАНД-ФИНАЛ", stage: "Финал" }
     ];
@@ -228,10 +242,27 @@ function updateTeamsDropdown() {
     });
 }
 
-// === ОТОБРАЖЕНИЕ КАРТОЧЕК КОМАНД ===
+// === ОТОБРАЖЕНИЕ КАРТОЧКИ КОМАНДЫ (ОДНОЙ) ===
+function showTeamCard(teamId) {
+    const container = document.getElementById('teamsContent');
+    container.innerHTML = '';
+    
+    const team = teamsData[teamId];
+    if (team) {
+        const card = createTeamCard(teamId, team);
+        container.appendChild(card);
+        currentDisplayedTeamId = teamId;
+    }
+    
+    showTeams();
+    toggleDropdown(); // Закрываем выпадающий список после выбора
+}
+
+// === ОТОБРАЖЕНИЕ ВСЕХ КАРТОЧЕК КОМАНД ===
 function displayTeamsCards() {
     const container = document.getElementById('teamsContent');
     container.innerHTML = '';
+    currentDisplayedTeamId = null;
     
     Object.keys(teamsData).forEach(teamId => {
         const team = teamsData[teamId];
@@ -240,14 +271,14 @@ function displayTeamsCards() {
     });
 }
 
-// === СОЗДАНИЕ КАРТОЧКИ КОМАНДЫ ===
+// === СОЗДАНИЕ КАРТОЧКИ КОМАНДЫ (НОВАЯ ВЕРСИЯ С АНИМАЦИЕЙ) ===
 function createTeamCard(teamId, team) {
     const card = document.createElement('div');
     card.className = 'team-visiting-card';
     card.setAttribute('data-team-id', teamId);
     
     const playersHTML = (team.players || []).map((player, index) => `
-        <div class="player-card-bublas" style="animation-delay: ${0.3 + index * 0.2}s">
+        <div class="player-card-bublas">
             <div class="player-role-bublas">${player.role || 'Игрок'}</div>
             <div class="player-name-bublas">${player.name || 'Неизвестно'}</div>
         </div>
@@ -275,8 +306,8 @@ function createTeamCard(teamId, team) {
                     <div class="mmr-value-bublas">${team.mmr || '0'}</div>
                 </div>
                 <div class="tournament-section-bublas">
-                    <div class="tournament-text-bublas">Illusive Cup</div>
-                    <div class="tournament-badge-bublas">2025</div>
+                    <div class="tournament-text-bublas">играем на</div>
+                    <div class="tournament-badge-bublas">Illusive Cup</div>
                 </div>
             </div>
         </div>
@@ -357,27 +388,26 @@ function toggleDropdown() {
     document.querySelector('.dropdown').classList.toggle('active');
 }
 
-function showTeamCard(teamId) {
-    showTeams();
-    const card = document.querySelector(`[data-team-id="${teamId}"]`);
-    if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-
 function showTeams() {
     hideAllSections();
     document.getElementById('teamsContent').classList.remove('hidden');
+    
+    // Если не выбрана конкретная команда, показываем все
+    if (!currentDisplayedTeamId) {
+        displayTeamsCards();
+    }
 }
 
 function showBracket() {
     hideAllSections();
     document.getElementById('bracketContent').classList.remove('hidden');
+    currentDisplayedTeamId = null;
 }
 
 function showSchedule() {
     hideAllSections();
     document.getElementById('scheduleContent').classList.remove('hidden');
+    currentDisplayedTeamId = null;
 }
 
 function hideAllSections() {
