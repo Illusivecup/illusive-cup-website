@@ -1,12 +1,12 @@
 // === КОНФИГУРАЦИЯ FIREBASE ===
 const firebaseConfig = {
-    apiKey: "AIzaSyAjUojB-m0TdI604jwsIXGOHGLdGBmC64",
+    apiKey: "AIzaSyAjUOjB-mQTdI6G4jwsIXGOHGldGBmC6j4",
     authDomain: "illusive-cup.firebaseapp.com",
     databaseURL: "https://illusive-cup-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "illusive-cup",
     storageBucket: "illusive-cup.firebasestorage.app",
     messagingSenderId: "465786550229",
-    appId: "1:465786550229:web:9a1d4a3015bbcb8a3ca75c"
+    appId: "1:465786550229:web:9a1d4a3015b9cb0a3caf5c"
 };
 
 // Инициализация Firebase
@@ -18,6 +18,7 @@ try {
 }
 
 const database = firebase.database();
+
 
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let isEditor = false;
@@ -783,3 +784,4 @@ function addScheduleMatch() {
 }
 
 console.log('🚀 Приложение Illusive Cup инициализировано!');
+
