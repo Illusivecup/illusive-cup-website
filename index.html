@@ -8,8 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
     <div class="container">
@@ -41,12 +41,7 @@
                         <span class="dropdown-arrow">▼</span>
                     </button>
                     <div class="dropdown-content" id="teamsDropdown">
-                        <a href="#" onclick="showTeam('bublasTeam')">Bublas Team</a>
-                        <a href="#" onclick="showTeam('team2')">Команда Фениксы</a>
-                        <a href="#" onclick="showTeam('team3')">Команда Тигры</a>
-                        <a href="#" onclick="showTeam('team4')">Команда Волки</a>
-                        <a href="#" onclick="showTeam('team5')">Команда Орлы</a>
-                        <a href="#" onclick="showTeam('team6')">Команда Медведи</a>
+                        <!-- Команды будут загружаться из Firebase -->
                     </div>
                 </div>
 
@@ -65,26 +60,29 @@
                         Расписание матчей
                     </button>
                 </div>
+
+                <!-- Кнопка Управление (только для редакторов) -->
+                <div class="nav-item">
+                    <button id="adminBtn" class="nav-btn admin-btn hidden" onclick="showAdminPanel()">
+                        <span class="btn-icon">⚙️</span>
+                        Управление
+                    </button>
+                </div>
             </div>
 
             <!-- Контентные блоки -->
             <div class="content-area">
                 <!-- Визитки команд -->
                 <div id="teamsContent" class="content-section">
-                    <!-- Визитки будут создаваться через JavaScript -->
+                    <!-- Карточки команд будут создаваться здесь -->
                 </div>
 
                 <!-- Турнирная сетка -->
                 <div id="bracketContent" class="content-section hidden">
                     <div class="bracket-container">
-                        <div class="bracket-header">
-                            <h2>Турнирная сетка Illusive Cup</h2>
-                            <button id="editBracketBtn" class="edit-btn hidden" onclick="toggleEditMode()">
-                                ✏️ Редактировать
-                            </button>
-                        </div>
+                        <h2>Турнирная сетка Illusive Cup</h2>
                         <div class="bracket" id="bracketContainer">
-                            <!-- Турнирная сетка будет загружаться из Firebase -->
+                            <!-- Сетка будет загружаться из Firebase -->
                         </div>
                     </div>
                 </div>
@@ -92,12 +90,7 @@
                 <!-- Расписание матчей -->
                 <div id="scheduleContent" class="content-section hidden">
                     <div class="schedule-container">
-                        <div class="schedule-header">
-                            <h2>Расписание матчей</h2>
-                            <button id="editScheduleBtn" class="edit-btn hidden" onclick="toggleScheduleEditMode()">
-                                ✏️ Редактировать
-                            </button>
-                        </div>
+                        <h2>Расписание матчей</h2>
                         <div class="schedule-list" id="scheduleList">
                             <!-- Расписание будет загружаться из Firebase -->
                         </div>
@@ -107,61 +100,99 @@
         </main>
     </div>
 
-    <!-- Модальное окно редактирования турнирной сетки -->
-    <div id="editModal" class="modal hidden">
-        <div class="modal-content">
+    <!-- Модальное окно редактирования команды -->
+    <div id="editTeamModal" class="modal hidden">
+        <div class="modal-content large-modal">
             <div class="modal-header">
-                <h2>✏️ Редактирование турнирной сетки</h2>
-                <button class="close-modal" onclick="closeEditModal()">×</button>
+                <h2>✏️ Редактирование команды</h2>
+                <button class="close-modal" onclick="closeEditTeamModal()">×</button>
             </div>
             
             <div class="edit-form">
-                <div class="form-section">
-                    <h3>1/4 финала</h3>
-                    <div class="match-edit" id="quarterFinalsEdit">
-                        <!-- Динамически создастся через JS -->
-                    </div>
+                <div class="form-group">
+                    <label>Название команды:</label>
+                    <input type="text" id="editTeamName" class="form-input">
                 </div>
                 
-                <div class="form-section">
-                    <h3>1/2 финала</h3>
-                    <div class="match-edit" id="semiFinalsEdit">
-                        <!-- Динамически создастся через JS -->
-                    </div>
+                <div class="form-group">
+                    <label>Слоган:</label>
+                    <input type="text" id="editTeamSlogan" class="form-input">
                 </div>
                 
-                <div class="form-section">
-                    <h3>Финал</h3>
-                    <div class="match-edit" id="finalEdit">
-                        <!-- Динамически создастся через JS -->
+                <div class="form-group">
+                    <label>Средний MMR:</label>
+                    <input type="number" id="editTeamMMR" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label>Игроки:</label>
+                    <div id="playersEditContainer">
+                        <!-- Игроки будут добавляться здесь -->
                     </div>
+                    <button type="button" onclick="addPlayerField()" class="add-btn">➕ Добавить игрока</button>
                 </div>
                 
                 <div class="form-actions">
-                    <button onclick="saveBracketToFirebase()" class="save-btn">💾 Сохранить для всех</button>
-                    <button onclick="closeEditModal()" class="cancel-btn">❌ Отмена</button>
+                    <button onclick="saveTeamChanges()" class="save-btn">💾 Сохранить команду</button>
+                    <button onclick="closeEditTeamModal()" class="cancel-btn">❌ Отмена</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно редактирования расписания -->
-    <div id="editScheduleModal" class="modal hidden">
-        <div class="modal-content">
+    <!-- Модальное окно управления командами -->
+    <div id="adminPanel" class="modal hidden">
+        <div class="modal-content large-modal">
             <div class="modal-header">
-                <h2>⏰ Редактирование расписания</h2>
-                <button class="close-modal" onclick="closeScheduleEditModal()">×</button>
+                <h2>⚙️ Управление турниром</h2>
+                <button class="close-modal" onclick="closeAdminPanel()">×</button>
             </div>
             
-            <div class="edit-form">
-                <div id="scheduleEditContainer">
-                    <!-- Расписание будет создаваться динамически -->
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="openAdminTab('teamsTab')">Команды</button>
+                <button class="tab-btn" onclick="openAdminTab('bracketTab')">Сетка</button>
+                <button class="tab-btn" onclick="openAdminTab('scheduleTab')">Расписание</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Вкладка управления командами -->
+                <div id="teamsTab" class="tab-pane active">
+                    <h3>Управление командами</h3>
+                    <div class="form-group">
+                        <label>Количество команд:</label>
+                        <input type="number" id="totalTeams" min="2" max="16" class="form-input" value="6">
+                    </div>
+                    
+                    <div class="teams-list" id="adminTeamsList">
+                        <!-- Список команд для редактирования -->
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button onclick="updateTeamsSettings()" class="save-btn">💾 Сохранить настройки</button>
+                    </div>
                 </div>
                 
-                <div class="form-actions">
-                    <button onclick="saveScheduleToFirebase()" class="save-btn">💾 Сохранить расписание</button>
-                    <button onclick="addScheduleItem()" class="add-btn">➕ Добавить матч</button>
-                    <button onclick="closeScheduleEditModal()" class="cancel-btn">❌ Отмена</button>
+                <!-- Вкладка редактирования сетки -->
+                <div id="bracketTab" class="tab-pane">
+                    <h3>Редактирование турнирной сетки</h3>
+                    <div id="bracketEditContainer">
+                        <!-- Редактирование сетки -->
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="saveBracketChanges()" class="save-btn">💾 Сохранить сетку</button>
+                    </div>
+                </div>
+                
+                <!-- Вкладка редактирования расписания -->
+                <div id="scheduleTab" class="tab-pane">
+                    <h3>Редактирование расписания</h3>
+                    <div id="scheduleEditContainer">
+                        <!-- Редактирование расписания -->
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="saveScheduleChanges()" class="save-btn">💾 Сохранить расписание</button>
+                        <button onclick="addScheduleMatch()" class="add-btn">➕ Добавить матч</button>
+                    </div>
                 </div>
             </div>
         </div>
