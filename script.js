@@ -19,7 +19,6 @@ try {
 
 const database = firebase.database();
 
-
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let isEditor = false;
 let currentEditingTeamId = null;
@@ -94,6 +93,8 @@ function checkEditorAccess() {
 // === СОЗДАНИЕ АНИМИРОВАННОГО ФОНА ===
 function createAnimatedBackground() {
     const bg = document.getElementById('animatedBg');
+    if (!bg) return;
+    
     const particleCount = 15;
     
     for (let i = 0; i < particleCount; i++) {
@@ -784,4 +785,3 @@ function addScheduleMatch() {
 }
 
 console.log('🚀 Приложение Illusive Cup инициализировано!');
-
