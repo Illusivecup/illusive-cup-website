@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeApp() {
     createAnimatedBackground();
-    initializeEventListeners();
+        initializeEventListeners();
     checkEditorAccess();
     setupRealTimeListeners();
     loadInitialData();
@@ -271,7 +271,7 @@ function displayTeamsCards() {
     });
 }
 
-// === СОЗДАНИЕ КАРТОЧКИ КОМАНДЫ (НОВАЯ ВЕРСИЯ С АНИМАЦИЕЙ) ===
+// === СОЗДАНИЕ КАРТОЧКИ КОМАНДЫ С НОВОЙ АНИМАЦИЕЙ ===
 function createTeamCard(teamId, team) {
     const card = document.createElement('div');
     card.className = 'team-visiting-card';
@@ -280,7 +280,9 @@ function createTeamCard(teamId, team) {
     const playersHTML = (team.players || []).map((player, index) => `
         <div class="player-card-bublas">
             <div class="player-role-bublas">${player.role || 'Игрок'}</div>
-            <div class="player-name-bublas">${player.name || 'Неизвестно'}</div>
+            <div class="player-name-bublas" data-text="${player.name || 'Неизвестно'}">
+                ${player.name || 'Неизвестно'}
+            </div>
         </div>
     `).join('');
     
@@ -551,84 +553,3 @@ function addScheduleMatch() {
 }
 
 console.log('🚀 Приложение Illusive Cup инициализировано!');
-// === ДОПОЛНИТЕЛЬНЫЕ АНИМАЦИИ ДЛЯ НИКНЕЙМОВ ===
-function enhancePlayerNameAnimations() {
-    // Добавляем случайные задержки для анимаций при наведении
-    document.querySelectorAll('.player-name-bublas').forEach((name, index) => {
-        // Случайная задержка для эффекта "волны"
-        name.style.setProperty('--hover-delay', `${index * 0.1}s`);
-        
-        // Эффект при клике на имя
-        name.addEventListener('click', function() {
-            this.style.animation = 'none';
-            setTimeout(() => {
-                this.style.animation = '';
-            }, 10);
-        });
-    });
-}
-
-// Вызываем после создания карточек
-function initializePlayerAnimations() {
-    setTimeout(enhancePlayerNameAnimations, 3500);
-}
-
-// Обновляем функцию создания карточки чтобы вызвать анимации
-function createTeamCard(teamId, team) {
-    const card = document.createElement('div');
-    card.className = 'team-visiting-card';
-    card.setAttribute('data-team-id', teamId);
-    
-    const playersHTML = (team.players || []).map((player, index) => `
-        <div class="player-card-bublas">
-            <div class="player-role-bublas">${player.role || 'Игрок'}</div>
-            <div class="player-name-bublas">${player.name || 'Неизвестно'}</div>
-        </div>
-    `).join('');
-    
-    const editButton = isEditor ? 
-        `<button class="edit-team-btn" data-team-id="${teamId}">✏️ Редактировать</button>` : '';
-    
-    card.innerHTML = `
-        <div class="card-header">
-            <div class="header-highlight"></div>
-            <div class="team-name-bublas">${team.name || 'Без названия'}</div>
-            <div class="team-subtitle">${team.slogan || 'Готовы к победе!'}</div>
-        </div>
-        <div class="team-card-content">
-            <div class="players-section-bublas">
-                <div class="section-title-bublas">Состав команды</div>
-                <div class="player-grid-bublas">
-                    ${playersHTML}
-                </div>
-            </div>
-            <div class="stats-section-bublas">
-                <div class="mmr-display-bublas">
-                    <div class="mmr-label-bublas">Средний MMR</div>
-                    <div class="mmr-value-bublas">${team.mmr || '0'}</div>
-                </div>
-                <div class="tournament-section-bublas">
-                    <div class="tournament-text-bublas">играем на</div>
-                    <div class="tournament-badge-bublas">Illusive Cup</div>
-                </div>
-            </div>
-        </div>
-        <div class="team-footer-bublas">
-            Зарегистрирована для участия в турнире
-            ${editButton}
-        </div>
-    `;
-    
-    // Добавляем обработчик для кнопки редактирования
-    if (isEditor) {
-        const editBtn = card.querySelector('.edit-team-btn');
-        editBtn.addEventListener('click', () => editTeam(teamId));
-    }
-    
-    // Инициализируем анимации для имен игроков
-    setTimeout(() => {
-        enhancePlayerNameAnimations();
-    }, 100);
-    
-    return card;
-}
