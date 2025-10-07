@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Illusive Cup 2025 - Турнир</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Анимированный фон -->
+        <div class="animated-bg" id="animatedBg"></div>
+        
+        <header class="main-header">
+            <h1 class="main-title">
+                <span class="title-main">Место встречи</span>
+                <span class="title-highlight">Illusive Cup</span>
+                <span class="title-date">11.10.2025</span>
+            </h1>
+        </header>
+
+        <main class="main-content">
+            <!-- Основные кнопки навигации -->
+            <div class="navigation-grid">
+                <!-- Кнопка Команды с выпадающим списком -->
+                <div class="nav-item dropdown">
+                    <button class="nav-btn teams-btn" onclick="toggleDropdown()">
+                        <span class="btn-icon">🏆</span>
+                        Команды
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-content" id="teamsDropdown">
+                        <a href="#" onclick="showTeam('bublasTeam')">Bublas Team</a>
+                        <a href="#" onclick="showTeam('team2')">Команда Фениксы</a>
+                        <a href="#" onclick="showTeam('team3')">Команда Тигры</a>
+                        <a href="#" onclick="showTeam('team4')">Команда Волки</a>
+                        <a href="#" onclick="showTeam('team5')">Команда Орлы</a>
+                        <a href="#" onclick="showTeam('team6')">Команда Медведи</a>
+                    </div>
+                </div>
+
+                <!-- Кнопка Турнирная сетка -->
+                <div class="nav-item">
+                    <button class="nav-btn bracket-btn" onclick="showBracket()">
+                        <span class="btn-icon">📊</span>
+                        Турнирная сетка
+                    </button>
+                </div>
+
+                <!-- Кнопка Расписание матчей -->
+                <div class="nav-item">
+                    <button class="nav-btn schedule-btn" onclick="showSchedule()">
+                        <span class="btn-icon">⏰</span>
+                        Расписание матчей
+                    </button>
+                </div>
+            </div>
+
+            <!-- Контентные блоки -->
+            <div class="content-area">
+                <!-- Визитки команд -->
+                <div id="teamsContent" class="content-section">
+                    <!-- Визитка Bublas Team -->
+                    <div id="bublasTeam" class="team-visiting-card hidden">
+                        <!-- Содержимое визитки Bublas Team будет здесь -->
+                    </div>
+
+                    <!-- Остальные визитки команд -->
+                    <div id="team2" class="team-card hidden">
+                        <div class="card-header">
+                            <h2>Команда Фениксы</h2>
+                            <button class="close-btn" onclick="hideTeam('team2')">×</button>
+                        </div>
+                        <div class="card-content">
+                            <div class="team-info">
+                                <h3>Команда Фениксы</h3>
+                                <p><strong>Капитан:</strong> Петр Петров</p>
+                                <p><strong>Участники:</strong> 6 человек</p>
+                                <p><strong>Достижения:</strong> Лучший новичок 2024</p>
+                                <div class="team-stats">
+                                    <div class="stat">🏆 Побед: 8</div>
+                                    <div class="stat">⚡ Рейтинг: 85%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Остальные команды... -->
+                </div>
+
+                <!-- Турнирная сетка -->
+                <div id="bracketContent" class="content-section hidden">
+                    <div class="bracket-container">
+                        <h2>Турнирная сетка Illusive Cup</h2>
+                        <div class="bracket">
+                            <div class="bracket-round">
+                                <h3>1/4 финала</h3>
+                                <div class="match highlight-match">Bublas Team vs Фениксы</div>
+                                <div class="match">Тигры vs Волки</div>
+                                <div class="match">Орлы vs Медведи</div>
+                                <div class="match">Команда A vs Команда B</div>
+                            </div>
+                            <div class="bracket-round">
+                                <h3>1/2 финала</h3>
+                                <div class="match">Победитель 1 vs Победитель 2</div>
+                                <div class="match">Победитель 3 vs Победитель 4</div>
+                            </div>
+                            <div class="bracket-round">
+                                <h3>Финал</h3>
+                                <div class="match final">Чемпион Illusive Cup</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Расписание матчей -->
+                <div id="scheduleContent" class="content-section hidden">
+                    <div class="schedule-container">
+                        <h2>Расписание матчей</h2>
+                        <div class="schedule-list">
+                            <div class="match-slot highlight">
+                                <span class="time">10:00</span>
+                                <span class="teams">Bublas Team vs Фениксы</span>
+                                <span class="court">Главная арена</span>
+                            </div>
+                            <div class="match-slot">
+                                <span class="time">11:30</span>
+                                <span class="teams">Тигры vs Волки</span>
+                                <span class="court">Корт 2</span>
+                            </div>
+                            <div class="match-slot">
+                                <span class="time">13:00</span>
+                                <span class="teams">Орлы vs Медведи</span>
+                                <span class="court">Корт 1</span>
+                            </div>
+                            <div class="match-slot">
+                                <span class="time">14:30</span>
+                                <span class="teams">Полуфинал 1</span>
+                                <span class="court">Центральный корт</span>
+                            </div>
+                            <div class="match-slot highlight">
+                                <span class="time">16:00</span>
+                                <span class="teams">ФИНАЛ Illusive Cup</span>
+                                <span class="court">Центральный корт</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

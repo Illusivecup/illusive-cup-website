@@ -1,0 +1,271 @@
+/* Добавляем стили для анимированной визитки Bublas Team */
+
+.team-visiting-card {
+    width: 100%;
+    background: linear-gradient(145deg, #0f1625, #1a243f);
+    border-radius: 17.6px;
+    overflow: hidden;
+    box-shadow: 0 22px 44px rgba(0, 0, 0, 0.5);
+    position: relative;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    margin: 20px 0;
+    animation: cardEntrance 1.5s ease-out;
+}
+
+@keyframes cardEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.team-visiting-card .card-header {
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    padding: 27.5px 44px;
+    position: relative;
+    overflow: hidden;
+}
+
+.team-visiting-card .card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+    background-size: cover;
+}
+
+.header-highlight {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 4.4px;
+    background: linear-gradient(90deg, transparent, #4CAF50, transparent);
+    animation: headerSlide 4s infinite;
+}
+
+@keyframes headerSlide {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.team-name-bublas {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.52rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 3.3px;
+    text-shadow: 0 0 11px rgba(76, 175, 80, 0.7);
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(45deg, #4CAF50, #8BC34A, #CDDC39);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 11px;
+    text-align: center;
+}
+
+.team-subtitle {
+    font-size: 1.32rem;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    font-style: italic;
+    color: #CDDC39;
+    opacity: 0.8;
+}
+
+.team-card-content {
+    display: flex;
+    padding: 0;
+}
+
+.players-section-bublas {
+    flex: 3;
+    padding: 33px;
+    background: rgba(10, 14, 23, 0.6);
+}
+
+.section-title-bublas {
+    text-align: center;
+    margin-bottom: 22px;
+    color: #8BC34A;
+    font-size: 1.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+}
+
+.player-grid-bublas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+    margin-top: 22px;
+}
+
+.player-card-bublas {
+    background: rgba(30, 40, 60, 0.7);
+    border-radius: 13.2px;
+    padding: 22px;
+    border-left: 4.4px solid #4CAF50;
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.player-card-bublas:hover {
+    transform: translateY(-6.6px);
+    box-shadow: 0 11px 22px rgba(0, 0, 0, 0.3);
+    border-left-color: #8BC34A;
+}
+
+.player-card-bublas::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 66px;
+    height: 66px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 0 0 0 66px;
+}
+
+.player-role-bublas {
+    font-size: 1.1rem;
+    color: #8BC34A;
+    margin-bottom: 8.8px;
+    font-weight: 600;
+}
+
+.player-name-bublas {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.stats-section-bublas {
+    flex: 2;
+    background: linear-gradient(135deg, #1a243f, #0f1625);
+    padding: 33px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-left: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.mmr-display-bublas {
+    text-align: center;
+    margin-bottom: 33px;
+}
+
+.mmr-label-bublas {
+    font-size: 1.32rem;
+    color: #8BC34A;
+    margin-bottom: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+}
+
+.mmr-value-bublas {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.85rem;
+    font-weight: 700;
+    color: #4CAF50;
+    text-shadow: 0 0 16.5px rgba(76, 175, 80, 0.5);
+    position: relative;
+}
+
+.tournament-section-bublas {
+    text-align: center;
+    margin: 33px 0;
+}
+
+.tournament-text-bublas {
+    font-size: 1.98rem;
+    font-weight: 700;
+    color: #CDDC39;
+    text-transform: uppercase;
+    letter-spacing: 2.2px;
+    margin-bottom: 16.5px;
+}
+
+.tournament-badge-bublas {
+    display: inline-block;
+    background: linear-gradient(45deg, #9C27B0, #E91E63);
+    color: white;
+    padding: 13.2px 27.5px;
+    border-radius: 27.5px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2.2px;
+    box-shadow: 0 5.5px 16.5px rgba(156, 39, 176, 0.4);
+    position: relative;
+    overflow: hidden;
+    animation: pulse 3s infinite;
+}
+
+.team-footer-bublas {
+    padding: 22px 44px;
+    background: rgba(10, 14, 23, 0.8);
+    text-align: center;
+    border-top: 1px solid rgba(76, 175, 80, 0.1);
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Анимация пульсации */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 11px rgba(76, 175, 80, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+/* Подсветка матчей с Bublas Team */
+.highlight-match {
+    background: linear-gradient(45deg, rgba(76, 175, 80, 0.1), rgba(102, 126, 234, 0.1)) !important;
+    border-left-color: #4CAF50 !important;
+    font-weight: bold;
+}
+
+/* Адаптивность для визитки */
+@media (max-width: 768px) {
+    .team-card-content {
+        flex-direction: column;
+    }
+    
+    .stats-section-bublas {
+        border-left: none;
+        border-top: 1px solid rgba(76, 175, 80, 0.2);
+    }
+    
+    .player-grid-bublas {
+        grid-template-columns: 1fr;
+    }
+    
+    .team-name-bublas {
+        font-size: 2.75rem;
+    }
+    
+    .tournament-text-bublas {
+        font-size: 1.65rem;
+    }
+    
+    .tournament-badge-bublas {
+        font-size: 1.87rem;
+        padding: 11px 22px;
+    }
+}
