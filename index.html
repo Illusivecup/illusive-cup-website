@@ -43,6 +43,14 @@
                     </div>
                 </div>
 
+                <!-- Кнопка Групповой этап -->
+                <div class="nav-item">
+                    <button class="nav-btn group-stage-btn" id="groupStageBtn">
+                        <span class="btn-icon">📈</span>
+                        Групповой этап
+                    </button>
+                </div>
+
                 <!-- Кнопка Турнирная сетка -->
                 <div class="nav-item">
                     <button class="nav-btn bracket-btn" id="bracketBtn">
@@ -73,6 +81,16 @@
                 <!-- Визитки команд -->
                 <div id="teamsContent" class="content-section">
                     <!-- Карточки команд будут создаваться здесь -->
+                </div>
+
+                <!-- Групповой этап -->
+                <div id="groupStageContent" class="content-section hidden">
+                    <div class="schedule-container">
+                        <h2>Групповой этап</h2>
+                        <div id="groupStageContainer">
+                            <!-- Таблица группового этапа будет загружаться здесь -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Турнирная сетка -->
@@ -150,6 +168,7 @@
                 <button class="tab-btn active" data-tab="teamsTab">Команды</button>
                 <button class="tab-btn" data-tab="bracketTab">Сетка</button>
                 <button class="tab-btn" data-tab="scheduleTab">Расписание</button>
+                <button class="tab-btn" data-tab="groupStageTab">Групповой этап</button>
             </div>
             
             <div class="tab-content">
@@ -158,7 +177,7 @@
                     <h3>Управление командами</h3>
                     <div class="form-group">
                         <label>Количество команд:</label>
-                        <input type="number" id="totalTeams" min="2" max="16" class="form-input" value="6">
+                        <input type="number" id="totalTeams" min="2" max="16" class="form-input" value="4">
                     </div>
                     
                     <div class="teams-list" id="adminTeamsList">
@@ -175,6 +194,25 @@
                     <h3>Редактирование турнирной сетки</h3>
                     <div id="bracketEditContainer">
                         <!-- Редактирование сетки -->
+                        <div class="form-group">
+                            <label>Четвертьфиналы:</label>
+                            <div class="match-edit-container">
+                                <div class="match-edit-row">
+                                    <input type="text" class="form-input" placeholder="Команда 1" value="1 место группы">
+                                    <input type="number" class="form-input score-input" placeholder="Счет 1">
+                                    <span>vs</span>
+                                    <input type="number" class="form-input score-input" placeholder="Счет 2">
+                                    <input type="text" class="form-input" placeholder="Команда 2" value="4 место группы">
+                                </div>
+                                <div class="match-edit-row">
+                                    <input type="text" class="form-input" placeholder="Команда 1" value="2 место группы">
+                                    <input type="number" class="form-input score-input" placeholder="Счет 1">
+                                    <span>vs</span>
+                                    <input type="number" class="form-input score-input" placeholder="Счет 2">
+                                    <input type="text" class="form-input" placeholder="Команда 2" value="3 место группы">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button id="saveBracketBtn" class="save-btn">💾 Сохранить сетку</button>
@@ -186,10 +224,48 @@
                     <h3>Редактирование расписания</h3>
                     <div id="scheduleEditContainer">
                         <!-- Редактирование расписания -->
+                        <div class="form-group">
+                            <label>Матчи:</label>
+                            <div class="schedule-edit-container">
+                                <div class="schedule-edit-row">
+                                    <input type="text" class="form-input time-input" placeholder="Время" value="15:00">
+                                    <input type="text" class="form-input" placeholder="Матч" value="Labubu Team vs unluck">
+                                    <input type="text" class="form-input" placeholder="Стадия" value="Групповой этап">
+                                </div>
+                                <div class="schedule-edit-row">
+                                    <input type="text" class="form-input time-input" placeholder="Время" value="16:30">
+                                    <input type="text" class="form-input" placeholder="Матч" value="Команда 3 vs Команда 4">
+                                    <input type="text" class="form-input" placeholder="Стадия" value="Групповой этап">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button id="saveScheduleBtn" class="save-btn">💾 Сохранить расписание</button>
                         <button id="addScheduleMatchBtn" class="add-btn">➕ Добавить матч</button>
+                    </div>
+                </div>
+
+                <!-- Вкладка управления групповым этапом -->
+                <div id="groupStageTab" class="tab-pane">
+                    <h3>Управление групповым этапом</h3>
+                    <div class="form-group">
+                        <label>Формат турнира:</label>
+                        <select id="tournamentFormat" class="form-input">
+                            <option value="round_robin">Круговая система</option>
+                            <option value="single_elimination">Олимпийская система</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Количество групп:</label>
+                        <input type="number" id="groupsCount" min="1" max="4" class="form-input" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Команд выходит в плей-офф:</label>
+                        <input type="number" id="advancingTeams" min="1" max="8" class="form-input" value="4">
+                    </div>
+                    <div class="form-actions">
+                        <button id="saveGroupStageBtn" class="save-btn">💾 Сохранить настройки</button>
                     </div>
                 </div>
             </div>
@@ -199,4 +275,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
