@@ -1185,3 +1185,148 @@ body {
         flex-direction: column;
     }
 }
+/* Добавьте эти стили в конец файла style.css */
+
+/* Стили для группового этапа */
+.group-container {
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.group-container h3 {
+    color: #4CAF50;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.3em;
+}
+
+.group-table {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    background: rgba(76, 175, 80, 0.3);
+    padding: 15px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    text-align: center;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    text-align: center;
+    align-items: center;
+}
+
+.table-row:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+.table-row.qualifying {
+    background: rgba(76, 175, 80, 0.1);
+    border-left: 3px solid #4CAF50;
+}
+
+.team-name {
+    font-weight: 600;
+    text-align: left;
+    padding-left: 10px;
+}
+
+.points {
+    font-weight: bold;
+    color: #4CAF50;
+    font-size: 1.1em;
+}
+
+/* Стили для редактирования в админ панели */
+.match-edit-container,
+.schedule-edit-container {
+    margin: 15px 0;
+}
+
+.match-edit-row,
+.schedule-edit-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.match-edit-row input,
+.schedule-edit-row input {
+    flex: 1;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+}
+
+.score-input {
+    max-width: 60px;
+    text-align: center;
+}
+
+.time-input {
+    max-width: 80px;
+}
+
+.match-edit-row span {
+    color: #a0aec0;
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+/* Адаптивность для групповой таблицы */
+@media (max-width: 768px) {
+    .table-header {
+        grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr;
+        font-size: 0.9em;
+        padding: 10px 8px;
+    }
+    
+    .table-row {
+        grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr;
+        padding: 8px;
+        font-size: 0.9em;
+    }
+    
+    .team-name {
+        padding-left: 5px;
+    }
+    
+    .match-edit-row,
+    .schedule-edit-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .match-edit-row input,
+    .schedule-edit-row input {
+        width: 100%;
+    }
+    
+    .score-input,
+    .time-input {
+        max-width: none;
+    }
+}
