@@ -576,3 +576,101 @@ function editTeam(teamId) {
 function addPlayerField(name = '', role = '') {
     const container = document.getElementById('playersEditContainer');
     const playerDiv
+    const playerDiv = document.createElement('div');
+    playerDiv.className = 'player-edit-row';
+    playerDiv.innerHTML = `
+        <input type="text" placeholder="Имя игрока" value="${name}" class="player-name-input">
+        <input type="text" placeholder="Роль" value="${role}" class="player-role-input">
+        <button type="button" class="remove-player">🗑️</button>
+    `;
+    
+    // Добавляем обработчик для кнопки удаления
+    playerDiv.querySelector('.remove-player').addEventListener('click', function() {
+        playerDiv.remove();
+    });
+    
+    container.appendChild(playerDiv);
+}
+
+function saveTeamChanges() {
+    if (!currentEditingTeamId) return;
+    
+    const name = document.getElementById('editTeamName').value;
+    const slogan = document.getElementById('editTeamSlogan').value;
+    const mmr = document.getElementById('editTeamMMR').value;
+    
+    const players = [];
+    document.querySelectorAll('.player-edit-row').forEach(row => {
+        const nameInput = row.querySelector('.player-name-input');
+        const roleInput = row.querySelector('.player-role-input');
+        if (nameInput.value.trim()) {
+            players.push({
+                name: nameInput.value,
+                role: roleInput.value || 'Игрок'
+            });
+        }
+    });
+    
+    // Обновление в Firebase
+    database.ref('teams/' + currentEditingTeamId).update({
+        name: name,
+        slogan: slogan,
+        mmr: mmr,
+        players: players
+    });
+    
+    closeEditTeamModal();
+    alert('✅ Команда сохранена!');
+}
+
+function closeEditTeamModal() {
+    document.getElementById('editTeamModal').classList.add('hidden');
+    currentEditingTeamId = null;
+}
+
+// === УПРАВЛЕНИЕ ГРУППОВЫМ ЭТАПОМ ===
+function saveGroupStageSettings() {
+    const format = document.getElementById('tournamentFormat').value;
+    const groupsCount = document.getElementById('groupsCount').value;
+    const advancingTeams = document.getElementById('advancingTeams').value;
+    
+    const settings = {
+        format: format,
+        settings: {
+            totalTeams: Object.keys(teamsData).length,
+            groups: parseInt(groupsCount),
+            advancingTeams: parseInt(advancingTeams)
+        }
+    };
+    
+    // Обновление в Firebase
+    database.ref('tournament').update(settings);
+    
+    alert('✅ Настройки группового этапа сохранены!');
+}
+
+// === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
+function loadInitialData() {
+    console.log('🔄 Загрузка начальных данных...');
+    // Данные уже загружаются через слушатели
+}
+
+// === ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ===
+function updateTeamsSettings() {
+    const totalTeams = document.getElementById('totalTeams').value;
+    alert(`Настройки команд обновлены. Всего команд: ${totalTeams}`);
+}
+
+function saveBracketChanges() {
+    alert('Функция сохранения сетки в разработке');
+}
+
+function saveScheduleChanges() {
+    alert('Функция сохранения расписания в разработке');
+}
+
+function addScheduleMatch() {
+    alert('Функция добавления матча в разработке');
+}
+
+console.log('🚀 Приложение Illusive Cup инициализировано!');
