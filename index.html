@@ -43,6 +43,14 @@
                     </div>
                 </div>
 
+                <!-- Кнопка Расписание матчей -->
+                <div class="nav-item">
+                    <button class="nav-btn schedule-btn" id="scheduleBtn">
+                        <span class="btn-icon">⏰</span>
+                        Расписание матчей
+                    </button>
+                </div>
+
                 <!-- Кнопка Групповой этап -->
                 <div class="nav-item">
                     <button class="nav-btn group-stage-btn" id="groupStageBtn">
@@ -51,19 +59,11 @@
                     </button>
                 </div>
 
-                <!-- Кнопка Турнирная сетка -->
+                <!-- Кнопка Плей-офф -->
                 <div class="nav-item">
-                    <button class="nav-btn bracket-btn" id="bracketBtn">
+                    <button class="nav-btn playoff-btn" id="playoffBtn">
                         <span class="btn-icon">📊</span>
-                        Турнирная сетка
-                    </button>
-                </div>
-
-                <!-- Кнопка Расписание матчей -->
-                <div class="nav-item">
-                    <button class="nav-btn schedule-btn" id="scheduleBtn">
-                        <span class="btn-icon">⏰</span>
-                        Расписание матчей
+                        Плей-офф
                     </button>
                 </div>
 
@@ -88,43 +88,70 @@
             <div class="content-area">
                 <!-- Визитки команд -->
                 <div id="teamsContent" class="content-section hidden">
-                    <!-- Карточка команды будет создаваться здесь при выборе из dropdown -->
                     <div id="singleTeamCard"></div>
-                </div>
-
-                <!-- Групповой этап -->
-                <div id="groupStageContent" class="content-section hidden">
-                    <div class="section-header">
-                        <h2>Групповой этап</h2>
-                        <p>Турнирная таблица и результаты матчей</p>
-                    </div>
-                    <div id="groupStageContainer">
-                        <!-- Таблица группового этапа будет загружаться здесь -->
-                    </div>
-                </div>
-
-                <!-- Турнирная сетка -->
-                <div id="bracketContent" class="content-section hidden">
-                    <div class="section-header">
-                        <h2>Турнирная сетка</h2>
-                        <p>Плей-офф этап турнира</p>
-                    </div>
-                    <div class="bracket-container">
-                        <div class="bracket" id="bracketContainer">
-                            <!-- Сетка будет загружаться из Firebase -->
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Расписание матчей -->
                 <div id="scheduleContent" class="content-section hidden">
                     <div class="section-header">
                         <h2>Расписание матчей</h2>
-                        <p>Время и стадии всех матчей турнира</p>
+                        <p>Все матчи турнира</p>
                     </div>
                     <div class="schedule-container">
-                        <div class="schedule-list" id="scheduleList">
-                            <!-- Расписание будет загружаться из Firebase -->
+                        <div class="schedule-columns">
+                            <div class="schedule-column">
+                                <h3>🟢 Запланированные</h3>
+                                <div class="schedule-list" id="upcomingMatches">
+                                    <!-- Запланированные матчи -->
+                                </div>
+                            </div>
+                            <div class="schedule-column">
+                                <h3>🔴 Проведённые</h3>
+                                <div class="schedule-list" id="completedMatches">
+                                    <!-- Завершенные матчи -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Групповой этап -->
+                <div id="groupStageContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Групповой этап</h2>
+                        <p>Турнирная таблица команд</p>
+                    </div>
+                    <div id="groupStageContainer">
+                        <!-- Таблица группового этапа -->
+                    </div>
+                </div>
+
+                <!-- Плей-офф -->
+                <div id="playoffContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Плей-офф</h2>
+                        <p>Финальная стадия турнира</p>
+                    </div>
+                    <div class="playoff-container">
+                        <div class="playoff-sections">
+                            <div class="playoff-section">
+                                <h3>🥉 Матч за 3 место</h3>
+                                <div id="thirdPlaceMatch" class="playoff-match">
+                                    <!-- Матч за 3 место -->
+                                </div>
+                            </div>
+                            <div class="playoff-section">
+                                <h3>🏆 Грандфинал</h3>
+                                <div id="grandFinalMatch" class="playoff-match">
+                                    <!-- Грандфинал -->
+                                </div>
+                            </div>
+                            <div class="playoff-section">
+                                <h3>👑 Победитель</h3>
+                                <div id="winnerSection" class="winner-container">
+                                    <!-- Победитель -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -137,7 +164,7 @@
                     </div>
                     <div class="audience-awards-container">
                         <div id="audienceAwardsContent">
-                            <!-- Данные приза зрительских симпатий будут загружаться здесь -->
+                            <!-- Данные приза зрительских симпатий -->
                         </div>
                     </div>
                 </div>
@@ -190,9 +217,9 @@
             
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="teamsTab">Команды</button>
-                <button class="tab-btn" data-tab="bracketTab">Сетка</button>
                 <button class="tab-btn" data-tab="scheduleTab">Расписание</button>
                 <button class="tab-btn" data-tab="groupStageTab">Групповой этап</button>
+                <button class="tab-btn" data-tab="playoffTab">Плей-офф</button>
                 <button class="tab-btn" data-tab="accessTab">Доступы</button>
             </div>
             
@@ -215,20 +242,6 @@
                     </div>
                 </div>
                 
-                <!-- Вкладка редактирования сетки -->
-                <div id="bracketTab" class="tab-pane">
-                    <h3>Редактирование турнирной сетки</h3>
-                    <div class="bracket-settings-info">
-                        <p>Выберите команды для каждого матча и укажите счет</p>
-                    </div>
-                    <div class="bracket-settings-container" id="bracketSettingsContainer">
-                        <!-- Сетка будет загружаться динамически -->
-                    </div>
-                    <div class="form-actions">
-                        <button id="saveBracketBtn" class="save-btn">💾 Сохранить сетку</button>
-                    </div>
-                </div>
-                
                 <!-- Вкладка редактирования расписания -->
                 <div id="scheduleTab" class="tab-pane">
                     <h3>Редактирование расписания</h3>
@@ -248,19 +261,8 @@
                 <div id="groupStageTab" class="tab-pane">
                     <h3>Управление групповым этапом</h3>
                     <div class="form-group">
-                        <label>Формат турнира:</label>
-                        <select id="tournamentFormat" class="form-input">
-                            <option value="round_robin">Круговая система</option>
-                            <option value="single_elimination">Олимпийская система</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label>Количество групп:</label>
                         <input type="number" id="groupsCount" min="1" max="4" class="form-input" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Команд выходит в плей-офф:</label>
-                        <input type="number" id="advancingTeams" min="1" max="8" class="form-input" value="4">
                     </div>
                     
                     <div class="group-stage-matches">
@@ -272,6 +274,51 @@
                     
                     <div class="form-actions">
                         <button id="saveGroupStageBtn" class="save-btn">💾 Сохранить настройки</button>
+                    </div>
+                </div>
+
+                <!-- Вкладка управления плей-офф -->
+                <div id="playoffTab" class="tab-pane">
+                    <h3>Управление плей-офф</h3>
+                    <div class="form-group">
+                        <label>Матч за 3 место:</label>
+                        <div class="playoff-match-settings">
+                            <select id="thirdPlaceTeam1" class="form-input">
+                                <option value="">-- Команда 1 --</option>
+                            </select>
+                            <input type="number" id="thirdPlaceScore1" class="form-input" placeholder="Счет 1" min="0">
+                            <span>vs</span>
+                            <input type="number" id="thirdPlaceScore2" class="form-input" placeholder="Счет 2" min="0">
+                            <select id="thirdPlaceTeam2" class="form-input">
+                                <option value="">-- Команда 2 --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Грандфинал:</label>
+                        <div class="playoff-match-settings">
+                            <select id="grandFinalTeam1" class="form-input">
+                                <option value="">-- Команда 1 --</option>
+                            </select>
+                            <input type="number" id="grandFinalScore1" class="form-input" placeholder="Счет 1" min="0">
+                            <span>vs</span>
+                            <input type="number" id="grandFinalScore2" class="form-input" placeholder="Счет 2" min="0">
+                            <select id="grandFinalTeam2" class="form-input">
+                                <option value="">-- Команда 2 --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Победитель:</label>
+                        <select id="playoffWinner" class="form-input">
+                            <option value="">-- Выберите победителя --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button id="savePlayoffBtn" class="save-btn">💾 Сохранить плей-офф</button>
                     </div>
                 </div>
 
