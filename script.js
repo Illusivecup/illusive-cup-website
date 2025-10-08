@@ -197,6 +197,28 @@ function createDemoData() {
                 { name: "DEM", role: "Саппорт 4", mmr: 2900 },
                 { name: "ДИКИЙ ОГУРЕЦ", role: "Саппорт", mmr: 2800 }
             ]
+        },
+        team3: {
+            name: "kola team",
+            slogan: "",
+            players: [
+                { name: "Игрок 1", role: "Керри", mmr: 3000 },
+                { name: "Игрок 2", role: "Мидер", mmr: 3000 },
+                { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
+                { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
+                { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
+            ]
+        },
+        team4: {
+            name: "Команда 4",
+            slogan: "",
+            players: [
+                { name: "Игрок 1", role: "Керри", mmr: 3000 },
+                { name: "Игрок 2", role: "Мидер", mmr: 3000 },
+                { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
+                { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
+                { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
+            ]
         }
     };
 
@@ -231,7 +253,12 @@ function createDemoData() {
     
     // Создаем демо-расписание
     const demoSchedule = [
-        { time: "15:00", match: "Labubu Team vs unluck", stage: "Групповой этап" }
+        { time: "15:00", match: "Labubu Team vs unluck", stage: "Групповой этап" },
+        { time: "16:30", match: "kola team vs Команда 4", stage: "Групповой этап" },
+        { time: "18:00", match: "Labubu Team vs kola team", stage: "Групповой этап" },
+        { time: "19:30", match: "unluck vs Команда 4", stage: "Групповой этап" },
+        { time: "21:00", match: "Полуфинал 1", stage: "Полуфинал" },
+        { time: "22:30", match: "ГРАНД-ФИНАЛ", stage: "Финал" }
     ];
     
     database.ref('schedule').set(demoSchedule).catch(error => {
@@ -242,18 +269,25 @@ function createDemoData() {
     const demoTournament = {
         format: "round_robin",
         settings: {
-            totalTeams: 2,
+            totalTeams: 4,
             groups: 1,
-            advancingTeams: 2
+            advancingTeams: 3
         },
         groupStage: {
             groupA: {
                 teams: [
                     { name: "Labubu Team", wins: 0, losses: 0, points: 0 },
-                    { name: "unluck", wins: 0, losses: 0, points: 0 }
+                    { name: "unluck", wins: 0, losses: 0, points: 0 },
+                    { name: "kola team", wins: 0, losses: 0, points: 0 },
+                    { name: "Команда 4", wins: 0, losses: 0, points: 0 }
                 ],
                 matches: [
-                    { team1: "Labubu Team", team2: "unluck", score1: 0, score2: 0, completed: false }
+                    { team1: "Labubu Team", team2: "unluck", score1: 0, score2: 0, completed: false },
+                    { team1: "kola team", team2: "Команда 4", score1: 0, score2: 0, completed: false },
+                    { team1: "Labubu Team", team2: "kola team", score1: 0, score2: 0, completed: false },
+                    { team1: "unluck", team2: "Команда 4", score1: 0, score2: 0, completed: false },
+                    { team1: "Labubu Team", team2: "Команда 4", score1: 0, score2: 0, completed: false },
+                    { team1: "unluck", team2: "kola team", score1: 0, score2: 0, completed: false }
                 ]
             }
         }
@@ -269,6 +303,13 @@ function createDemoData() {
             {
                 matchId: "match1",
                 teams: ["Labubu Team", "unluck"],
+                bestPlayers: [
+                    { name: "TheNotoriousPudge", team: "Labubu Team", role: "Керри" }
+                ]
+            },
+            {
+                matchId: "match2",
+                teams: ["kola team", "Команда 4"],
                 bestPlayers: [
                     { name: "", team: "", role: "" }
                 ]
