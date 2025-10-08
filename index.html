@@ -14,8 +14,8 @@
         <!-- Анимированный фон -->
         <div class="animated-bg" id="animatedBg"></div>
         
-        <!-- Статус подключения -->
-        <div id="connectionStatus" class="connection-status">
+        <!-- Статус подключения (только для редакторов) -->
+        <div id="connectionStatus" class="connection-status hidden">
             <span class="status-dot"></span>
             <span class="status-text">Подключение к турниру...</span>
         </div>
@@ -136,11 +136,6 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Средний MMR:</label>
-                    <input type="number" id="editTeamMMR" class="form-input">
-                </div>
-                
-                <div class="form-group">
                     <label>Игроки:</label>
                     <div id="playersEditContainer">
                         <!-- Игроки будут добавляться здесь -->
@@ -178,6 +173,7 @@
                     <div class="form-group">
                         <label>Количество команд:</label>
                         <input type="number" id="totalTeams" min="2" max="16" class="form-input" value="4">
+                        <button id="applyTeamsCountBtn" class="save-btn">Применить</button>
                     </div>
                     
                     <div class="teams-list" id="adminTeamsList">
