@@ -7,15 +7,332 @@
     <meta name="keywords" content="турнир, киберспорт, Dota 2, Illusive Cup">
     <title>Illusive Cup 2025 - Турнир</title>
     
-    <!-- Preload critical resources -->
-    <link rel="preload" href="style.css" as="style">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" as="style">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     
-    <!-- CSS -->
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDK будет загружен динамически -->
+    <style>
+        /* Базовые стили */
+        :root {
+            --color-primary: #0c0f1d;
+            --color-secondary: #1a243f;
+            --color-surface: rgba(255, 255, 255, 0.05);
+            --color-accent-green: #4CAF50;
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #a0aec0;
+            --border-light: rgba(255, 255, 255, 0.1);
+            --radius-lg: 12px;
+            --transition-normal: 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: var(--color-text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Кнопки */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            text-decoration: none;
+        }
+
+        .btn--primary {
+            background: var(--color-accent-green);
+            color: white;
+        }
+
+        .btn--primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn--outline {
+            background: transparent;
+            color: var(--color-text-primary);
+            border: 2px solid var(--border-light);
+        }
+
+        .btn--outline:hover {
+            background: var(--color-surface);
+            border-color: var(--color-accent-green);
+        }
+
+        .btn--sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .btn--danger {
+            background: #f44336;
+            color: white;
+        }
+
+        /* Карточки */
+        .card {
+            background: var(--color-surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: all var(--transition-normal);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--color-accent-green);
+        }
+
+        /* Формы */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-accent-green);
+        }
+
+        /* Шапка приложения */
+        .app-header {
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--border-light);
+            padding: 15px 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .nav-btn.active,
+        .nav-btn:hover {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: var(--color-accent-green);
+        }
+
+        /* Основной контент */
+        .app-main {
+            padding: 20px 0;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Менеджер команд */
+        .team-manager-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .team-list {
+            display: grid;
+            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        }
+
+        .team-card {
+            background: var(--color-surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 15px;
+        }
+
+        .team-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .team-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .team-mmr {
+            background: var(--color-accent-green);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .team-slogan {
+            font-style: italic;
+            color: var(--color-text-secondary);
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .team-players {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .team-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--color-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--color-text-primary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .team-manager-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .team-list {
+                grid-template-columns: 1fr;
+            }
+
+            .main-nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="app">
@@ -25,27 +342,418 @@
         </div>
     </div>
 
-    <!-- Загрузка скриптов -->
-    <script src="js/utils/state-manager.js"></script>
-    <script src="js/utils/error-handler.js"></script>
-    <script src="js/utils/data-validator.js"></script>
-    <script src="js/utils/performance-optimizer.js"></script>
-    <script src="js/services/firebase-service.js"></script>
-    <script src="js/services/tournament-service.js"></script>
-    <script src="js/components/team-manager.js"></script>
-    <script src="js/components/schedule-manager.js"></script>
-    <script src="js/components/bracket-viewer.js"></script>
-    <script src="js/app.js"></script>
-
     <script>
-        // Скрываем loading overlay когда приложение загружено
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                const loadingOverlay = document.getElementById('initialLoading');
-                if (loadingOverlay) {
-                    loadingOverlay.style.display = 'none';
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAjUOjB-mQTdI6G4jwsIXGOHGldGBmC6j4",
+            authDomain: "illusive-cup.firebaseapp.com",
+            databaseURL: "https://illusive-cup-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "illusive-cup",
+            storageBucket: "illusive-cup.firebasestorage.app",
+            messagingSenderId: "465786550229",
+            appId: "1:465786550229:web:9a1d4a3015b9cb0a3caf5c"
+        };
+
+        // Simplified Firebase Service
+        class FirebaseService {
+            constructor() {
+                this.app = null;
+                this.database = null;
+                this.init();
+            }
+
+            init() {
+                try {
+                    this.app = firebase.initializeApp(firebaseConfig);
+                    this.database = firebase.database();
+                    console.log('✅ Firebase initialized');
+                } catch (error) {
+                    console.error('❌ Firebase initialization failed:', error);
                 }
-            }, 1000);
+            }
+
+            async get(path) {
+                try {
+                    const snapshot = await this.database.ref(path).once('value');
+                    return snapshot.val();
+                } catch (error) {
+                    console.error('Firebase get error:', error);
+                    return null;
+                }
+            }
+
+            async set(path, data) {
+                try {
+                    await this.database.ref(path).set(data);
+                    console.log('✅ Data saved to', path);
+                    return true;
+                } catch (error) {
+                    console.error('Firebase set error:', error);
+                    return false;
+                }
+            }
+        }
+
+        // Main Application
+        class IllusiveCupApp {
+            constructor() {
+                this.firebase = new FirebaseService();
+                this.currentView = 'teams';
+                this.teams = [];
+                this.init();
+            }
+
+            async init() {
+                console.log('🚀 Initializing Illusive Cup App...');
+                this.setupAppStructure();
+                this.setupEventListeners();
+                await this.loadTeams();
+                this.loadCurrentView();
+                
+                // Hide loading overlay
+                setTimeout(() => {
+                    const loadingOverlay = document.getElementById('initialLoading');
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+                }, 1000);
+
+                console.log('✅ App initialized');
+                this.showNotification('Приложение загружено', 'success');
+            }
+
+            setupAppStructure() {
+                const appContainer = document.getElementById('app');
+                appContainer.innerHTML = `
+                    <div class="app">
+                        <header class="app-header">
+                            <div class="container">
+                                <div class="header-content">
+                                    <div class="logo">
+                                        <h1>🏆 Illusive Cup</h1>
+                                    </div>
+                                    <nav class="main-nav">
+                                        <button class="nav-btn active" data-view="teams">👥 Команды</button>
+                                        <button class="nav-btn" data-view="schedule">📅 Расписание</button>
+                                        <button class="nav-btn" data-view="bracket">🏆 Сетка</button>
+                                    </nav>
+                                </div>
+                            </div>
+                        </header>
+
+                        <main class="app-main">
+                            <div class="container">
+                                <div class="view-container">
+                                    <div id="teamsView" class="view active"></div>
+                                    <div id="scheduleView" class="view"></div>
+                                    <div id="bracketView" class="view"></div>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+                `;
+            }
+
+            setupEventListeners() {
+                document.addEventListener('click', (e) => {
+                    if (e.target.dataset.view) {
+                        this.switchView(e.target.dataset.view);
+                    }
+                });
+            }
+
+            async loadTeams() {
+                try {
+                    const teams = await this.firebase.get('tournament/teams');
+                    this.teams = teams ? Object.values(teams) : [];
+                } catch (error) {
+                    console.error('Error loading teams:', error);
+                    this.teams = [];
+                }
+            }
+
+            switchView(viewName) {
+                if (this.currentView === viewName) return;
+
+                // Update active nav button
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === viewName);
+                });
+
+                // Hide current view
+                const currentViewEl = document.getElementById(`${this.currentView}View`);
+                if (currentViewEl) currentViewEl.classList.remove('active');
+
+                this.currentView = viewName;
+
+                // Show new view
+                const newViewEl = document.getElementById(`${viewName}View`);
+                if (newViewEl) newViewEl.classList.add('active');
+
+                this.loadCurrentView();
+            }
+
+            loadCurrentView() {
+                const viewContainer = document.getElementById(`${this.currentView}View`);
+                if (!viewContainer) return;
+
+                switch (this.currentView) {
+                    case 'teams':
+                        this.renderTeamsView(viewContainer);
+                        break;
+                    case 'schedule':
+                        this.renderScheduleView(viewContainer);
+                        break;
+                    case 'bracket':
+                        this.renderBracketView(viewContainer);
+                        break;
+                }
+            }
+
+            renderTeamsView(container) {
+                container.innerHTML = `
+                    <div class="team-manager">
+                        <div class="team-manager-header">
+                            <h2>Управление командами</h2>
+                            <button class="btn btn--primary" id="addTeamBtn">➕ Добавить команду</button>
+                        </div>
+                        <div class="team-list" id="teamList">
+                            ${this.renderTeamList()}
+                        </div>
+                        ${this.renderTeamModal()}
+                    </div>
+                `;
+
+                this.setupTeamEventListeners();
+            }
+
+            renderTeamList() {
+                if (this.teams.length === 0) {
+                    return `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🏆</div>
+                            <h3>Команды не найдены</h3>
+                            <p>Добавьте первую команду для начала работы</p>
+                        </div>
+                    `;
+                }
+
+                return this.teams.map(team => `
+                    <div class="team-card">
+                        <div class="team-card-header">
+                            <h4 class="team-name">${this.escapeHtml(team.name)}</h4>
+                            <span class="team-mmr">${team.mmr || 0} MMR</span>
+                        </div>
+                        ${team.slogan ? `<p class="team-slogan">"${this.escapeHtml(team.slogan)}"</p>` : ''}
+                        <div class="team-players">
+                            <span class="players-count">${team.players?.length || 0} игроков</span>
+                        </div>
+                        <div class="team-card-actions">
+                            <button class="btn btn--sm btn--outline team-edit-btn" data-team-id="${team.id}">
+                                ✏️ Редактировать
+                            </button>
+                            <button class="btn btn--sm btn--danger team-delete-btn" data-team-id="${team.id}">
+                                🗑️ Удалить
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderTeamModal() {
+                return `
+                    <div class="modal" id="teamModal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="teamModalTitle">Новая команда</h3>
+                                <button class="modal-close" id="closeTeamModal">&times;</button>
+                            </div>
+                            <form id="teamForm" class="modal-body">
+                                <div class="form-group">
+                                    <label for="teamName" class="form-label">Название команды</label>
+                                    <input type="text" id="teamName" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="teamSlogan" class="form-label">Слоган команды</label>
+                                    <input type="text" id="teamSlogan" class="form-input">
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn--outline" id="cancelTeamBtn">Отмена</button>
+                                    <button type="submit" class="btn btn--primary">Сохранить команду</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
+            setupTeamEventListeners() {
+                // Add team button
+                const addTeamBtn = document.getElementById('addTeamBtn');
+                if (addTeamBtn) {
+                    addTeamBtn.addEventListener('click', () => this.openTeamModal());
+                }
+
+                // Team actions
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('team-edit-btn')) {
+                        const teamId = e.target.dataset.teamId;
+                        this.openTeamModal(teamId);
+                    }
+                    if (e.target.classList.contains('team-delete-btn')) {
+                        const teamId = e.target.dataset.teamId;
+                        this.deleteTeam(teamId);
+                    }
+                });
+
+                // Team modal
+                const modal = document.getElementById('teamModal');
+                if (modal) {
+                    const closeBtn = modal.querySelector('#closeTeamModal');
+                    const cancelBtn = modal.querySelector('#cancelTeamBtn');
+                    const form = modal.querySelector('#teamForm');
+
+                    const closeModal = () => modal.style.display = 'none';
+                    
+                    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+                    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+                    
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) closeModal();
+                    });
+
+                    if (form) {
+                        form.addEventListener('submit', (e) => {
+                            e.preventDefault();
+                            this.saveTeam();
+                        });
+                    }
+                }
+            }
+
+            openTeamModal(teamId = null) {
+                const modal = document.getElementById('teamModal');
+                const form = document.getElementById('teamForm');
+                
+                if (!modal || !form) return;
+
+                form.reset();
+
+                if (teamId) {
+                    const team = this.teams.find(t => t.id === teamId);
+                    if (team) {
+                        document.getElementById('teamName').value = team.name;
+                        document.getElementById('teamSlogan').value = team.slogan || '';
+                        modal.querySelector('#teamModalTitle').textContent = 'Редактирование команды';
+                        form.dataset.teamId = teamId;
+                    }
+                } else {
+                    modal.querySelector('#teamModalTitle').textContent = 'Новая команда';
+                    delete form.dataset.teamId;
+                }
+
+                modal.style.display = 'flex';
+            }
+
+            async saveTeam() {
+                const form = document.getElementById('teamForm');
+                const name = document.getElementById('teamName').value.trim();
+                const slogan = document.getElementById('teamSlogan').value.trim();
+
+                if (!name) {
+                    this.showNotification('Введите название команды', 'error');
+                    return;
+                }
+
+                const teamData = {
+                    name,
+                    slogan,
+                    players: [],
+                    mmr: 0,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                };
+
+                try {
+                    if (form.dataset.teamId) {
+                        // Update existing team
+                        teamData.id = form.dataset.teamId;
+                        await this.firebase.set(`tournament/teams/${teamData.id}`, teamData);
+                        this.showNotification('Команда обновлена', 'success');
+                    } else {
+                        // Create new team
+                        teamData.id = 'team_' + Date.now();
+                        await this.firebase.set(`tournament/teams/${teamData.id}`, teamData);
+                        this.showNotification('Команда создана', 'success');
+                    }
+
+                    await this.loadTeams();
+                    this.renderTeamsView(document.getElementById('teamsView'));
+                    
+                    const modal = document.getElementById('teamModal');
+                    if (modal) modal.style.display = 'none';
+
+                } catch (error) {
+                    console.error('Error saving team:', error);
+                    this.showNotification('Ошибка сохранения', 'error');
+                }
+            }
+
+            async deleteTeam(teamId) {
+                const team = this.teams.find(t => t.id === teamId);
+                if (!team) return;
+
+                if (!confirm(`Удалить команду "${team.name}"?`)) return;
+
+                try {
+                    await this.firebase.set(`tournament/teams/${teamId}`, null);
+                    this.showNotification('Команда удалена', 'success');
+                    await this.loadTeams();
+                    this.renderTeamsView(document.getElementById('teamsView'));
+                } catch (error) {
+                    console.error('Error deleting team:', error);
+                    this.showNotification('Ошибка удаления', 'error');
+                }
+            }
+
+            renderScheduleView(container) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <h3>Расписание</h3>
+                        <p>Функционал расписания в разработке</p>
+                    </div>
+                `;
+            }
+
+            renderBracketView(container) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏆</div>
+                        <h3>Турнирная сетка</h3>
+                        <p>Функционал сетки в разработке</p>
+                    </div>
+                `;
+            }
+
+            showNotification(message, type = 'info') {
+                // Simple notification implementation
+                console.log(`${type.toUpperCase()}: ${message}`);
+            }
+
+            escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe
+                    .toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.illusiveCupApp = new IllusiveCupApp();
         });
     </script>
 </body>
