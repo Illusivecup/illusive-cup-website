@@ -166,11 +166,6 @@ body {
     position: relative;
 }
 
-/* Специальные стили для кнопки управления */
-.admin-nav-item {
-    grid-column: -2; /* Размещаем справа */
-}
-
 .nav-btn {
     width: 100%;
     padding: 20px 15px;
@@ -197,23 +192,6 @@ body {
     transform: translateY(-3px);
     box-shadow: var(--shadow-medium);
     outline: none;
-}
-
-/* Специальные стили для кнопки управления - менее заметная */
-.admin-btn {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: var(--text-secondary) !important;
-    font-size: 14px !important;
-    padding: 15px 10px !important;
-}
-
-.admin-btn:hover,
-.admin-btn:focus {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: var(--text-primary) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1) !important;
 }
 
 .btn-icon {
@@ -440,93 +418,518 @@ body {
 
 .player-card-bublas {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
     border-radius: var(--radius-small);
     padding: 20px;
-    text-align: center;
+    border: 1px solid var(--border-light);
     transition: all var(--transition-normal);
-    backdrop-filter: blur(5px);
+    text-align: center;
 }
 
 .player-card-bublas:hover {
+    background: rgba(255, 255, 255, 0.1);
     transform: translateY(-3px);
     box-shadow: var(--shadow-light);
-    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.player-role-bublas {
+    font-size: 1.1em;
+    color: var(--accent-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .player-name-bublas {
     font-family: 'Exo 2', sans-serif;
-    font-size: 1.2em;
-    font-weight: 600;
+    font-size: 1.3em;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
 }
 
-.player-role-bublas {
-    font-size: 0.9em;
-    color: var(--accent-secondary);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.player-name-bublas:hover {
+    color: var(--accent-primary);
+    transform: scale(1.05);
 }
 
-.team-stats-bublas {
+.stats-section-bublas {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 25px;
 }
 
-.stat-item-bublas {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-small);
-    padding: 20px;
+.mmr-display-bublas {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(139, 195, 74, 0.15));
+    border-radius: var(--radius-medium);
+    padding: 25px;
+    text-align: center;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.mmr-label-bublas {
+    font-size: 1.1em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.mmr-value-bublas {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5em;
+    font-weight: 900;
+    color: var(--accent-primary);
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.tournament-section-bublas {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-medium);
+    padding: 25px;
     text-align: center;
     border: 1px solid var(--border-light);
+}
+
+.tournament-text-bublas {
+    font-size: 1.1em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.tournament-badge-bublas {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4em;
+    font-weight: 900;
+    color: #FFD700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.team-footer-bublas {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 20px 30px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1em;
+    border-top: 1px solid var(--border-light);
+    font-weight: 500;
+}
+
+.edit-team-btn {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: var(--text-primary);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 700;
+    margin-top: 15px;
+    transition: all var(--transition-normal);
+    font-size: 1.1em;
+}
+
+.edit-team-btn:hover,
+.edit-team-btn:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+    outline: none;
+}
+
+/* === МОДАЛЬНЫЕ ОКНА === */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    border-radius: var(--radius-large);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-heavy);
+    animation: modalAppear var(--transition-normal);
+    max-width: 90%;
+    max-height: 90%;
+    overflow: hidden;
+    width: 100%;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.large-modal {
+    width: 800px;
+    max-width: 95%;
+}
+
+/* Увеличиваем модальное окно голосования */
+#votingModal .modal-content {
+    width: 90%;
+    max-width: 1000px;
+    max-height: 85vh;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(33, 150, 243, 0.2));
+    padding: 25px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    color: var(--text-primary);
+    font-family: 'Orbitron', sans-serif;
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 2em;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     transition: all var(--transition-normal);
 }
 
-.stat-item-bublas:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-light);
-    border-color: rgba(76, 175, 80, 0.2);
+.close-modal:hover,
+.close-modal:focus {
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
+    outline: none;
 }
 
-.stat-value-bublas {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2em;
-    font-weight: 700;
-    color: var(--accent-primary);
-    margin-bottom: 5px;
+.modal-body {
+    padding: 25px;
 }
 
-.stat-label-bublas {
-    font-size: 0.9em;
+/* === ФОРМЫ === */
+.edit-form, .tab-content {
+    padding: 25px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
     color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-small);
+    color: var(--text-primary);
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    transition: all var(--transition-normal);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Редактирование игроков */
+.player-edit-form {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-light);
+}
+
+.player-edit-form h4 {
+    color: var(--accent-primary);
+    margin-bottom: 15px;
+    font-family: 'Exo 2', sans-serif;
+}
+
+.player-fields {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+}
+
+.player-fields input {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all var(--transition-normal);
+}
+
+.player-fields input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* Кнопки */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+}
+
+.save-btn, .add-btn, .cancel-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 600;
+    transition: all var(--transition-normal);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
+    font-size: 14px;
 }
 
-/* === РАСПИСАНИЕ === */
-.schedule-container {
-    margin-top: 30px;
+.save-btn {
+    background: linear-gradient(135deg, var(--accent-primary), #45a049);
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
 
+.save-btn:hover,
+.save-btn:focus {
+    background: linear-gradient(135deg, #45a049, var(--accent-primary));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    outline: none;
+}
+
+.add-btn {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+}
+
+.add-btn:hover,
+.add-btn:focus {
+    background: linear-gradient(135deg, #1976D2, #2196F3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    outline: none;
+}
+
+.cancel-btn {
+    background: linear-gradient(135deg, var(--accent-danger), #d32f2f);
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.cancel-btn:hover,
+.cancel-btn:focus {
+    background: linear-gradient(135deg, #d32f2f, var(--accent-danger));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+    outline: none;
+}
+
+/* === АДМИН ПАНЕЛЬ === */
+.admin-panel {
+    max-width: 900px !important;
+}
+
+.admin-tabs {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-light);
+    overflow-x: auto;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.tab-btn:hover,
+.tab-btn:focus {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    outline: none;
+}
+
+.tab-btn.active {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.tab-pane {
+    display: none;
+    padding: 25px;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeIn var(--transition-normal);
+}
+
+/* Управление командами в админке */
+.teams-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 20px 0;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-small);
+    border: 1px solid var(--border-light);
+}
+
+.admin-team-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-light);
+    transition: all var(--transition-normal);
+}
+
+.admin-team-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-team-item:last-child {
+    border-bottom: none;
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.team-info strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.team-info span {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.edit-btn {
+    background: var(--accent-primary);
+    color: var(--text-primary);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+}
+
+.edit-btn:hover,
+.edit-btn:focus {
+    background: #45a049;
+    transform: scale(1.05);
+    outline: none;
+}
+
+/* === СТАТУС ПОДКЛЮЧЕНИЯ === */
+.connection-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 10px 15px;
+    border-radius: 25px;
+    border: 1px solid var(--border-medium);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-danger);
+    transition: all var(--transition-normal);
+}
+
+.status-dot.connected {
+    background: var(--accent-primary);
+    box-shadow: 0 0 10px var(--accent-primary);
+}
+
+.status-text {
+    color: var(--text-primary);
+}
+
+/* Расписание в две колонки */
 .schedule-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
+    margin-top: 20px;
 }
 
 .schedule-column h3 {
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1.4em;
-    font-weight: 600;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-medium);
     text-align: center;
-    border: 1px solid var(--border-light);
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3em;
 }
 
 .schedule-list {
@@ -537,737 +940,295 @@ body {
 
 .match-card {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-medium);
+    border-radius: 10px;
     padding: 20px;
+    border-left: 4px solid var(--accent-primary);
     transition: all var(--transition-normal);
-    backdrop-filter: blur(10px);
     cursor: pointer;
 }
 
 .match-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
-    border-color: rgba(76, 175, 80, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(5px);
 }
 
-.match-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-light);
+.match-card.completed {
+    border-left-color: var(--accent-success);
+    opacity: 0.9;
 }
 
-.match-stage {
-    font-size: 0.9em;
-    color: var(--accent-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.match-card.deleted {
+    border-left-color: var(--accent-danger);
+    opacity: 0.6;
+    background: rgba(244, 67, 54, 0.1);
 }
 
 .match-time {
-    font-size: 0.9em;
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    font-weight: 500;
+    margin-bottom: 10px;
 }
 
 .match-teams {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.team {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
+    gap: 15px;
+    margin-bottom: 10px;
 }
 
 .team-name {
-    font-weight: 600;
-    font-size: 1.1em;
+    font-weight: 500;
+    flex: 1;
     text-align: center;
-    margin-bottom: 5px;
 }
 
-.team-score {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.5em;
-    font-weight: 700;
-    color: var(--accent-primary);
+/* НОВЫЕ СТИЛИ ДЛЯ ПОБЕДИТЕЛЕЙ И ПРОИГРАВШИХ */
+.team-name.winner {
+    color: var(--accent-success);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.team-name.loser {
+    color: var(--accent-danger);
+    opacity: 0.7;
+}
+
+.team-name.deleted {
+    color: var(--accent-danger);
+    text-decoration: line-through;
 }
 
 .vs {
-    margin: 0 20px;
     color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.match-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
     font-weight: 700;
-    font-size: 1.2em;
+    text-align: center;
+    color: var(--accent-primary);
+    margin: 10px 0;
+}
+
+/* Стили для прогресс-бара */
+.match-progress {
+    margin: 10px 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.team1-progress {
+    background: linear-gradient(90deg, var(--accent-primary), #45a049);
+}
+
+.team2-progress {
+    background: linear-gradient(90deg, #2196F3, #1976D2);
+}
+
+.progress-text {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 5px;
+}
+
+.match-stage {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    text-align: center;
+}
+
+.match-format {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 5px 0;
+    font-weight: 600;
 }
 
 .match-status {
+    font-size: 0.8em;
+    margin-top: 8px;
     text-align: center;
-    padding: 8px 15px;
-    border-radius: var(--radius-small);
-    font-size: 0.9em;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    color: var(--text-secondary);
 }
 
-.status-upcoming {
-    background: rgba(255, 152, 0, 0.2);
-    color: var(--accent-warning);
-    border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-.status-completed {
-    background: rgba(76, 175, 80, 0.2);
-    color: var(--accent-success);
-    border: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-/* === ГРУППОВОЙ ЭТАП === */
-.group-stage-container {
-    margin-top: 30px;
-}
-
-.group-tables {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 30px;
-}
-
-.group-table {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-medium);
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-}
-
-.group-header {
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(33, 150, 243, 0.2));
-    padding: 20px;
-    text-align: center;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.group-header h3 {
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1.4em;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-primary);
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 15px 10px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 0.9em;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.table td {
-    padding: 12px 10px;
-    text-align: center;
-    border-bottom: 1px solid var(--border-light);
-    transition: background-color var(--transition-fast);
-}
-
-.table tr:hover td {
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.team-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-align: left;
-}
-
-.team-logo-small {
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7em;
-    font-weight: bold;
-    color: white;
-}
-
-.qualified {
-    background: rgba(76, 175, 80, 0.1);
-    border-left: 3px solid var(--accent-primary);
-}
-
-/* === ПЛЕЙ-ОФФ === */
+/* Стили для плей-офф */
 .playoff-container {
-    margin-top: 30px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-medium);
+    padding: 30px;
+    border: 1px solid var(--border-light);
 }
 
 .playoff-sections {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 30px;
-}
-
-.playoff-section {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-medium);
-    padding: 25px;
-    backdrop-filter: blur(10px);
+    text-align: center;
 }
 
 .playoff-section h3 {
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1.3em;
-    font-weight: 600;
     margin-bottom: 20px;
-    text-align: center;
-    color: var(--accent-primary);
+    color: var(--text-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3em;
 }
 
 .playoff-match {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 25px;
     border: 1px solid var(--border-light);
-    border-radius: var(--radius-small);
-    padding: 20px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.playoff-match-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.playoff-team {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Стили для победителей и проигравших в плей-офф */
+.playoff-team.winner {
+    color: var(--accent-success);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.playoff-team.loser {
+    color: var(--accent-danger);
+    opacity: 0.7;
+}
+
+.playoff-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.playoff-vs {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin: 10px 0;
 }
 
 .winner-container {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(76, 175, 80, 0.1));
+    border-radius: var(--radius-medium);
+    padding: 30px;
+    border: 2px solid #FFD700;
     text-align: center;
-    padding: 40px 20px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.winner-trophy {
-    font-size: 4em;
-    margin-bottom: 20px;
-    animation: bounce 2s infinite;
+.winner-content {
+    text-align: center;
 }
 
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
-    }
-    40% {
-        transform: translateY(-10px);
-    }
-    60% {
-        transform: translateY(-5px);
-    }
+.winner-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
 }
 
 .winner-name {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2em;
-    font-weight: 700;
-    background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary), #CDDC39);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 1.8em;
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     margin-bottom: 10px;
 }
 
-/* === ПРИЗ ЗРИТЕЛЬСКИХ СИМПАТИЙ === */
-.audience-awards-container {
-    margin-top: 30px;
+.winner-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1em;
 }
 
-.awards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.award-card {
+/* Стили для таблицы группового этапа */
+.standings-table {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
     border-radius: var(--radius-medium);
-    padding: 25px;
-    backdrop-filter: blur(10px);
-    transition: all var(--transition-normal);
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    overflow-x: auto;
 }
 
-.award-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
-    border-color: rgba(139, 195, 74, 0.3);
+.standings-table table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-.award-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+.standings-table th {
+    background: rgba(76, 175, 80, 0.2);
+    padding: 15px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--accent-primary);
+    border-bottom: 2px solid var(--accent-primary);
+}
+
+.standings-table td {
+    padding: 12px 10px;
     border-bottom: 1px solid var(--border-light);
 }
 
-.award-icon {
-    font-size: 2em;
+.standings-table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
-.award-title {
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1.3em;
-    font-weight: 600;
-    color: var(--accent-secondary);
+.standings-table tr:last-child td {
+    border-bottom: none;
 }
 
-.award-player {
-    font-size: 1.5em;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 10px;
+/* Стили для состояния "нет данных" */
+.no-data, .no-match {
     text-align: center;
-}
-
-.award-reason {
     color: var(--text-secondary);
+    padding: 40px 20px;
     font-style: italic;
-    text-align: center;
-    line-height: 1.5;
 }
 
-.vote-item {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-light);
+.match-info {
+    background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
     padding: 15px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.vote-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateX(5px);
-}
-
-.vote-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.vote-match {
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.vote-count {
-    background: var(--accent-primary);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 0.8em;
-    font-weight: 600;
-}
-
-.vote-players {
-    font-size: 0.9em;
-    color: var(--text-secondary);
-}
-
-/* === МОДАЛЬНЫЕ ОКНА === */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(12, 15, 29, 0.95);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 20px;
-    animation: modalFadeIn var(--transition-normal);
-}
-
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        backdrop-filter: blur(0);
-    }
-    to {
-        opacity: 1;
-        backdrop-filter: blur(10px);
-    }
-}
-
-.modal-content {
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-    border-radius: var(--radius-large);
-    border: 1px solid var(--border-light);
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-heavy);
-    animation: modalSlideIn var(--transition-normal);
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-.large-modal {
-    max-width: 800px;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 25px 30px;
-    border-bottom: 1px solid var(--border-light);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.modal-header h2 {
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1.5em;
-    font-weight: 600;
-    margin: 0;
-    color: var(--text-primary);
-}
-
-.close-modal {
-    background: none;
-    border: none;
-    font-size: 2em;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all var(--transition-fast);
-}
-
-.close-modal:hover,
-.close-modal:focus {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.1);
-    outline: none;
-}
-
-.modal-body {
-    padding: 30px;
-}
-
-/* === ФОРМЫ === */
-.form-group {
     margin-bottom: 20px;
+    text-align: center;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.form-input {
-    width: 100%;
-    padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-small);
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 16px;
-    transition: all var(--transition-normal);
-    backdrop-filter: blur(5px);
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-    background: rgba(255, 255, 255, 0.12);
-}
-
-.form-input::placeholder {
-    color: var(--text-secondary);
-}
-
-/* КНОПКИ ФОРМ */
-.form-actions {
-    display: flex;
-    gap: 15px;
-    justify-content: flex-end;
-    margin-top: 30px;
-    flex-wrap: wrap;
-}
-
-.save-btn {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: var(--radius-small);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.save-btn:hover,
-.save-btn:focus {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-medium);
-    outline: none;
-}
-
-.cancel-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    border: 1px solid var(--border-light);
-    padding: 12px 25px;
-    border-radius: var(--radius-small);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.cancel-btn:hover,
-.cancel-btn:focus {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-    outline: none;
-}
-
-.add-btn {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: var(--radius-small);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.add-btn:hover,
-.add-btn:focus {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-light);
-    outline: none;
-}
-
-/* === ПАНЕЛЬ УПРАВЛЕНИЯ === */
-.admin-panel {
-    max-width: 900px;
-}
-
-.admin-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border-light);
-    background: rgba(255, 255, 255, 0.05);
-    padding: 0 30px;
-}
-
-.tab-btn {
-    background: none;
-    border: none;
-    padding: 15px 25px;
-    color: var(--text-secondary);
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    border-bottom: 3px solid transparent;
-}
-
-.tab-btn:hover,
-.tab-btn:focus {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
-    outline: none;
-}
-
-.tab-btn.active {
-    color: var(--accent-primary);
-    border-bottom-color: var(--accent-primary);
-    background: rgba(76, 175, 80, 0.1);
-}
-
-.tab-content {
-    padding: 30px;
-}
-
-.tab-pane {
-    display: none;
-}
-
-.tab-pane.active {
-    display: block;
-    animation: fadeIn var(--transition-normal);
-}
-
-/* Списки в панели управления */
-.teams-list,
-.schedule-edit-list,
-.votes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.admin-team-item,
-.admin-schedule-item,
-.vote-item-admin {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-small);
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all var(--transition-normal);
-}
-
-.admin-team-item:hover,
-.admin-schedule-item:hover,
-.vote-item-admin:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateX(5px);
-}
-
-.team-info,
-.match-info-admin,
-.vote-info {
-    flex: 1;
-}
-
-.team-name-admin {
-    font-weight: 600;
-    font-size: 1.1em;
-    color: var(--text-primary);
-    margin-bottom: 5px;
-}
-
-.team-slogan-admin {
-    color: var(--text-secondary);
-    font-size: 0.9em;
-}
-
-.match-teams-admin {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 5px;
-}
-
-.match-details-admin {
-    color: var(--text-secondary);
-    font-size: 0.9em;
-}
-
-.vote-match-admin {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 5px;
-}
-
-.vote-players-admin {
-    color: var(--text-secondary);
-    font-size: 0.9em;
-}
-
-.admin-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.edit-btn,
-.delete-btn {
-    padding: 8px 15px;
-    border: none;
-    border-radius: var(--radius-small);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.edit-btn {
-    background: rgba(33, 150, 243, 0.2);
-    color: #2196F3;
-    border: 1px solid rgba(33, 150, 243, 0.3);
-}
-
-.edit-btn:hover,
-.edit-btn:focus {
-    background: rgba(33, 150, 243, 0.3);
-    transform: translateY(-1px);
-    outline: none;
-}
-
-.delete-btn {
-    background: rgba(244, 67, 54, 0.2);
-    color: var(--accent-danger);
-    border: 1px solid rgba(244, 67, 54, 0.3);
-}
-
-.delete-btn:hover,
-.delete-btn:focus {
-    background: rgba(244, 67, 54, 0.3);
-    transform: translateY(-1px);
-    outline: none;
-}
-
-/* === ГОЛОСОВАНИЕ === */
+/* === СТИЛИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ === */
 .voting-container {
     margin: 20px 0;
 }
@@ -1276,207 +1237,282 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 10px;
 }
 
 .voting-column {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
     border-radius: var(--radius-medium);
     padding: 25px;
+    border: 1px solid var(--border-light);
+    max-height: 100%;
+    overflow-y: auto;
 }
 
-.voting-team-header {
+.voting-column h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--accent-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4em;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.player-vote-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+    position: relative;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.player-vote-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-light);
+}
+
+.player-vote-item.selected {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+}
+
+.player-vote-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-size: 1.2em;
+}
+
+.player-vote-role {
+    font-size: 1em;
+    color: var(--accent-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Стили для показа MMR при наведении */
+.player-vote-item .player-mmr {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(76, 175, 80, 0.3);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.player-vote-item:hover .player-mmr {
+    opacity: 1;
+}
+
+/* На мобильных устройствах используем псевдо-ховер через активное состояние */
+@media (max-width: 768px) {
+    .player-vote-item {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .player-vote-item:active .player-mmr,
+    .player-vote-item.touch-active .player-mmr {
+        opacity: 1;
+    }
+}
+
+/* Стили для приза зрительских симпатий */
+.award-match-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-medium);
+}
+
+.award-match-header {
     text-align: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--border-light);
 }
 
-.voting-team-name {
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1.4em;
+.award-match-header h3 {
+    color: var(--accent-primary);
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 10px;
+}
+
+.award-match-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 10px 0;
+}
+
+.award-match-time {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.award-players {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.award-player-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    padding: 20px;
+    text-align: center;
+    border: 2px solid var(--border-light);
+    transition: all var(--transition-normal);
+}
+
+.award-player-card.top-player {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(76, 175, 80, 0.2));
+    border-color: #FFD700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    transform: scale(1.05);
+}
+
+.player-award-name {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.player-award-role {
+    color: var(--accent-secondary);
     font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.player-award-team {
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
+.player-award-votes {
+    color: var(--accent-primary);
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+/* Стили для результатов голосования в админке */
+.vote-result-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-light);
+}
+
+.vote-match-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.vote-match-header h4 {
     color: var(--accent-primary);
     margin-bottom: 5px;
 }
 
-.player-voting-list {
+.vote-match-score {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.vote-players {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-.player-voting-item {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-small);
-    padding: 15px;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.player-voting-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateX(5px);
-}
-
-.player-voting-item.selected {
-    background: rgba(76, 175, 80, 0.2);
-    border-color: var(--accent-primary);
-}
-
-.player-checkbox {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-medium);
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
-}
-
-.player-voting-item.selected .player-checkbox {
-    background: var(--accent-primary);
-    border-color: var(--accent-primary);
-}
-
-.player-voting-item.selected .player-checkbox::after {
-    content: '✓';
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-}
-
-.player-voting-info {
-    flex: 1;
-}
-
-.player-voting-name {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 3px;
-}
-
-.player-voting-role {
-    font-size: 0.9em;
-    color: var(--text-secondary);
-}
-
-/* РЕДАКТИРОВАНИЕ ГОЛОСОВ */
-.selected-players-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.selected-player-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-small);
-    padding: 20px;
-}
-
-.selected-player-header {
+.vote-player-result {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    border: 1px solid var(--border-light);
 }
 
-.selected-player-name {
+.vote-player-result.top-voted {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: var(--accent-primary);
+}
+
+.player-name {
     font-weight: 600;
-    color: var(--text-primary);
-    font-size: 1.1em;
 }
 
-.selected-player-team {
+.player-team {
     color: var(--text-secondary);
     font-size: 0.9em;
 }
 
-.reason-input {
-    width: 100%;
-    min-height: 80px;
-    padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-small);
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 14px;
-    resize: vertical;
+.vote-count {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+/* Градиент для таблицы группового этапа */
+.standings-table tr {
     transition: all var(--transition-normal);
 }
 
-.reason-input:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    background: rgba(255, 255, 255, 0.12);
+.standings-table tr:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* === СТАТУС ПОДКЛЮЧЕНИЯ === */
-.connection-status {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-medium);
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 1000;
-    transition: all var(--transition-normal);
+/* Стили для кнопки админки */
+.admin-btn {
+    background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
+    border: 1px solid rgba(255, 107, 53, 0.3) !important;
 }
 
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--accent-warning);
-    animation: pulse 2s infinite;
+.admin-btn:hover {
+    background: linear-gradient(135deg, #f7931e, #ff6b35) !important;
+    border-color: rgba(255, 107, 53, 0.5) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3) !important;
 }
 
-.connection-status.connected .status-dot {
-    background: var(--accent-success);
-    animation: none;
-}
-
-.connection-status.error .status-dot {
-    background: var(--accent-danger);
-    animation: none;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.status-text {
-    font-size: 0.9em;
-    font-weight: 500;
-}
-
-/* === АДАПТИВНОСТЬ === */
+/* Адаптивность */
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: 10px;
     }
     
     .navigation-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 10px;
-    }
-    
-    .admin-nav-item {
-        grid-column: span 2; /* На мобильных занимает всю ширину */
     }
     
     .nav-btn {
@@ -1484,14 +1520,30 @@ body {
         font-size: 14px;
     }
     
-    .content-area {
-        padding: 20px;
-    }
-    
     .team-card-content {
         grid-template-columns: 1fr;
         gap: 20px;
-        padding: 20px;
+    }
+    
+    .player-grid-bublas {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .admin-tabs {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        margin: 10px;
+        width: calc(100% - 20px);
+    }
+    
+    .player-fields {
+        grid-template-columns: 1fr;
     }
     
     .schedule-columns {
@@ -1501,160 +1553,80 @@ body {
     
     .playoff-sections {
         grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .voting-columns {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .award-players {
+        grid-template-columns: 1fr;
+    }
+    
+    .award-player-card.top-player {
+        transform: scale(1.02);
+    }
+    
+    .admin-team-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .admin-btn {
+        font-size: 14px !important;
+        padding: 15px 10px !important;
+    }
+    
+    /* Адаптивность модального окна голосования */
+    #votingModal .modal-content {
+        width: 95%;
+        max-height: 90vh;
+        margin: 10px;
     }
     
     .voting-columns {
         grid-template-columns: 1fr;
         gap: 20px;
+        max-height: 60vh;
     }
     
-    .form-actions {
-        flex-direction: column;
+    .voting-column {
+        padding: 15px;
     }
     
-    .form-actions button {
-        width: 100%;
-        justify-content: center;
+    .player-vote-item {
+        padding: 15px;
     }
     
-    .modal-content {
-        width: 95%;
-        margin: 10px;
+    .player-vote-name {
+        font-size: 1.1em;
     }
     
-    .admin-tabs {
-        flex-wrap: wrap;
-        padding: 0 15px;
+    /* Статус подключения на мобильных */
+    .connection-status {
+        top: 10px;
+        right: 10px;
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 968px) {
+    .schedule-columns {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
     
-    .tab-btn {
-        padding: 12px 15px;
-        font-size: 14px;
+    .playoff-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
     
-    .admin-team-item,
-    .admin-schedule-item,
-    .vote-item-admin {
-        flex-direction: column;
-        align-items: flex-start;
+    .voting-columns {
+        grid-template-columns: 1fr;
         gap: 15px;
     }
-    
-    .admin-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
-}
-
-@media (max-width: 480px) {
-    .navigation-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .admin-nav-item {
-        grid-column: 1;
-    }
-    
-    .player-grid-bublas {
-        grid-template-columns: 1fr;
-    }
-    
-    .group-tables {
-        grid-template-columns: 1fr;
-    }
-    
-    .awards-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .modal-header {
-        padding: 20px;
-    }
-    
-    .modal-body {
-        padding: 20px;
-    }
-    
-    .tab-content {
-        padding: 20px;
-    }
-}
-
-/* === УТИЛИТЫ === */
-.text-center {
-    text-align: center;
-}
-
-.mt-20 {
-    margin-top: 20px;
-}
-
-.mb-20 {
-    margin-bottom: 20px;
-}
-
-.p-20 {
-    padding: 20px;
-}
-
-.loading {
-    opacity: 0.7;
-    pointer-events: none;
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-.slide-in-left {
-    animation: slideInLeft 0.5s ease-out;
-}
-
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Специальные стили для редактирования голосов */
-.vote-edit-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.edit-vote-btn {
-    background: rgba(33, 150, 243, 0.2);
-    color: #2196F3;
-    border: 1px solid rgba(33, 150, 243, 0.3);
-    padding: 6px 12px;
-    border-radius: var(--radius-small);
-    font-size: 12px;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.edit-vote-btn:hover {
-    background: rgba(33, 150, 243, 0.3);
-}
-
-/* Стили для заголовков в расписании */
-.schedule-settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.schedule-settings-header h4 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.2em;
 }
