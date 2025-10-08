@@ -75,8 +75,8 @@
                     </button>
                 </div>
 
-                <!-- Кнопка Управление (теперь всегда видна) -->
-                <div class="nav-item">
+                <!-- Кнопка Управление (менее заметная, справа) -->
+                <div class="nav-item admin-nav-item">
                     <button id="adminBtn" class="nav-btn admin-btn">
                         <span class="btn-icon">⚙️</span>
                         Управление
@@ -358,10 +358,10 @@
                         <button id="selectMatchForVote" class="save-btn">🎯 Выбрать матч</button>
                     </div>
                     
-                    <div id="voteResults" class="hidden">
-                        <h4>Результаты голосования</h4>
-                        <div id="voteResultsContent">
-                            <!-- Результаты будут отображаться здесь -->
+                    <div class="form-group">
+                        <h4>Управление голосами</h4>
+                        <div class="votes-list" id="votesList">
+                            <!-- Список голосов для редактирования -->
                         </div>
                     </div>
                 </div>
@@ -440,6 +440,27 @@
                 <div class="form-actions">
                     <button id="submitVote" class="save-btn">✅ Отправить голос</button>
                     <button id="cancelVote" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования голоса -->
+    <div id="editVoteModal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>✏️ Редактирование голоса</h2>
+                <button class="close-modal" id="closeEditVoteModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="editVoteInfo" class="match-info"></div>
+                <div class="selected-players-list" id="selectedPlayersList">
+                    <!-- Выбранные игроки с полями для причин -->
+                </div>
+                <div class="form-actions">
+                    <button id="saveVoteChanges" class="save-btn">💾 Сохранить изменения</button>
+                    <button id="deleteVoteBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить голос</button>
+                    <button id="cancelEditVote" class="cancel-btn">❌ Отмена</button>
                 </div>
             </div>
         </div>
