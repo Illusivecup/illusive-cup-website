@@ -324,7 +324,7 @@ class TeamsManager {
     }
 }
 
-// === МЕНЕДЖЕР МАТЧЕЙ ===
+// === МЕНЕДЖЕР МАТЧЕЙ (ОБНОВЛЕННЫЙ) ===
 class MatchManager {
     constructor(database) {
         this.database = database;
@@ -355,6 +355,60 @@ class MatchManager {
     updateScheduleLists() {
         this.updateUpcomingMatches();
         this.updateCompletedMatches();
+    }
+
+    // НОВАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЗАВЕРШЕННОСТИ МАТЧА
+    isMatchCompleted(match) {
+        if (!match.format) {
+            match.format = 'bo1'; // Формат по умолчанию
+        }
+
+        const score1 = parseInt(match.score1) || 0;
+        const score2 = parseInt(match.score2) || 0;
+
+        switch (match.format) {
+            case 'bo1':
+                // Bo1 завершен, если одна из команд выиграла 1 карту
+                return score1 >= 1 || score2 >= 1;
+            case 'bo3':
+                // Bo3 завершен, если одна из команд выиграла 2 карты
+                return score1 >= 2 || score2 >= 2;
+            case 'bo5':
+                // Bo5 завершен, если одна из команд выиграла 3 карты
+                return score1 >= 3 || score2 >= 3;
+            default:
+                return score1 >= 1 || score2 >= 1;
+        }
+    }
+
+    getRequiredWins(format) {
+        switch (format) {
+            case 'bo1': return 1;
+            case 'bo3': return 2;
+            case 'bo5': return 3;
+            default: return 1;
+        }
+    }
+
+    getFormatName(format) {
+        const formats = {
+            'bo1': 'Bo1',
+            'bo3': 'Bo3', 
+            'bo5': 'Bo5'
+        };
+        return formats[format] || 'Bo1';
+    }
+
+    getMatchWinner(match) {
+        if (!this.isMatchCompleted(match)) return null;
+        
+        const requiredWins = this.getRequiredWins(match.format);
+        const score1 = parseInt(match.score1) || 0;
+        const score2 = parseInt(match.score2) || 0;
+        
+        if (score1 >= requiredWins) return 'team1';
+        if (score2 >= requiredWins) return 'team2';
+        return null;
     }
 
     updateGroupStageTable() {
@@ -423,15 +477,17 @@ class MatchManager {
             standings[match.team1Id].played++;
             standings[match.team2Id].played++;
 
-            if (match.score1 > match.score2) {
+            const winner = this.getMatchWinner(match);
+            if (winner === 'team1') {
                 standings[match.team1Id].wins++;
                 standings[match.team1Id].points += 3;
                 standings[match.team2Id].losses++;
-            } else if (match.score2 > match.score1) {
+            } else if (winner === 'team2') {
                 standings[match.team2Id].wins++;
                 standings[match.team2Id].points += 3;
                 standings[match.team1Id].losses++;
             } else {
+                // Ничья (если возможно в будущем)
                 standings[match.team1Id].points += 1;
                 standings[match.team2Id].points += 1;
             }
@@ -528,12 +584,13 @@ class MatchManager {
             match.stage === 'grand_final' && this.isMatchCompleted(match)
         );
 
-        if (grandFinal && grandFinal.score1 !== undefined && grandFinal.score2 !== undefined) {
-            const winner = grandFinal.score1 > grandFinal.score2 ? grandFinal.team1Name : grandFinal.team2Name;
+        if (grandFinal) {
+            const winner = this.getMatchWinner(grandFinal);
+            const winnerName = winner === 'team1' ? grandFinal.team1Name : grandFinal.team2Name;
             container.innerHTML = `
                 <div class="winner-content">
                     <div class="winner-icon">🏆</div>
-                    <div class="winner-name">${winner}</div>
+                    <div class="winner-name">${winnerName}</div>
                     <div class="winner-subtitle">Победитель Illusive Cup 2025</div>
                 </div>
             `;
@@ -544,21 +601,27 @@ class MatchManager {
 
     createPlayoffMatchCard(match) {
         const isCompleted = this.isMatchCompleted(match);
+        const currentFormat = match.format || 'bo1';
+        const requiredWins = this.getRequiredWins(currentFormat);
+        const winner = this.getMatchWinner(match);
+        const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
+        const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
         
         return `
             <div class="playoff-match-content">
-                <div class="playoff-team ${isCompleted && match.score1 > match.score2 ? 'winner' : ''}">
+                <div class="playoff-team ${team1Class}">
                     ${match.team1Name}
                 </div>
                 ${isCompleted ? `
-                    <div class="playoff-score">${match.score1} : ${match.score2}</div>
+                    <div class="playoff-score">${match.score1 || 0} : ${match.score2 || 0}</div>
                 ` : `
                     <div class="playoff-vs">VS</div>
                 `}
-                <div class="playoff-team ${isCompleted && match.score2 > match.score1 ? 'winner' : ''}">
+                <div class="playoff-team ${team2Class}">
                     ${match.team2Name}
                 </div>
                 ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
+                <div class="match-format">${this.getFormatName(currentFormat)}</div>
             </div>
         `;
     }
@@ -589,16 +652,16 @@ class MatchManager {
         ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
     }
 
-    isMatchCompleted(match) {
-        // Матч считается завершенным если есть счет
-        return match.score1 !== undefined && match.score2 !== undefined;
-    }
-
     createScheduleMatchCard(match, isCompleted = false, matchId = '') {
-        const showScore = isCompleted && match.score1 !== undefined && match.score2 !== undefined;
+        const showScore = match.score1 !== undefined && match.score2 !== undefined;
         const teams = teamsManager ? teamsManager.getAllTeams() : {};
         const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
         const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+        
+        // Определяем победителя и проигравшего
+        const winner = this.getMatchWinner(match);
+        const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
+        const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
         
         // Если команды удалены, показываем сообщение
         if (!team1Exists || !team2Exists) {
@@ -611,27 +674,39 @@ class MatchManager {
                         <div class="team-name deleted">${team2Exists ? match.team2Name : 'Команда удалена'}</div>
                     </div>
                     <div class="match-stage">${this.getStageName(match.stage)}</div>
+                    <div class="match-format">${this.getFormatName(match.format)}</div>
                     <div class="match-status">🗑️ Команда удалена</div>
                 </div>
             `;
         }
         
+        const currentFormat = match.format || 'bo1';
+        const requiredWins = this.getRequiredWins(currentFormat);
+        
         return `
             <div class="match-card ${isCompleted ? 'completed' : ''}" data-match-id="${matchId}">
                 <div class="match-time">${match.time || 'Время не указано'}</div>
                 <div class="match-teams">
-                    <div class="team-name ${showScore && match.score1 > match.score2 ? 'winner' : ''}">
+                    <div class="team-name ${team1Class}">
                         ${match.team1Name}
                     </div>
                     <div class="vs">vs</div>
-                    <div class="team-name ${showScore && match.score2 > match.score1 ? 'winner' : ''}">
+                    <div class="team-name ${team2Class}">
                         ${match.team2Name}
                     </div>
                 </div>
                 ${showScore ? `
-                    <div class="match-score">${match.score1} : ${match.score2}</div>
+                    <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+                    <div class="match-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill team1-progress" style="width: ${((match.score1 || 0) / requiredWins) * 100}%"></div>
+                            <div class="progress-fill team2-progress" style="width: ${((match.score2 || 0) / requiredWins) * 100}%"></div>
+                        </div>
+                        <div class="progress-text">До победы: ${requiredWins} побед</div>
+                    </div>
                 ` : ''}
                 <div class="match-stage">${this.getStageName(match.stage)}</div>
+                <div class="match-format">${this.getFormatName(currentFormat)}</div>
                 ${isCompleted ? '<div class="match-status">✅ Завершен</div>' : '<div class="match-status">⏳ Ожидается</div>'}
             </div>
         `;
@@ -651,6 +726,11 @@ class MatchManager {
         matchData.createdAt = Date.now();
         matchData.updatedAt = Date.now();
         
+        // Устанавливаем формат по умолчанию, если не указан
+        if (!matchData.format) {
+            matchData.format = 'bo1';
+        }
+        
         await this.database.ref(`matches/${matchId}`).set(matchData);
         console.log('✅ Матч создан в базе:', matchId);
         return matchId;
@@ -663,18 +743,33 @@ class MatchManager {
     }
 
     async deleteMatch(matchId) {
-        await this.database.ref(`matches/${matchId}`).remove();
-        console.log('✅ Матч удален из базы:', matchId);
+        if (!confirm('❌ Вы уверены, что хотите удалить этот матч? Это действие нельзя отменить.')) {
+            return;
+        }
+        
+        try {
+            await this.database.ref(`matches/${matchId}`).remove();
+            delete this.matches[matchId];
+            console.log('✅ Матч удален из базы:', matchId);
+            
+            closeEditMatchResultModal();
+            this.updateMatchUI();
+            
+            alert('✅ Матч успешно удален!');
+        } catch (error) {
+            console.error('❌ Ошибка удаления матча:', error);
+            alert('❌ Ошибка удаления матча');
+        }
     }
 
-    async setMatchResult(matchId, score1, score2, completed = true) {
+    async setMatchResult(matchId, score1, score2, format = 'bo1') {
         const match = this.matches[matchId];
         if (!match) return;
 
         const updateData = {
             score1: parseInt(score1),
             score2: parseInt(score2),
-            completed: completed,
+            format: format,
             updatedAt: Date.now()
         };
 
@@ -1074,6 +1169,7 @@ async function saveNewMatch() {
     const team2Select = document.getElementById('newMatchTeam2');
     const timeInput = document.getElementById('newMatchTime');
     const stageSelect = document.getElementById('newMatchStage');
+    const formatSelect = document.getElementById('newMatchFormat');
     
     if (!team1Select || !team2Select || !timeInput || !stageSelect || !matchManager) return;
     
@@ -1081,6 +1177,7 @@ async function saveNewMatch() {
     const team2Id = team2Select.value;
     const time = timeInput.value;
     const stage = stageSelect.value;
+    const format = formatSelect ? formatSelect.value : 'bo1';
     
     if (!team1Id || !team2Id) {
         alert('❌ Выберите обе команды');
@@ -1117,7 +1214,7 @@ async function saveNewMatch() {
         time: matchTime,
         timestamp: new Date(time).getTime(),
         stage,
-        completed: false,
+        format,
         score1: 0,
         score2: 0,
         createdAt: Date.now()
@@ -1142,11 +1239,13 @@ function closeAddMatchModal() {
         const team2Select = document.getElementById('newMatchTeam2');
         const timeInput = document.getElementById('newMatchTime');
         const stageSelect = document.getElementById('newMatchStage');
+        const formatSelect = document.getElementById('newMatchFormat');
         
         if (team1Select) team1Select.value = '';
         if (team2Select) team2Select.value = '';
         if (timeInput) timeInput.value = '';
         if (stageSelect) stageSelect.value = 'group';
+        if (formatSelect) formatSelect.value = 'bo1';
     }
 }
 
@@ -1168,6 +1267,8 @@ function showEditMatchResultModal(matchId) {
     const matchInfo = document.getElementById('editMatchInfo');
     const score1Input = document.getElementById('editMatchScore1');
     const score2Input = document.getElementById('editMatchScore2');
+    const formatSelect = document.getElementById('editMatchFormat');
+    const deleteMatchBtn = document.getElementById('deleteMatchBtn');
     
     if (!modal || !matchInfo || !score1Input || !score2Input || !matchManager) return;
     
@@ -1197,6 +1298,24 @@ function showEditMatchResultModal(matchId) {
     score1Input.value = match.score1 || 0;
     score2Input.value = match.score2 || 0;
     
+    // Заполняем выпадающий список формата
+    if (formatSelect) {
+        formatSelect.innerHTML = `
+            <option value="bo1" ${match.format === 'bo1' ? 'selected' : ''}>Bo1 (1 победа)</option>
+            <option value="bo3" ${match.format === 'bo3' ? 'selected' : ''}>Bo3 (2 победы)</option>
+            <option value="bo5" ${match.format === 'bo5' ? 'selected' : ''}>Bo5 (3 победы)</option>
+        `;
+    }
+    
+    // Настраиваем кнопку удаления
+    if (deleteMatchBtn) {
+        deleteMatchBtn.onclick = () => {
+            if (matchManager) {
+                matchManager.deleteMatch(matchId);
+            }
+        };
+    }
+    
     appState.currentEditingMatchId = matchId;
     modal.classList.remove('hidden');
 }
@@ -1205,11 +1324,13 @@ async function saveMatchResult() {
     const matchId = appState.currentEditingMatchId;
     const score1Input = document.getElementById('editMatchScore1');
     const score2Input = document.getElementById('editMatchScore2');
+    const formatSelect = document.getElementById('editMatchFormat');
     
     if (!matchId || !score1Input || !score2Input || !matchManager) return;
     
     const score1 = parseInt(score1Input.value);
     const score2 = parseInt(score2Input.value);
+    const format = formatSelect ? formatSelect.value : 'bo1';
     
     if (isNaN(score1) || isNaN(score2)) {
         alert('❌ Введите корректные значения счета');
@@ -1221,8 +1342,21 @@ async function saveMatchResult() {
         return;
     }
     
+    // Проверяем, что счет соответствует формату
+    const requiredWins = matchManager.getRequiredWins(format);
+    if (score1 > requiredWins || score2 > requiredWins) {
+        alert(`❌ Счет не может превышать ${requiredWins} для формата ${matchManager.getFormatName(format)}`);
+        return;
+    }
+    
+    // Проверяем, что только одна команда может иметь необходимое количество побед
+    if ((score1 >= requiredWins && score2 >= requiredWins) || (score1 === requiredWins && score2 === requiredWins)) {
+        alert(`❌ Только одна команда может иметь ${requiredWins} побед в формате ${matchManager.getFormatName(format)}`);
+        return;
+    }
+    
     try {
-        await matchManager.setMatchResult(matchId, score1, score2, true);
+        await matchManager.setMatchResult(matchId, score1, score2, format);
         closeEditMatchResultModal();
         alert('✅ Результат матча сохранен!');
         

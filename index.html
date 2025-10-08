@@ -239,6 +239,14 @@
                         <option value="grand_final">Гранд финал</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>Число игр:</label>
+                    <select id="newMatchFormat" class="form-input">
+                        <option value="bo1">Bo1 (1 победа)</option>
+                        <option value="bo3">Bo3 (2 победы)</option>
+                        <option value="bo5">Bo5 (3 победы)</option>
+                    </select>
+                </div>
                 <div class="form-actions">
                     <button id="saveNewMatchBtn" class="save-btn">💾 Сохранить матч</button>
                     <button id="cancelAddMatchBtn" class="cancel-btn">❌ Отмена</button>
@@ -264,8 +272,17 @@
                     <label>Счет команды 2:</label>
                     <input type="number" id="editMatchScore2" class="form-input" min="0" value="0">
                 </div>
+                <div class="form-group">
+                    <label>Формат матча:</label>
+                    <select id="editMatchFormat" class="form-input">
+                        <option value="bo1">Bo1 (1 победа)</option>
+                        <option value="bo3">Bo3 (2 победы)</option>
+                        <option value="bo5">Bo5 (3 победы)</option>
+                    </select>
+                </div>
                 <div class="form-actions">
                     <button id="saveMatchResultBtn" class="save-btn">💾 Сохранить результат</button>
+                    <button id="deleteMatchBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить матч</button>
                     <button id="cancelEditMatchResultBtn" class="cancel-btn">❌ Отмена</button>
                 </div>
             </div>
