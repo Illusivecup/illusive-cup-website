@@ -200,7 +200,73 @@
                 
                 <div class="form-actions">
                     <button id="saveTeamBtn" class="save-btn">💾 Сохранить команду</button>
+                    <button id="deleteTeamBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить команду</button>
                     <button id="cancelEditTeamBtn" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления матча -->
+    <div id="addMatchModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Добавить матч</h2>
+                <button class="close-modal" id="closeAddMatchModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Команда 1:</label>
+                    <select id="newMatchTeam1" class="form-input">
+                        <option value="">-- Выберите команду --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Команда 2:</label>
+                    <select id="newMatchTeam2" class="form-input">
+                        <option value="">-- Выберите команду --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Время матча:</label>
+                    <input type="datetime-local" id="newMatchTime" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Этап турнира:</label>
+                    <select id="newMatchStage" class="form-input">
+                        <option value="group">Групповой этап</option>
+                        <option value="third_place">Матч за 3 место</option>
+                        <option value="grand_final">Гранд финал</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button id="saveNewMatchBtn" class="save-btn">💾 Сохранить матч</button>
+                    <button id="cancelAddMatchBtn" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования результата матча -->
+    <div id="editMatchResultModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Редактирование результата</h2>
+                <button class="close-modal" id="closeEditMatchResultModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="editMatchInfo" class="match-info"></div>
+                <div class="form-group">
+                    <label>Счет команды 1:</label>
+                    <input type="number" id="editMatchScore1" class="form-input" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Счет команды 2:</label>
+                    <input type="number" id="editMatchScore2" class="form-input" min="0" value="0">
+                </div>
+                <div class="form-actions">
+                    <button id="saveMatchResultBtn" class="save-btn">💾 Сохранить результат</button>
+                    <button id="cancelEditMatchResultBtn" class="cancel-btn">❌ Отмена</button>
                 </div>
             </div>
         </div>
@@ -246,9 +312,6 @@
                     </div>
                     <div class="schedule-edit-list" id="scheduleEditList">
                         <!-- Расписание будет загружаться динамически -->
-                    </div>
-                    <div class="form-actions">
-                        <button id="saveScheduleBtn" class="save-btn">💾 Сохранить расписание</button>
                     </div>
                 </div>
 

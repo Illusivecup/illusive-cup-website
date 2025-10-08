@@ -888,51 +888,6 @@ body {
     color: var(--text-primary);
 }
 
-/* === АДАПТИВНОСТЬ === */
-@media (max-width: 768px) {
-    .container {
-        padding: 10px;
-    }
-    
-    .navigation-grid {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 10px;
-    }
-    
-    .nav-btn {
-        padding: 15px 10px;
-        font-size: 14px;
-    }
-    
-    .team-card-content {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .player-grid-bublas {
-        grid-template-columns: 1fr;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-    }
-    
-    .admin-tabs {
-        flex-direction: column;
-    }
-    
-    .modal-content {
-        margin: 10px;
-        width: calc(100% - 20px);
-    }
-    
-    .player-fields {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ДОБАВЛЯЕМ В КОНЕЦ ФАЙЛА */
-
 /* Расписание в две колонки */
 .schedule-columns {
     display: grid;
@@ -961,6 +916,7 @@ body {
     padding: 20px;
     border-left: 4px solid var(--accent-primary);
     transition: all var(--transition-normal);
+    cursor: pointer;
 }
 
 .match-card:hover {
@@ -1004,6 +960,13 @@ body {
     font-weight: 700;
     text-align: center;
     color: var(--accent-primary);
+}
+
+.match-stage {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    text-align: center;
 }
 
 /* Стили для плей-офф */
@@ -1058,6 +1021,14 @@ body {
     color: var(--accent-primary);
 }
 
+.playoff-vs {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin: 10px 0;
+}
+
 .winner-container {
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(76, 175, 80, 0.1));
     border-radius: var(--radius-medium);
@@ -1106,136 +1077,57 @@ body {
     color: var(--text-secondary);
 }
 
-/* Адаптивность для новых секций */
-@media (max-width: 968px) {
-    .schedule-columns {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .playoff-sections {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .playoff-match-settings {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
+/* Стили для таблицы группового этапа */
+.standings-table {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    overflow-x: auto;
 }
 
-@media (max-width: 768px) {
-    .playoff-sections {
-        grid-template-columns: 1fr;
-    }
-    
-    .playoff-match, .winner-container {
-        min-height: 120px;
-        padding: 20px;
-    }
-    
-    .winner-name {
-        font-size: 1.5em;
-    }
+.standings-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-/* Дополнительные стили для админки */
-.admin-team-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
+.standings-table th {
+    background: rgba(76, 175, 80, 0.2);
+    padding: 15px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--accent-primary);
+    border-bottom: 2px solid var(--accent-primary);
+}
+
+.standings-table td {
+    padding: 12px 10px;
     border-bottom: 1px solid var(--border-light);
-    transition: all var(--transition-normal);
 }
 
-.admin-team-item:hover {
+.standings-table tr:hover {
     background: rgba(255, 255, 255, 0.05);
 }
 
-.admin-team-item:last-child {
+.standings-table tr:last-child td {
     border-bottom: none;
 }
 
-.team-info {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.team-info strong {
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.team-info span {
+/* Стили для состояния "нет данных" */
+.no-data, .no-match {
+    text-align: center;
     color: var(--text-secondary);
-    font-size: 0.9em;
+    padding: 40px 20px;
+    font-style: italic;
 }
 
-.edit-btn {
-    background: var(--accent-primary);
-    color: var(--text-primary);
-    border: none;
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    font-family: inherit;
-}
-
-.edit-btn:hover,
-.edit-btn:focus {
-    background: #45a049;
-    transform: scale(1.05);
-    outline: none;
-}
-
-.player-edit-form {
+.match-info {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
-    padding: 20px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-light);
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
 }
-
-.player-edit-form h4 {
-    color: var(--accent-primary);
-    margin-bottom: 15px;
-    font-family: 'Exo 2', sans-serif;
-}
-
-.player-fields {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 10px;
-}
-
-.player-fields input {
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border-medium);
-    border-radius: 6px;
-    color: var(--text-primary);
-    font-size: 14px;
-    transition: all var(--transition-normal);
-}
-
-.player-fields input:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-}
-
-/* Адаптивность для форм редактирования */
-@media (max-width: 768px) {
-    .player-fields {
-        grid-template-columns: 1fr;
-    }
-    
-    .admin-team-item {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-    }
 
 /* Стили для кнопки админки */
 .admin-btn {
@@ -1250,11 +1142,83 @@ body {
     box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3) !important;
 }
 
-/* Адаптивность для кнопки админки */
+/* Адаптивность */
 @media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .navigation-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    
+    .nav-btn {
+        padding: 15px 10px;
+        font-size: 14px;
+    }
+    
+    .team-card-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .player-grid-bublas {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .admin-tabs {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        margin: 10px;
+        width: calc(100% - 20px);
+    }
+    
+    .player-fields {
+        grid-template-columns: 1fr;
+    }
+    
+    .schedule-columns {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .playoff-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .playoff-match-settings {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .admin-team-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
     .admin-btn {
         font-size: 14px !important;
         padding: 15px 10px !important;
     }
+}
 
+@media (max-width: 968px) {
+    .schedule-columns {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .playoff-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
 }

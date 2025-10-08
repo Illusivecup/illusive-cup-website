@@ -13,6 +13,7 @@ const firebaseConfig = {
 let database;
 let teamsManager;
 let securityManager;
+let matchManager;
 
 // === СИСТЕМА БЕЗОПАСНОСТИ ===
 class SecurityManager {
@@ -25,9 +26,7 @@ class SecurityManager {
     init() {
         console.log('🔐 Инициализация SecurityManager...');
         
-        // Проверяем существование элементов
         this.checkRequiredElements();
-        
         this.checkExistingSession();
         this.setupEventListeners();
         console.log('✅ SecurityManager инициализирован');
@@ -54,7 +53,6 @@ class SecurityManager {
     setupEventListeners() {
         console.log('🔧 Настройка обработчиков SecurityManager...');
         
-        // Кнопка админки
         const adminBtn = document.getElementById('adminBtn');
         if (adminBtn) {
             adminBtn.addEventListener('click', (e) => {
@@ -67,7 +65,6 @@ class SecurityManager {
             console.error('❌ Элемент adminBtn не найден');
         }
 
-        // Модальное окно авторизации
         this.setupAuthModalListeners();
     }
 
@@ -148,7 +145,6 @@ class SecurityManager {
     }
 
     async authenticate(password) {
-        // Имитация задержки для безопасности
         await new Promise(resolve => setTimeout(resolve, 500));
         return password === this.EDITOR_PASSWORD;
     }
@@ -169,9 +165,8 @@ class SecurityManager {
 
             const data = JSON.parse(sessionData);
             const sessionAge = Date.now() - data.timestamp;
-            const maxAge = 8 * 60 * 60 * 1000; // 8 часов
+            const maxAge = 8 * 60 * 60 * 1000;
 
-            // Сессия действительна 8 часов
             if (data.authenticated && sessionAge < maxAge) {
                 this.isAuthenticated = true;
                 console.log('✅ Сессия восстановлена');
@@ -264,7 +259,6 @@ class TeamsManager {
         updateTeamsDropdown();
         updateAdminTeamsList();
         
-        // Обновляем визитку если она открыта
         const appState = getAppState();
         if (appState.currentDisplayedTeamId) {
             showSingleTeamCard(appState.currentDisplayedTeamId);
@@ -283,19 +277,37 @@ class TeamsManager {
 
     async updateTeam(teamId, teamData) {
         teamData.mmr = this.calculateTeamMMR(teamData.players);
+        teamData.updatedAt = Date.now();
         await this.database.ref(`teams/${teamId}`).update(teamData);
         return teamId;
     }
 
     async createTeam(teamId, teamData) {
         teamData.mmr = this.calculateTeamMMR(teamData.players);
+        teamData.createdAt = Date.now();
+        teamData.updatedAt = Date.now();
         await this.database.ref(`teams/${teamId}`).set(teamData);
         return teamId;
     }
 
     async deleteTeam(teamId) {
-        await this.database.ref(`teams/${teamId}`).remove();
-        delete this.teams[teamId];
+        if (!confirm('❌ Вы уверены, что хотите удалить эту команду? Это действие нельзя отменить.')) {
+            return;
+        }
+        
+        try {
+            await this.database.ref(`teams/${teamId}`).remove();
+            delete this.teams[teamId];
+            console.log('✅ Команда удалена из базы:', teamId);
+            
+            closeEditTeamModal();
+            this.updateUI();
+            
+            alert('✅ Команда успешно удалена!');
+        } catch (error) {
+            console.error('❌ Ошибка удаления команды:', error);
+            alert('❌ Ошибка удаления команды');
+        }
     }
 
     getTeam(teamId) {
@@ -307,10 +319,266 @@ class TeamsManager {
     }
 }
 
+// === МЕНЕДЖЕР МАТЧЕЙ ===
+class MatchManager {
+    constructor(database) {
+        this.database = database;
+        this.matches = {};
+    }
+
+    async initialize() {
+        await this.setupMatchListeners();
+    }
+
+    async setupMatchListeners() {
+        return new Promise((resolve) => {
+            this.database.ref('matches').on('value', (snapshot) => {
+                this.matches = snapshot.val() || {};
+                console.log('📥 Обновлены данные матчей:', this.matches);
+                this.updateMatchUI();
+                resolve();
+            });
+        });
+    }
+
+    updateMatchUI() {
+        this.updateGroupStageTable();
+        this.updatePlayoffMatches();
+        this.updateScheduleLists();
+    }
+
+    updateScheduleLists() {
+        this.updateUpcomingMatches();
+        this.updateCompletedMatches();
+    }
+
+    updateGroupStageTable() {
+        const container = document.getElementById('groupStageContainer');
+        if (!container) return;
+
+        const groupMatches = Object.values(this.matches).filter(match => 
+            match.stage === 'group' && match.completed
+        );
+
+        const standings = this.calculateStandings(groupMatches);
+        container.innerHTML = this.createGroupStageTable(standings);
+    }
+
+    calculateStandings(matches) {
+        const standings = {};
+
+        matches.forEach(match => {
+            if (!match.completed) return;
+
+            if (!standings[match.team1Id]) {
+                standings[match.team1Id] = {
+                    teamId: match.team1Id,
+                    teamName: match.team1Name,
+                    played: 0,
+                    wins: 0,
+                    losses: 0,
+                    points: 0
+                };
+            }
+            if (!standings[match.team2Id]) {
+                standings[match.team2Id] = {
+                    teamId: match.team2Id,
+                    teamName: match.team2Name,
+                    played: 0,
+                    wins: 0,
+                    losses: 0,
+                    points: 0
+                };
+            }
+
+            standings[match.team1Id].played++;
+            standings[match.team2Id].played++;
+
+            if (match.score1 > match.score2) {
+                standings[match.team1Id].wins++;
+                standings[match.team1Id].points += 3;
+                standings[match.team2Id].losses++;
+            } else if (match.score2 > match.score1) {
+                standings[match.team2Id].wins++;
+                standings[match.team2Id].points += 3;
+                standings[match.team1Id].losses++;
+            }
+        });
+
+        return Object.values(standings).sort((a, b) => b.points - a.points);
+    }
+
+    createGroupStageTable(standings) {
+        if (standings.length === 0) {
+            return '<div class="no-data">Нет данных о матчах группового этапа</div>';
+        }
+
+        return `
+            <div class="standings-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Команда</th>
+                            <th>И</th>
+                            <th>В</th>
+                            <th>П</th>
+                            <th>О</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${standings.map((team, index) => `
+                            <tr>
+                                <td>${index + 1}. ${team.teamName}</td>
+                                <td>${team.played}</td>
+                                <td>${team.wins}</td>
+                                <td>${team.losses}</td>
+                                <td><strong>${team.points}</strong></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    updatePlayoffMatches() {
+        this.updateThirdPlaceMatch();
+        this.updateGrandFinal();
+    }
+
+    updateThirdPlaceMatch() {
+        const container = document.getElementById('thirdPlaceMatch');
+        if (!container) return;
+
+        const thirdPlaceMatch = Object.values(this.matches).find(match => 
+            match.stage === 'third_place'
+        );
+
+        if (thirdPlaceMatch) {
+            container.innerHTML = this.createPlayoffMatchCard(thirdPlaceMatch);
+        } else {
+            container.innerHTML = '<div class="no-match">Матч за 3 место не назначен</div>';
+        }
+    }
+
+    updateGrandFinal() {
+        const container = document.getElementById('grandFinalMatch');
+        if (!container) return;
+
+        const grandFinal = Object.values(this.matches).find(match => 
+            match.stage === 'grand_final'
+        );
+
+        if (grandFinal) {
+            container.innerHTML = this.createPlayoffMatchCard(grandFinal);
+        } else {
+            container.innerHTML = '<div class="no-match">Грандфинал не назначен</div>';
+        }
+    }
+
+    createPlayoffMatchCard(match) {
+        return `
+            <div class="playoff-match-content">
+                <div class="playoff-team">${match.team1Name}</div>
+                ${match.completed ? `
+                    <div class="playoff-score">${match.score1} : ${match.score2}</div>
+                ` : `
+                    <div class="playoff-vs">VS</div>
+                `}
+                <div class="playoff-team">${match.team2Name}</div>
+                ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
+            </div>
+        `;
+    }
+
+    updateUpcomingMatches() {
+        const container = document.getElementById('upcomingMatches');
+        if (!container) return;
+
+        const upcoming = Object.values(this.matches).filter(match => 
+            !match.completed
+        ).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+        container.innerHTML = upcoming.map((match, index) => 
+            this.createScheduleMatchCard(match, false, Object.keys(this.matches)[index])
+        ).join('') || '<div class="no-data">Нет запланированных матчей</div>';
+    }
+
+    updateCompletedMatches() {
+        const container = document.getElementById('completedMatches');
+        if (!container) return;
+
+        const completed = Object.values(this.matches).filter(match => 
+            match.completed
+        ).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        container.innerHTML = completed.map((match, index) => 
+            this.createScheduleMatchCard(match, true, Object.keys(this.matches)[index])
+        ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
+    }
+
+    createScheduleMatchCard(match, isCompleted = false, matchId = '') {
+        return `
+            <div class="match-card ${isCompleted ? 'completed' : ''}" data-match-id="${matchId}">
+                <div class="match-time">${match.time || 'Время не указано'}</div>
+                <div class="match-teams">
+                    <div class="team-name">${match.team1Name}</div>
+                    <div class="vs">vs</div>
+                    <div class="team-name">${match.team2Name}</div>
+                </div>
+                ${isCompleted ? `
+                    <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+                ` : ''}
+                <div class="match-stage">${this.getStageName(match.stage)}</div>
+            </div>
+        `;
+    }
+
+    getStageName(stage) {
+        const stages = {
+            'group': 'Групповой этап',
+            'third_place': 'Матч за 3 место',
+            'grand_final': 'Гранд финал'
+        };
+        return stages[stage] || stage;
+    }
+
+    async createMatch(matchData) {
+        const matchId = `match_${Date.now()}`;
+        matchData.createdAt = Date.now();
+        matchData.updatedAt = Date.now();
+        
+        await this.database.ref(`matches/${matchId}`).set(matchData);
+        console.log('✅ Матч создан в базе:', matchId);
+        return matchId;
+    }
+
+    async updateMatch(matchId, matchData) {
+        matchData.updatedAt = Date.now();
+        await this.database.ref(`matches/${matchId}`).update(matchData);
+        console.log('✅ Матч обновлен в базе:', matchId);
+    }
+
+    async deleteMatch(matchId) {
+        await this.database.ref(`matches/${matchId}`).remove();
+        console.log('✅ Матч удален из базы:', matchId);
+    }
+
+    async setMatchResult(matchId, score1, score2, completed = true) {
+        await this.database.ref(`matches/${matchId}`).update({
+            score1: parseInt(score1),
+            score2: parseInt(score2),
+            completed: completed,
+            updatedAt: Date.now()
+        });
+    }
+}
+
 // === ПРОСТОЕ УПРАВЛЕНИЕ СОСТОЯНИЕМ ===
 const appState = {
     currentEditingTeamId: null,
-    currentDisplayedTeamId: null
+    currentDisplayedTeamId: null,
+    currentEditingMatchId: null
 };
 
 function getAppState() {
@@ -334,18 +602,15 @@ function closeAllDropdowns() {
 }
 
 function showSection(sectionName) {
-    // Скрываем все секции
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.add('hidden');
     });
     
-    // Показываем нужную секцию
     const targetSection = document.getElementById(`${sectionName}Content`);
     if (targetSection) {
         targetSection.classList.remove('hidden');
     }
     
-    // Сбрасываем выбранную команду
     appState.currentDisplayedTeamId = null;
 }
 
@@ -382,7 +647,6 @@ function showSingleTeamCard(teamId) {
     container.appendChild(card);
     appState.currentDisplayedTeamId = teamId;
     
-    // Показываем секцию команд
     hideAllSections();
     document.getElementById('teamsContent').classList.remove('hidden');
     closeAllDropdowns();
@@ -442,7 +706,6 @@ function createTeamCard(teamId, team) {
         </div>
     `;
     
-    // Обработчики для отображения MMR при наведении
     card.querySelectorAll('.player-name-bublas').forEach(playerName => {
         playerName.addEventListener('mouseenter', function() {
             const mmr = this.getAttribute('data-mmr');
@@ -475,17 +738,14 @@ function closeEditTeamModal() {
 
 // Админ-панель
 function openAdminTab(tabName) {
-    // Деактивируем все кнопки
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    // Скрываем все вкладки
     document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.remove('active');
     });
     
-    // Активируем выбранную кнопку и вкладку
     const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
     const targetPane = document.getElementById(tabName);
     
@@ -624,13 +884,11 @@ window.updateTeamsCount = async function() {
     
     try {
         if (count < currentCount) {
-            // Удаляем лишние команды
             const teamIds = Object.keys(currentTeams);
             for (let i = count; i < currentCount; i++) {
                 await teamsManager.deleteTeam(teamIds[i]);
             }
         } else if (count > currentCount) {
-            // Добавляем новые команды
             for (let i = currentCount + 1; i <= count; i++) {
                 const teamId = `team${i}`;
                 const newTeam = {
@@ -654,6 +912,202 @@ window.updateTeamsCount = async function() {
         alert('❌ Ошибка обновления команд');
     }
 };
+
+// Функции для работы с матчами
+function showAddMatchModal() {
+    if (!securityManager || !securityManager.isAuthenticated) {
+        securityManager.showAuthModal();
+        return;
+    }
+
+    const modal = document.getElementById('addMatchModal');
+    if (!modal) return;
+
+    populateTeamSelects();
+    modal.classList.remove('hidden');
+}
+
+function populateTeamSelects() {
+    const team1Select = document.getElementById('newMatchTeam1');
+    const team2Select = document.getElementById('newMatchTeam2');
+    
+    if (!team1Select || !team2Select || !teamsManager) return;
+    
+    team1Select.innerHTML = '<option value="">-- Выберите команду --</option>';
+    team2Select.innerHTML = '<option value="">-- Выберите команду --</option>';
+    
+    const teams = teamsManager.getAllTeams();
+    
+    Object.keys(teams).forEach(teamId => {
+        const team = teams[teamId];
+        const option1 = document.createElement('option');
+        const option2 = document.createElement('option');
+        
+        option1.value = teamId;
+        option1.textContent = team.name || 'Без названия';
+        
+        option2.value = teamId;
+        option2.textContent = team.name || 'Без названия';
+        
+        team1Select.appendChild(option1);
+        team2Select.appendChild(option2);
+    });
+}
+
+async function saveNewMatch() {
+    const team1Select = document.getElementById('newMatchTeam1');
+    const team2Select = document.getElementById('newMatchTeam2');
+    const timeInput = document.getElementById('newMatchTime');
+    const stageSelect = document.getElementById('newMatchStage');
+    
+    if (!team1Select || !team2Select || !timeInput || !stageSelect || !matchManager) return;
+    
+    const team1Id = team1Select.value;
+    const team2Id = team2Select.value;
+    const time = timeInput.value;
+    const stage = stageSelect.value;
+    
+    if (!team1Id || !team2Id) {
+        alert('❌ Выберите обе команды');
+        return;
+    }
+    
+    if (team1Id === team2Id) {
+        alert('❌ Команды не могут играть сами с собой');
+        return;
+    }
+    
+    if (!time) {
+        alert('❌ Укажите время матча');
+        return;
+    }
+    
+    const teams = teamsManager.getAllTeams();
+    const team1Name = teams[team1Id]?.name || 'Команда 1';
+    const team2Name = teams[team2Id]?.name || 'Команда 2';
+    
+    const matchTime = new Date(time).toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const matchData = {
+        team1Id,
+        team2Id,
+        team1Name,
+        team2Name,
+        time: matchTime,
+        timestamp: new Date(time).getTime(),
+        stage,
+        completed: false,
+        score1: 0,
+        score2: 0,
+        createdAt: Date.now()
+    };
+    
+    try {
+        await matchManager.createMatch(matchData);
+        closeAddMatchModal();
+        alert('✅ Матч успешно добавлен!');
+    } catch (error) {
+        console.error('❌ Ошибка добавления матча:', error);
+        alert('❌ Ошибка добавления матча');
+    }
+}
+
+function closeAddMatchModal() {
+    const modal = document.getElementById('addMatchModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        
+        const team1Select = document.getElementById('newMatchTeam1');
+        const team2Select = document.getElementById('newMatchTeam2');
+        const timeInput = document.getElementById('newMatchTime');
+        const stageSelect = document.getElementById('newMatchStage');
+        
+        if (team1Select) team1Select.value = '';
+        if (team2Select) team2Select.value = '';
+        if (timeInput) timeInput.value = '';
+        if (stageSelect) stageSelect.value = 'group';
+    }
+}
+
+// Функции для редактирования результатов матчей
+function setupMatchEditing() {
+    document.addEventListener('click', (e) => {
+        const matchCard = e.target.closest('.match-card');
+        if (matchCard && securityManager && securityManager.isAuthenticated) {
+            const matchId = matchCard.getAttribute('data-match-id');
+            if (matchId) {
+                showEditMatchResultModal(matchId);
+            }
+        }
+    });
+}
+
+function showEditMatchResultModal(matchId) {
+    const modal = document.getElementById('editMatchResultModal');
+    const matchInfo = document.getElementById('editMatchInfo');
+    const score1Input = document.getElementById('editMatchScore1');
+    const score2Input = document.getElementById('editMatchScore2');
+    
+    if (!modal || !matchInfo || !score1Input || !score2Input || !matchManager) return;
+    
+    const match = matchManager.matches[matchId];
+    if (!match) return;
+    
+    matchInfo.innerHTML = `
+        <div class="match-teams">
+            <div class="team-name">${match.team1Name}</div>
+            <div class="vs">vs</div>
+            <div class="team-name">${match.team2Name}</div>
+        </div>
+        <div class="match-stage">${matchManager.getStageName(match.stage)}</div>
+        ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
+    `;
+    
+    score1Input.value = match.score1 || 0;
+    score2Input.value = match.score2 || 0;
+    
+    appState.currentEditingMatchId = matchId;
+    modal.classList.remove('hidden');
+}
+
+async function saveMatchResult() {
+    const matchId = appState.currentEditingMatchId;
+    const score1Input = document.getElementById('editMatchScore1');
+    const score2Input = document.getElementById('editMatchScore2');
+    
+    if (!matchId || !score1Input || !score2Input || !matchManager) return;
+    
+    const score1 = parseInt(score1Input.value);
+    const score2 = parseInt(score2Input.value);
+    
+    if (isNaN(score1) || isNaN(score2)) {
+        alert('❌ Введите корректные значения счета');
+        return;
+    }
+    
+    try {
+        await matchManager.setMatchResult(matchId, score1, score2, true);
+        closeEditMatchResultModal();
+        alert('✅ Результат матча сохранен!');
+    } catch (error) {
+        console.error('❌ Ошибка сохранения результата:', error);
+        alert('❌ Ошибка сохранения результата');
+    }
+}
+
+function closeEditMatchResultModal() {
+    const modal = document.getElementById('editMatchResultModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        appState.currentEditingMatchId = null;
+    }
+}
 
 // Утилиты
 function updateConnectionStatus(connected) {
@@ -679,22 +1133,22 @@ async function initializeApp() {
     try {
         console.log('🚀 Инициализация Tournament App...');
         
-        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         database = firebase.database();
         window.database = database;
         console.log('🔥 Firebase успешно инициализирован');
         
-        // Инициализация менеджеров
         securityManager = new SecurityManager();
         teamsManager = new TeamsManager(database);
+        matchManager = new MatchManager(database);
         
         await teamsManager.initialize();
+        await matchManager.initialize();
         
-        // Настройка обработчиков событий
         setupEventListeners();
+        setupDeleteTeamHandler();
+        setupMatchEditing();
         
-        // Инициализация SecurityManager
         securityManager.init();
         
         console.log('✅ Tournament App успешно инициализирован');
@@ -704,10 +1158,21 @@ async function initializeApp() {
     }
 }
 
+function setupDeleteTeamHandler() {
+    const deleteBtn = document.getElementById('deleteTeamBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            const teamId = appState.currentEditingTeamId;
+            if (teamId && teamsManager) {
+                await teamsManager.deleteTeam(teamId);
+            }
+        });
+    }
+}
+
 function setupEventListeners() {
     console.log('🔧 Настройка основных обработчиков событий...');
     
-    // Навигация
     const teamsDropdownBtn = document.getElementById('teamsDropdownBtn');
     const scheduleBtn = document.getElementById('scheduleBtn');
     const groupStageBtn = document.getElementById('groupStageBtn');
@@ -734,7 +1199,6 @@ function setupEventListeners() {
         audienceAwardBtn.addEventListener('click', () => showSection('audienceAward'));
     }
     
-    // Закрытие модальных окон
     const closeEditTeamModalBtn = document.getElementById('closeEditTeamModal');
     const cancelEditTeamBtn = document.getElementById('cancelEditTeamBtn');
     
@@ -746,14 +1210,12 @@ function setupEventListeners() {
         cancelEditTeamBtn.addEventListener('click', closeEditTeamModal);
     }
     
-    // Вкладки админки
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             openAdminTab(this.getAttribute('data-tab'));
         });
     });
     
-    // Кнопки админки
     const saveTeamBtn = document.getElementById('saveTeamBtn');
     const applyTeamsCountBtn = document.getElementById('applyTeamsCountBtn');
     
@@ -765,14 +1227,48 @@ function setupEventListeners() {
         applyTeamsCountBtn.addEventListener('click', window.updateTeamsCount);
     }
     
-    // Глобальные обработчики
+    const addScheduleMatchBtn = document.getElementById('addScheduleMatchBtn');
+    const saveNewMatchBtn = document.getElementById('saveNewMatchBtn');
+    const cancelAddMatchBtn = document.getElementById('cancelAddMatchBtn');
+    const closeAddMatchModal = document.getElementById('closeAddMatchModal');
+    
+    if (addScheduleMatchBtn) {
+        addScheduleMatchBtn.addEventListener('click', showAddMatchModal);
+    }
+    
+    if (saveNewMatchBtn) {
+        saveNewMatchBtn.addEventListener('click', saveNewMatch);
+    }
+    
+    if (cancelAddMatchBtn) {
+        cancelAddMatchBtn.addEventListener('click', closeAddMatchModal);
+    }
+    
+    if (closeAddMatchModal) {
+        closeAddMatchModal.addEventListener('click', closeAddMatchModal);
+    }
+    
+    const saveMatchResultBtn = document.getElementById('saveMatchResultBtn');
+    const cancelEditMatchResultBtn = document.getElementById('cancelEditMatchResultBtn');
+    const closeEditMatchResultModal = document.getElementById('closeEditMatchResultModal');
+    
+    if (saveMatchResultBtn) {
+        saveMatchResultBtn.addEventListener('click', saveMatchResult);
+    }
+    
+    if (cancelEditMatchResultBtn) {
+        cancelEditMatchResultBtn.addEventListener('click', closeEditMatchResultModal);
+    }
+    
+    if (closeEditMatchResultModal) {
+        closeEditMatchResultModal.addEventListener('click', closeEditMatchResultModal);
+    }
+    
     document.addEventListener('click', (event) => {
-        // Закрытие модальных окон при клике вне их
         if (event.target.classList.contains('modal')) {
             event.target.classList.add('hidden');
         }
         
-        // Закрытие выпадающих списков при клике вне их
         if (!event.target.closest('.dropdown') && !event.target.closest('.nav-btn')) {
             closeAllDropdowns();
         }
