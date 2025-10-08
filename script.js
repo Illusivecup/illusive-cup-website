@@ -303,6 +303,11 @@ class TeamsManager {
             closeEditTeamModal();
             this.updateUI();
             
+            // Обновляем матчи после удаления команды
+            if (matchManager && matchManager.updateMatchUI) {
+                matchManager.updateMatchUI();
+            }
+            
             alert('✅ Команда успешно удалена!');
         } catch (error) {
             console.error('❌ Ошибка удаления команды:', error);
@@ -356,8 +361,9 @@ class MatchManager {
         const container = document.getElementById('groupStageContainer');
         if (!container) return;
 
+        // Фильтруем только групповые матчи
         const groupMatches = Object.values(this.matches).filter(match => 
-            match.stage === 'group' && match.completed
+            match.stage === 'group'
         );
 
         const standings = this.calculateStandings(groupMatches);
@@ -366,10 +372,33 @@ class MatchManager {
 
     calculateStandings(matches) {
         const standings = {};
+        const teams = teamsManager ? teamsManager.getAllTeams() : {};
 
+        // Инициализируем только существующие команды
+        Object.keys(teams).forEach(teamId => {
+            const team = teams[teamId];
+            if (team && team.name) {
+                standings[teamId] = {
+                    teamId: teamId,
+                    teamName: team.name,
+                    played: 0,
+                    wins: 0,
+                    losses: 0,
+                    points: 0
+                };
+            }
+        });
+
+        // Обрабатываем завершенные матчи группового этапа
         matches.forEach(match => {
-            if (!match.completed) return;
+            if (!this.isMatchCompleted(match)) return;
+            
+            const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
+            const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+            
+            if (!team1Exists || !team2Exists) return;
 
+            // Инициализируем команды, если их нет в standings
             if (!standings[match.team1Id]) {
                 standings[match.team1Id] = {
                     teamId: match.team1Id,
@@ -402,10 +431,22 @@ class MatchManager {
                 standings[match.team2Id].wins++;
                 standings[match.team2Id].points += 3;
                 standings[match.team1Id].losses++;
+            } else {
+                standings[match.team1Id].points += 1;
+                standings[match.team2Id].points += 1;
             }
         });
 
-        return Object.values(standings).sort((a, b) => b.points - a.points);
+        // Фильтруем только команды, которые есть в standings
+        const validStandings = Object.values(standings).filter(team => 
+            team && team.teamName
+        );
+
+        return validStandings.sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.wins !== a.wins) return b.wins - a.wins;
+            return a.losses - b.losses;
+        });
     }
 
     createGroupStageTable(standings) {
@@ -418,6 +459,7 @@ class MatchManager {
                 <table>
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Команда</th>
                             <th>И</th>
                             <th>В</th>
@@ -428,7 +470,8 @@ class MatchManager {
                     <tbody>
                         ${standings.map((team, index) => `
                             <tr>
-                                <td>${index + 1}. ${team.teamName}</td>
+                                <td>${index + 1}</td>
+                                <td><strong>${team.teamName}</strong></td>
                                 <td>${team.played}</td>
                                 <td>${team.wins}</td>
                                 <td>${team.losses}</td>
@@ -444,6 +487,7 @@ class MatchManager {
     updatePlayoffMatches() {
         this.updateThirdPlaceMatch();
         this.updateGrandFinal();
+        this.updateWinnerSection();
     }
 
     updateThirdPlaceMatch() {
@@ -476,16 +520,44 @@ class MatchManager {
         }
     }
 
+    updateWinnerSection() {
+        const container = document.getElementById('winnerSection');
+        if (!container) return;
+
+        const grandFinal = Object.values(this.matches).find(match => 
+            match.stage === 'grand_final' && this.isMatchCompleted(match)
+        );
+
+        if (grandFinal && grandFinal.score1 !== undefined && grandFinal.score2 !== undefined) {
+            const winner = grandFinal.score1 > grandFinal.score2 ? grandFinal.team1Name : grandFinal.team2Name;
+            container.innerHTML = `
+                <div class="winner-content">
+                    <div class="winner-icon">🏆</div>
+                    <div class="winner-name">${winner}</div>
+                    <div class="winner-subtitle">Победитель Illusive Cup 2025</div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = '<div class="no-match">Победитель не определён</div>';
+        }
+    }
+
     createPlayoffMatchCard(match) {
+        const isCompleted = this.isMatchCompleted(match);
+        
         return `
             <div class="playoff-match-content">
-                <div class="playoff-team">${match.team1Name}</div>
-                ${match.completed ? `
+                <div class="playoff-team ${isCompleted && match.score1 > match.score2 ? 'winner' : ''}">
+                    ${match.team1Name}
+                </div>
+                ${isCompleted ? `
                     <div class="playoff-score">${match.score1} : ${match.score2}</div>
                 ` : `
                     <div class="playoff-vs">VS</div>
                 `}
-                <div class="playoff-team">${match.team2Name}</div>
+                <div class="playoff-team ${isCompleted && match.score2 > match.score1 ? 'winner' : ''}">
+                    ${match.team2Name}
+                </div>
                 ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
             </div>
         `;
@@ -495,12 +567,12 @@ class MatchManager {
         const container = document.getElementById('upcomingMatches');
         if (!container) return;
 
-        const upcoming = Object.values(this.matches).filter(match => 
-            !match.completed
-        ).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        const upcoming = Object.entries(this.matches)
+            .filter(([matchId, match]) => !this.isMatchCompleted(match))
+            .sort(([, a], [, b]) => (a.timestamp || 0) - (b.timestamp || 0));
 
-        container.innerHTML = upcoming.map((match, index) => 
-            this.createScheduleMatchCard(match, false, Object.keys(this.matches)[index])
+        container.innerHTML = upcoming.map(([matchId, match]) => 
+            this.createScheduleMatchCard(match, false, matchId)
         ).join('') || '<div class="no-data">Нет запланированных матчей</div>';
     }
 
@@ -508,28 +580,59 @@ class MatchManager {
         const container = document.getElementById('completedMatches');
         if (!container) return;
 
-        const completed = Object.values(this.matches).filter(match => 
-            match.completed
-        ).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const completed = Object.entries(this.matches)
+            .filter(([matchId, match]) => this.isMatchCompleted(match))
+            .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
 
-        container.innerHTML = completed.map((match, index) => 
-            this.createScheduleMatchCard(match, true, Object.keys(this.matches)[index])
+        container.innerHTML = completed.map(([matchId, match]) => 
+            this.createScheduleMatchCard(match, true, matchId)
         ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
     }
 
+    isMatchCompleted(match) {
+        // Матч считается завершенным если есть счет
+        return match.score1 !== undefined && match.score2 !== undefined;
+    }
+
     createScheduleMatchCard(match, isCompleted = false, matchId = '') {
+        const showScore = isCompleted && match.score1 !== undefined && match.score2 !== undefined;
+        const teams = teamsManager ? teamsManager.getAllTeams() : {};
+        const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
+        const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+        
+        // Если команды удалены, показываем сообщение
+        if (!team1Exists || !team2Exists) {
+            return `
+                <div class="match-card deleted" data-match-id="${matchId}">
+                    <div class="match-time">${match.time || 'Время не указано'}</div>
+                    <div class="match-teams">
+                        <div class="team-name deleted">${team1Exists ? match.team1Name : 'Команда удалена'}</div>
+                        <div class="vs">vs</div>
+                        <div class="team-name deleted">${team2Exists ? match.team2Name : 'Команда удалена'}</div>
+                    </div>
+                    <div class="match-stage">${this.getStageName(match.stage)}</div>
+                    <div class="match-status">🗑️ Команда удалена</div>
+                </div>
+            `;
+        }
+        
         return `
             <div class="match-card ${isCompleted ? 'completed' : ''}" data-match-id="${matchId}">
                 <div class="match-time">${match.time || 'Время не указано'}</div>
                 <div class="match-teams">
-                    <div class="team-name">${match.team1Name}</div>
+                    <div class="team-name ${showScore && match.score1 > match.score2 ? 'winner' : ''}">
+                        ${match.team1Name}
+                    </div>
                     <div class="vs">vs</div>
-                    <div class="team-name">${match.team2Name}</div>
+                    <div class="team-name ${showScore && match.score2 > match.score1 ? 'winner' : ''}">
+                        ${match.team2Name}
+                    </div>
                 </div>
-                ${isCompleted ? `
-                    <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+                ${showScore ? `
+                    <div class="match-score">${match.score1} : ${match.score2}</div>
                 ` : ''}
                 <div class="match-stage">${this.getStageName(match.stage)}</div>
+                ${isCompleted ? '<div class="match-status">✅ Завершен</div>' : '<div class="match-status">⏳ Ожидается</div>'}
             </div>
         `;
     }
@@ -565,12 +668,24 @@ class MatchManager {
     }
 
     async setMatchResult(matchId, score1, score2, completed = true) {
-        await this.database.ref(`matches/${matchId}`).update({
+        const match = this.matches[matchId];
+        if (!match) return;
+
+        const updateData = {
             score1: parseInt(score1),
             score2: parseInt(score2),
             completed: completed,
             updatedAt: Date.now()
-        });
+        };
+
+        await this.database.ref(`matches/${matchId}`).update(updateData);
+        
+        // Автоматически обновляем UI
+        this.updateMatchUI();
+    }
+
+    getMatch(matchId) {
+        return this.matches[matchId];
     }
 }
 
@@ -1056,8 +1171,18 @@ function showEditMatchResultModal(matchId) {
     
     if (!modal || !matchInfo || !score1Input || !score2Input || !matchManager) return;
     
-    const match = matchManager.matches[matchId];
+    const match = matchManager.getMatch(matchId);
     if (!match) return;
+    
+    // Проверяем существование команд
+    const teams = teamsManager ? teamsManager.getAllTeams() : {};
+    const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
+    const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+    
+    if (!team1Exists || !team2Exists) {
+        alert('❌ Нельзя редактировать матч с удаленными командами');
+        return;
+    }
     
     matchInfo.innerHTML = `
         <div class="match-teams">
@@ -1091,10 +1216,20 @@ async function saveMatchResult() {
         return;
     }
     
+    if (score1 < 0 || score2 < 0) {
+        alert('❌ Счет не может быть отрицательным');
+        return;
+    }
+    
     try {
         await matchManager.setMatchResult(matchId, score1, score2, true);
         closeEditMatchResultModal();
         alert('✅ Результат матча сохранен!');
+        
+        // Принудительное обновление UI
+        if (matchManager.updateMatchUI) {
+            matchManager.updateMatchUI();
+        }
     } catch (error) {
         console.error('❌ Ошибка сохранения результата:', error);
         alert('❌ Ошибка сохранения результата');

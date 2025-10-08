@@ -925,8 +925,14 @@ body {
 }
 
 .match-card.completed {
-    border-left-color: var(--text-secondary);
-    opacity: 0.8;
+    border-left-color: var(--accent-success);
+    opacity: 0.9;
+}
+
+.match-card.deleted {
+    border-left-color: var(--accent-danger);
+    opacity: 0.6;
+    background: rgba(244, 67, 54, 0.1);
 }
 
 .match-time {
@@ -949,6 +955,16 @@ body {
     text-align: center;
 }
 
+.team-name.winner {
+    color: var(--accent-primary);
+    font-weight: bold;
+}
+
+.team-name.deleted {
+    color: var(--accent-danger);
+    text-decoration: line-through;
+}
+
 .vs {
     color: var(--text-secondary);
     font-size: 0.9rem;
@@ -967,6 +983,13 @@ body {
     color: var(--text-secondary);
     margin-top: 10px;
     text-align: center;
+}
+
+.match-status {
+    font-size: 0.8em;
+    margin-top: 8px;
+    text-align: center;
+    color: var(--text-secondary);
 }
 
 /* Стили для плей-офф */
@@ -1012,6 +1035,12 @@ body {
     font-size: 1.2em;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+.playoff-team.winner {
+    color: #FFD700;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
 .playoff-score {
