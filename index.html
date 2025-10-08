@@ -301,7 +301,7 @@
                 <button class="tab-btn active" data-tab="teamsTab">Команды</button>
                 <button class="tab-btn" data-tab="scheduleTab">Расписание</button>
                 <button class="tab-btn" data-tab="groupStageTab">Групповой этап</button>
-                <button class="tab-btn" data-tab="playoffTab">Плей-офф</button>
+                <button class="tab-btn" data-tab="audienceAwardTab">Редактирование ПриЗ</button>
                 <button class="tab-btn" data-tab="accessTab">Доступы</button>
             </div>
             
@@ -345,48 +345,24 @@
                     </div>
                 </div>
 
-                <!-- Вкладка управления плей-офф -->
-                <div id="playoffTab" class="tab-pane">
-                    <h3>Управление плей-офф</h3>
-                    <div class="form-group">
-                        <label>Матч за 3 место:</label>
-                        <div class="playoff-match-settings">
-                            <select id="thirdPlaceTeam1" class="form-input">
-                                <option value="">-- Команда 1 --</option>
-                            </select>
-                            <input type="number" id="thirdPlaceScore1" class="form-input" placeholder="Счет 1" min="0">
-                            <span>vs</span>
-                            <input type="number" id="thirdPlaceScore2" class="form-input" placeholder="Счет 2" min="0">
-                            <select id="thirdPlaceTeam2" class="form-input">
-                                <option value="">-- Команда 2 --</option>
-                            </select>
-                        </div>
-                    </div>
+                <!-- Вкладка редактирования приза зрительских симпатий -->
+                <div id="audienceAwardTab" class="tab-pane">
+                    <h3>🎭 Редактирование Приза Зрительских Симпатий</h3>
                     
                     <div class="form-group">
-                        <label>Грандфинал:</label>
-                        <div class="playoff-match-settings">
-                            <select id="grandFinalTeam1" class="form-input">
-                                <option value="">-- Команда 1 --</option>
-                            </select>
-                            <input type="number" id="grandFinalScore1" class="form-input" placeholder="Счет 1" min="0">
-                            <span>vs</span>
-                            <input type="number" id="grandFinalScore2" class="form-input" placeholder="Счет 2" min="0">
-                            <select id="grandFinalTeam2" class="form-input">
-                                <option value="">-- Команда 2 --</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Победитель:</label>
-                        <select id="playoffWinner" class="form-input">
-                            <option value="">-- Выберите победителя --</option>
+                        <h4>Голосование</h4>
+                        <label>Выберите матч для голосования:</label>
+                        <select id="voteMatchSelect" class="form-input">
+                            <option value="">-- Выберите матч --</option>
                         </select>
+                        <button id="selectMatchForVote" class="save-btn">🎯 Выбрать матч</button>
                     </div>
                     
-                    <div class="form-actions">
-                        <button id="savePlayoffBtn" class="save-btn">💾 Сохранить плей-офф</button>
+                    <div id="voteResults" class="hidden">
+                        <h4>Результаты голосования</h4>
+                        <div id="voteResultsContent">
+                            <!-- Результаты будут отображаться здесь -->
+                        </div>
                     </div>
                 </div>
 
@@ -437,6 +413,33 @@
                 <div class="form-actions">
                     <button id="confirmAuth" class="save-btn">Войти</button>
                     <button id="cancelAuth" class="cancel-btn">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно голосования -->
+    <div id="votingModal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>🎭 Голосование за лучшего игрока</h2>
+                <button class="close-modal" id="closeVotingModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="votingMatchInfo" class="match-info"></div>
+                <div class="voting-container">
+                    <div class="voting-columns">
+                        <div class="voting-column" id="team1Voting">
+                            <!-- Игроки команды 1 -->
+                        </div>
+                        <div class="voting-column" id="team2Voting">
+                            <!-- Игроки команды 2 -->
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="submitVote" class="save-btn">✅ Отправить голос</button>
+                    <button id="cancelVote" class="cancel-btn">❌ Отмена</button>
                 </div>
             </div>
         </div>
