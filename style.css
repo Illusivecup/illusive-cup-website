@@ -420,7 +420,7 @@ body {
     }
 }
 
-/* === НОВАЯ АНИМАЦИЯ ДЛЯ НИКНЕЙМОВ === */
+/* === ОБНОВЛЕННАЯ АНИМАЦИЯ ДЛЯ НИКНЕЙМОВ === */
 .player-name-bublas {
     font-size: 1.4rem;
     font-weight: 700;
@@ -432,16 +432,19 @@ body {
     transition: all 0.3s ease;
     cursor: pointer;
     padding: 8px 0;
-    background: linear-gradient(90deg, transparent, transparent);
+    background: linear-gradient(45deg, #4CAF50, #8BC34A, #CDDC39, #4CAF50);
+    background-size: 300% 300%;
     -webkit-background-clip: text;
     background-clip: text;
+    color: transparent;
+    animation: slideInName 1.5s ease-out forwards, gradientShift 3s ease infinite;
 }
 
-.player-card-bublas:nth-child(1) .player-name-bublas { animation-delay: 2.2s; }
-.player-card-bublas:nth-child(2) .player-name-bublas { animation-delay: 2.4s; }
-.player-card-bublas:nth-child(3) .player-name-bublas { animation-delay: 2.6s; }
-.player-card-bublas:nth-child(4) .player-name-bublas { animation-delay: 2.8s; }
-.player-card-bublas:nth-child(5) .player-name-bublas { animation-delay: 3s; }
+.player-card-bublas:nth-child(1) .player-name-bublas { animation-delay: 2.2s, 2.2s; }
+.player-card-bublas:nth-child(2) .player-name-bublas { animation-delay: 2.4s, 2.4s; }
+.player-card-bublas:nth-child(3) .player-name-bublas { animation-delay: 2.6s, 2.6s; }
+.player-card-bublas:nth-child(4) .player-name-bublas { animation-delay: 2.8s, 2.8s; }
+.player-card-bublas:nth-child(5) .player-name-bublas { animation-delay: 3s, 3s; }
 
 @keyframes slideInName {
     0% {
@@ -458,18 +461,6 @@ body {
     }
 }
 
-/* Анимация при наведении - градиентный текст */
-.player-name-bublas:hover {
-    color: transparent;
-    background: linear-gradient(45deg, #4CAF50, #8BC34A, #CDDC39, #4CAF50);
-    background-size: 300% 300%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    animation: gradientShift 2s ease infinite;
-    transform: translateX(0) scale(1.08);
-    text-shadow: none;
-}
-
 @keyframes gradientShift {
     0%, 100% {
         background-position: 0% 50%;
@@ -479,7 +470,22 @@ body {
     }
 }
 
-/* Эффект подчеркивания с волной */
+/* Эффект при наведении - показываем MMR */
+.player-name-bublas:hover {
+    animation: gradientShift 3s ease infinite, mmrPulse 0.5s ease;
+    transform: scale(1.05);
+}
+
+@keyframes mmrPulse {
+    0%, 100% {
+        transform: scale(1.05);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Эффект подчеркивания */
 .player-name-bublas::after {
     content: '';
     position: absolute;
@@ -496,88 +502,6 @@ body {
 .player-name-bublas:hover::after {
     width: 100%;
     opacity: 1;
-    animation: waveLine 1.5s ease-in-out infinite;
-}
-
-@keyframes waveLine {
-    0%, 100% {
-        transform: scaleX(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scaleX(1.1);
-        opacity: 0.8;
-    }
-}
-
-/* Эффект свечения вокруг текста */
-.player-name-bublas::before {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    color: transparent;
-    background: linear-gradient(45deg, #4CAF50, #8BC34A, #CDDC39);
-    -webkit-background-clip: text;
-    background-clip: text;
-    opacity: 0;
-    filter: blur(8px);
-    transition: all 0.4s ease;
-    z-index: -1;
-}
-
-.player-name-bublas:hover::before {
-    opacity: 0.3;
-    transform: translate(4px, 4px);
-}
-
-/* Эффект вибрации букв */
-.player-name-bublas:hover {
-    animation: gradientShift 2s ease infinite, letterVibrate 0.5s ease;
-}
-
-@keyframes letterVibrate {
-    0%, 100% {
-        transform: translateX(0) scale(1.08);
-    }
-    25% {
-        transform: translateX(-1px) scale(1.08);
-    }
-    50% {
-        transform: translateX(1px) scale(1.08);
-    }
-    75% {
-        transform: translateX(-1px) scale(1.08);
-    }
-}
-
-/* Эффект для роли при наведении на имя */
-.player-card-bublas:hover .player-role-bublas {
-    color: #8BC34A;
-    transform: translateY(-2px);
-    transition: all 0.3s ease 0.1s;
-}
-
-/* Свечение всей карточки при наведении на имя */
-.player-name-bublas:hover {
-    filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.4));
-}
-
-/* Эффект появления иконки игрока */
-.player-name-bublas {
-    padding-left: 0;
-    transition: padding-left 0.3s ease;
-}
-
-.player-name-bublas:hover {
-    padding-left: 10px;
-}
-
-.player-name-bublas:hover::first-letter {
-    color: #CDDC39;
-    text-shadow: 0 0 10px rgba(205, 220, 57, 0.8);
 }
 
 .stats-section-bublas {
@@ -925,6 +849,7 @@ body {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    align-items: center;
 }
 
 .player-edit-row input {
@@ -936,6 +861,10 @@ body {
     color: white;
 }
 
+.player-mmr-input {
+    max-width: 80px;
+}
+
 .remove-player {
     background: #f44336;
     color: white;
@@ -943,6 +872,7 @@ body {
     padding: 10px;
     border-radius: 6px;
     cursor: pointer;
+    width: 40px;
 }
 
 .form-actions {
@@ -988,6 +918,20 @@ body {
 
 .add-btn:hover {
     background: #1976D2;
+}
+
+.delete-team-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.delete-team-btn:hover {
+    background: #da190b;
 }
 
 /* Админ панель */
@@ -1150,14 +1094,6 @@ body {
         padding: 10px 20px;
     }
     
-    .player-name-bublas:hover {
-        transform: translateX(0) scale(1.05);
-    }
-    
-    .player-name-bublas:hover {
-        padding-left: 5px;
-    }
-    
     .bracket {
         flex-direction: column;
     }
@@ -1183,6 +1119,15 @@ body {
     
     .admin-tabs {
         flex-direction: column;
+    }
+    
+    .player-edit-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .player-mmr-input {
+        max-width: none;
     }
 }
 /* Добавьте эти стили в конец файла style.css */
