@@ -1,12 +1,13 @@
-// Конфигурация Firebase
+// Конфигурация Firebase (ОБНОВЛЕННАЯ)
 const firebaseConfig = {
-    apiKey: "AIzaSyC4mZxJpzqoQn1l7K4wQ5Y9v8XzAbCdEfG",
-    authDomain: "illusive-cup-2025.firebaseapp.com",
-    databaseURL: "https://illusive-cup-2025-default-rtdb.firebaseio.com",
-    projectId: "illusive-cup-2025",
-    storageBucket: "illusive-cup-2025.firebasestorage.app",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef123456789"
+    apiKey: "AIzaSyAjUOjB-mQTdI6G4jwsIXGOHGldGBmC6j4",
+    authDomain: "illusive-cup.firebaseapp.com",
+    databaseURL: "https://illusive-cup-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "illusive-cup",
+    storageBucket: "illusive-cup.firebasestorage.app",
+    messagingSenderId: "465786550229",
+    appId: "1:465786550229:web:9a1d4a3015b9cb0a3caf5c",
+    measurementId: "G-5BXENVE2K9"
 };
 
 // Инициализация Firebase
