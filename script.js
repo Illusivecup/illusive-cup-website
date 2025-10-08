@@ -1725,7 +1725,7 @@ function updateAdminTeamsList() {
 }
 
 // Управление командами
-function updateTeamsCount() {
+async function updateTeamsCount() {
     if (!SecurityManager.requireAuth()) return;
     
     const appState = AppState.getInstance();
@@ -1765,7 +1765,7 @@ function updateTeamsCount() {
                     ],
                     mmr: 3000
                 };
-                teamsManager.database.ref('teams/' + newTeamId).set(newTeam);
+                await teamsManager.database.ref('teams/' + newTeamId).set(newTeam);
             }
         } else if (targetCount < currentCount) {
             // Удаляем лишние команды
@@ -1783,46 +1783,3 @@ function updateTeamsCount() {
         ErrorHandler.showError('Ошибка при обновлении команд: ' + error.message);
     }
 }
-
-// Вспомогательные функции
-function getRoundName(round) {
-    const roundNames = {
-        'quarterfinals': 'Четвертьфиналы',
-        'semifinals': 'Полуфиналы', 
-        'final': 'Финал'
-    };
-    return roundNames[round] || round;
-}
-
-function updateConnectionStatus(connected) {
-    const statusElement = document.getElementById('connectionStatus');
-    const statusDot = statusElement?.querySelector('.status-dot');
-    const statusText = statusElement?.querySelector('.status-text');
-    
-    if (statusElement && statusDot && statusText) {
-        if (connected) {
-            statusDot.classList.add('connected');
-            statusText.textContent = 'Подключено к турниру';
-            statusElement.classList.remove('hidden');
-        } else {
-            statusDot.classList.remove('connected');
-            statusText.textContent = 'Нет подключения';
-        }
-    }
-}
-
-// Запуск приложения
-document.addEventListener('DOMContentLoaded', () => {
-    AppInitializer.initialize();
-});
-
-// Глобальные обработчики ошибок
-window.addEventListener('error', (event) => {
-    console.error('🚨 Глобальная ошибка:', event.error);
-    ErrorHandler.showError('Произошла непредвиденная ошибка');
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('🚨 Необработанный Promise:', event.reason);
-    ErrorHandler.showError('Ошибка загрузки данных');
-});
