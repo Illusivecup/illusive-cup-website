@@ -19,44 +19,70 @@ class SecurityManager {
     constructor() {
         this.EDITOR_PASSWORD = 'IllusiveCup2025!';
         this.isAuthenticated = false;
-        this.init();
+        // НЕ вызываем init() здесь - будет вызван после загрузки DOM
     }
 
     init() {
+        console.log('🔐 Инициализация SecurityManager...');
         this.checkExistingSession();
         this.setupEventListeners();
     }
 
     setupEventListeners() {
-        // Кнопка админки
-        document.getElementById('adminBtn').addEventListener('click', () => {
+        console.log('🔧 Настройка обработчиков SecurityManager...');
+        
+        // Кнопка админки с проверкой существования
+        const adminBtn = document.getElementById('adminBtn');
+        if (!adminBtn) {
+            console.error('❌ Элемент adminBtn не найден');
+            setTimeout(() => this.setupEventListeners(), 100);
+            return;
+        }
+
+        adminBtn.addEventListener('click', () => {
             this.handleAdminButtonClick();
         });
 
         // Модальное окно авторизации
-        document.getElementById('confirmAuth').addEventListener('click', () => {
-            this.handleAuthConfirm();
-        });
+        const confirmAuth = document.getElementById('confirmAuth');
+        const cancelAuth = document.getElementById('cancelAuth');
+        const closeAuthModal = document.getElementById('closeAuthModal');
+        const closeAdminPanel = document.getElementById('closeAdminPanel');
+        const editorPassword = document.getElementById('editorPassword');
 
-        document.getElementById('cancelAuth').addEventListener('click', () => {
-            this.hideAuthModal();
-        });
-
-        document.getElementById('closeAuthModal').addEventListener('click', () => {
-            this.hideAuthModal();
-        });
-
-        // Закрытие админки
-        document.getElementById('closeAdminPanel').addEventListener('click', () => {
-            this.hideAdminPanel();
-        });
-
-        // Enter в поле пароля
-        document.getElementById('editorPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+        if (confirmAuth) {
+            confirmAuth.addEventListener('click', () => {
                 this.handleAuthConfirm();
-            }
-        });
+            });
+        }
+
+        if (cancelAuth) {
+            cancelAuth.addEventListener('click', () => {
+                this.hideAuthModal();
+            });
+        }
+
+        if (closeAuthModal) {
+            closeAuthModal.addEventListener('click', () => {
+                this.hideAuthModal();
+            });
+        }
+
+        if (closeAdminPanel) {
+            closeAdminPanel.addEventListener('click', () => {
+                this.hideAdminPanel();
+            });
+        }
+
+        if (editorPassword) {
+            editorPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleAuthConfirm();
+                }
+            });
+        }
+
+        console.log('✅ Обработчики SecurityManager настроены');
     }
 
     handleAdminButtonClick() {
@@ -134,35 +160,55 @@ class SecurityManager {
 
     showAdminInterface() {
         const adminBtn = document.getElementById('adminBtn');
-        adminBtn.classList.remove('hidden');
+        if (adminBtn) {
+            adminBtn.classList.remove('hidden');
+        }
     }
 
     hideAdminInterface() {
         const adminBtn = document.getElementById('adminBtn');
-        adminBtn.classList.add('hidden');
+        if (adminBtn) {
+            adminBtn.classList.add('hidden');
+        }
     }
 
     showAuthModal() {
         const modal = document.getElementById('authModal');
-        modal.classList.remove('hidden');
-        document.getElementById('editorPassword').focus();
+        if (modal) {
+            modal.classList.remove('hidden');
+            const passwordInput = document.getElementById('editorPassword');
+            if (passwordInput) {
+                passwordInput.focus();
+            }
+        }
     }
 
     hideAuthModal() {
         const modal = document.getElementById('authModal');
-        modal.classList.add('hidden');
-        document.getElementById('editorPassword').value = '';
+        if (modal) {
+            modal.classList.add('hidden');
+            const passwordInput = document.getElementById('editorPassword');
+            if (passwordInput) {
+                passwordInput.value = '';
+            }
+        }
     }
 
     showAdminPanel() {
         const panel = document.getElementById('adminPanel');
-        panel.classList.remove('hidden');
-        updateAdminTeamsList();
+        if (panel) {
+            panel.classList.remove('hidden');
+            if (window.updateAdminTeamsList) {
+                updateAdminTeamsList();
+            }
+        }
     }
 
     hideAdminPanel() {
         const panel = document.getElementById('adminPanel');
-        panel.classList.add('hidden');
+        if (panel) {
+            panel.classList.add('hidden');
+        }
     }
 }
 
@@ -255,7 +301,9 @@ function getAppState() {
 // Навигация
 function toggleDropdown() {
     const dropdown = document.querySelector('.dropdown');
-    dropdown.classList.toggle('active');
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+    }
 }
 
 function closeAllDropdowns() {
@@ -340,7 +388,7 @@ function createTeamCard(teamId, team) {
         </div>
     `).join('');
     
-    const editButton = securityManager.isAuthenticated ? 
+    const editButton = securityManager && securityManager.isAuthenticated ? 
         `<button class="edit-team-btn" onclick="editTeam('${teamId}')">✏️ Редактировать</button>` : '';
     
     card.innerHTML = `
@@ -417,8 +465,11 @@ function openAdminTab(tabName) {
     });
     
     // Активируем выбранную кнопку и вкладку
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-    document.getElementById(tabName).classList.add('active');
+    const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    const targetPane = document.getElementById(tabName);
+    
+    if (targetBtn) targetBtn.classList.add('active');
+    if (targetPane) targetPane.classList.add('active');
 }
 
 function updateAdminTeamsList() {
@@ -445,8 +496,10 @@ function updateAdminTeamsList() {
 
 // Глобальные функции для вызова из HTML
 window.editTeam = function(teamId) {
-    if (!securityManager.isAuthenticated) {
-        securityManager.showAuthModal();
+    if (!securityManager || !securityManager.isAuthenticated) {
+        if (securityManager) {
+            securityManager.showAuthModal();
+        }
         return;
     }
     
@@ -486,7 +539,7 @@ window.editTeam = function(teamId) {
 };
 
 window.saveTeamChanges = async function() {
-    if (!securityManager.isAuthenticated || !teamsManager) return;
+    if (!securityManager || !securityManager.isAuthenticated || !teamsManager) return;
     
     const teamId = appState.currentEditingTeamId;
     if (!teamId) return;
@@ -531,7 +584,7 @@ window.saveTeamChanges = async function() {
 };
 
 window.updateTeamsCount = async function() {
-    if (!securityManager.isAuthenticated || !teamsManager) return;
+    if (!securityManager || !securityManager.isAuthenticated || !teamsManager) return;
     
     const input = document.getElementById('totalTeams');
     const count = parseInt(input.value) || 4;
@@ -587,12 +640,12 @@ function updateConnectionStatus(connected) {
     
     if (connected) {
         status.classList.remove('hidden');
-        dot.classList.add('connected');
-        text.textContent = 'Подключено к турниру';
+        if (dot) dot.classList.add('connected');
+        if (text) text.textContent = 'Подключено к турниру';
     } else {
         status.classList.remove('hidden');
-        dot.classList.remove('connected');
-        text.textContent = 'Нет подключения';
+        if (dot) dot.classList.remove('connected');
+        if (text) text.textContent = 'Нет подключения';
     }
 }
 
@@ -616,6 +669,11 @@ async function initializeApp() {
         // Настройка обработчиков событий
         setupEventListeners();
         
+        // Инициализация SecurityManager после загрузки DOM
+        setTimeout(() => {
+            securityManager.init();
+        }, 100);
+        
         console.log('✅ Tournament App успешно инициализирован');
         
     } catch (error) {
@@ -624,16 +682,46 @@ async function initializeApp() {
 }
 
 function setupEventListeners() {
+    console.log('🔧 Настройка основных обработчиков событий...');
+    
     // Навигация
-    document.getElementById('teamsDropdownBtn').addEventListener('click', toggleDropdown);
-    document.getElementById('scheduleBtn').addEventListener('click', () => showSection('schedule'));
-    document.getElementById('groupStageBtn').addEventListener('click', () => showSection('groupStage'));
-    document.getElementById('playoffBtn').addEventListener('click', () => showSection('playoff'));
-    document.getElementById('audienceAwardBtn').addEventListener('click', () => showSection('audienceAward'));
+    const teamsDropdownBtn = document.getElementById('teamsDropdownBtn');
+    const scheduleBtn = document.getElementById('scheduleBtn');
+    const groupStageBtn = document.getElementById('groupStageBtn');
+    const playoffBtn = document.getElementById('playoffBtn');
+    const audienceAwardBtn = document.getElementById('audienceAwardBtn');
+    
+    if (teamsDropdownBtn) {
+        teamsDropdownBtn.addEventListener('click', toggleDropdown);
+    }
+    
+    if (scheduleBtn) {
+        scheduleBtn.addEventListener('click', () => showSection('schedule'));
+    }
+    
+    if (groupStageBtn) {
+        groupStageBtn.addEventListener('click', () => showSection('groupStage'));
+    }
+    
+    if (playoffBtn) {
+        playoffBtn.addEventListener('click', () => showSection('playoff'));
+    }
+    
+    if (audienceAwardBtn) {
+        audienceAwardBtn.addEventListener('click', () => showSection('audienceAward'));
+    }
     
     // Закрытие модальных окон
-    document.getElementById('closeEditTeamModal').addEventListener('click', closeEditTeamModal);
-    document.getElementById('cancelEditTeamBtn').addEventListener('click', closeEditTeamModal);
+    const closeEditTeamModalBtn = document.getElementById('closeEditTeamModal');
+    const cancelEditTeamBtn = document.getElementById('cancelEditTeamBtn');
+    
+    if (closeEditTeamModalBtn) {
+        closeEditTeamModalBtn.addEventListener('click', closeEditTeamModal);
+    }
+    
+    if (cancelEditTeamBtn) {
+        cancelEditTeamBtn.addEventListener('click', closeEditTeamModal);
+    }
     
     // Вкладки админки
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -641,6 +729,18 @@ function setupEventListeners() {
             openAdminTab(this.getAttribute('data-tab'));
         });
     });
+    
+    // Кнопки админки
+    const saveTeamBtn = document.getElementById('saveTeamBtn');
+    const applyTeamsCountBtn = document.getElementById('applyTeamsCountBtn');
+    
+    if (saveTeamBtn) {
+        saveTeamBtn.addEventListener('click', window.saveTeamChanges);
+    }
+    
+    if (applyTeamsCountBtn) {
+        applyTeamsCountBtn.addEventListener('click', window.updateTeamsCount);
+    }
     
     // Глобальные обработчики
     document.addEventListener('click', (event) => {
@@ -660,7 +760,37 @@ function setupEventListeners() {
             closeAllModals();
         }
     });
+    
+    console.log('✅ Основные обработчики событий настроены');
+}
+
+// Создание анимированного фона
+function createAnimatedBackground() {
+    const bg = document.getElementById('animatedBg');
+    if (!bg) return;
+    
+    for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        const size = Math.random() * 100 + 50;
+        const left = Math.random() * 100;
+        const animationDuration = Math.random() * 30 + 20;
+        const animationDelay = Math.random() * 10;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${left}%`;
+        particle.style.animationDuration = `${animationDuration}s`;
+        particle.style.animationDelay = `${animationDelay}s`;
+        
+        bg.appendChild(particle);
+    }
 }
 
 // Запуск приложения
-document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM загружен, запуск приложения...');
+    createAnimatedBackground();
+    initializeApp();
+});
