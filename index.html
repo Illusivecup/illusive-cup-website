@@ -240,7 +240,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Число игр:</label>
+                    <label>Формат матча:</label>
                     <select id="newMatchFormat" class="form-input">
                         <option value="bo1">Bo1 (1 победа)</option>
                         <option value="bo3">Bo3 (2 победы)</option>
@@ -358,7 +358,7 @@
                         <button id="selectMatchForVote" class="save-btn">🎯 Выбрать матч</button>
                     </div>
                     
-                    <div id="voteResults" class="hidden">
+                    <div id="voteResults" class="vote-results-section">
                         <h4>Результаты голосования</h4>
                         <div id="voteResultsContent">
                             <!-- Результаты будут отображаться здесь -->
@@ -437,9 +437,35 @@
                         </div>
                     </div>
                 </div>
+                <div class="voting-instructions">
+                    <p>💡 <strong>Как голосовать:</strong> Нажмите на игрока чтобы выбрать/отменить выбор. Для выбранных игроков можно указать причину выбора.</p>
+                </div>
                 <div class="form-actions">
                     <button id="submitVote" class="save-btn">✅ Отправить голос</button>
                     <button id="cancelVote" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования голосования -->
+    <div id="editVoteModal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>✏️ Редактирование голосования</h2>
+                <button class="close-modal" id="closeEditVoteModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="editVoteInfo" class="match-info"></div>
+                <div class="existing-votes-container">
+                    <h4>Текущие голоса:</h4>
+                    <div id="existingVotesList">
+                        <!-- Существующие голоса будут здесь -->
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="deleteAllVotesBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить все голоса за этот матч</button>
+                    <button id="closeEditVoteBtn" class="cancel-btn">❌ Закрыть</button>
                 </div>
             </div>
         </div>

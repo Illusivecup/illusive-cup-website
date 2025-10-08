@@ -334,7 +334,7 @@ class TeamsManager {
     }
 }
 
-// === МЕНЕДЖЕР МАТЧЕЙ (ОБНОВЛЕННЫЙ) ===
+// === МЕНЕДЖЕР МАТЧЕЙ ===
 class MatchManager {
     constructor(database) {
         this.database = database;
@@ -367,10 +367,9 @@ class MatchManager {
         this.updateCompletedMatches();
     }
 
-    // НОВАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЗАВЕРШЕННОСТИ МАТЧА
     isMatchCompleted(match) {
         if (!match.format) {
-            match.format = 'bo1'; // Формат по умолчанию
+            match.format = 'bo1';
         }
 
         const score1 = parseInt(match.score1) || 0;
@@ -378,13 +377,10 @@ class MatchManager {
 
         switch (match.format) {
             case 'bo1':
-                // Bo1 завершен, если одна из команд выиграла 1 карту
                 return score1 >= 1 || score2 >= 1;
             case 'bo3':
-                // Bo3 завершен, если одна из команд выиграла 2 карты
                 return score1 >= 2 || score2 >= 2;
             case 'bo5':
-                // Bo5 завершен, если одна из команд выиграла 3 карты
                 return score1 >= 3 || score2 >= 3;
             default:
                 return score1 >= 1 || score2 >= 1;
@@ -425,7 +421,6 @@ class MatchManager {
         const container = document.getElementById('groupStageContainer');
         if (!container) return;
 
-        // Фильтруем только групповые матчи
         const groupMatches = Object.values(this.matches).filter(match => 
             match.stage === 'group'
         );
@@ -438,7 +433,6 @@ class MatchManager {
         const standings = {};
         const teams = teamsManager ? teamsManager.getAllTeams() : {};
 
-        // Инициализируем только существующие команды
         Object.keys(teams).forEach(teamId => {
             const team = teams[teamId];
             if (team && team.name) {
@@ -453,7 +447,6 @@ class MatchManager {
             }
         });
 
-        // Обрабатываем завершенные матчи группового этапа
         matches.forEach(match => {
             if (!this.isMatchCompleted(match)) return;
             
@@ -462,7 +455,6 @@ class MatchManager {
             
             if (!team1Exists || !team2Exists) return;
 
-            // Инициализируем команды, если их нет в standings
             if (!standings[match.team1Id]) {
                 standings[match.team1Id] = {
                     teamId: match.team1Id,
@@ -496,14 +488,9 @@ class MatchManager {
                 standings[match.team2Id].wins++;
                 standings[match.team2Id].points += 3;
                 standings[match.team1Id].losses++;
-            } else {
-                // Ничья (если возможно в будущем)
-                standings[match.team1Id].points += 1;
-                standings[match.team2Id].points += 1;
             }
         });
 
-        // Фильтруем только команды, которые есть в standings
         const validStandings = Object.values(standings).filter(team => 
             team && team.teamName
         );
@@ -520,7 +507,6 @@ class MatchManager {
             return '<div class="no-data">Нет данных о матчах группового этапа</div>';
         }
 
-        // Находим минимальное и максимальное количество очков
         const points = standings.map(team => team.points);
         const minPoints = Math.min(...points);
         const maxPoints = Math.max(...points);
@@ -540,24 +526,21 @@ class MatchManager {
                     </thead>
                     <tbody>
                         ${standings.map((team, index) => {
-                            // Рассчитываем цвет на основе позиции в таблице
-                            let backgroundColor = '#ff4444'; // Красный по умолчанию
+                            let backgroundColor = '#ff4444';
                             
                             if (maxPoints !== minPoints) {
                                 const position = (team.points - minPoints) / (maxPoints - minPoints);
                                 if (position === 0) {
-                                    backgroundColor = '#ff4444'; // Красный для последнего
+                                    backgroundColor = '#ff4444';
                                 } else if (position === 1) {
-                                    backgroundColor = '#4CAF50'; // Зеленый для первого
+                                    backgroundColor = '#4CAF50';
                                 } else {
-                                    // Оранжевый градиент для средних позиций
                                     const r = Math.round(255 * (1 - position) + 255 * position);
                                     const g = Math.round(68 * (1 - position) + 175 * position);
                                     const b = Math.round(68 * (1 - position) + 80 * position);
                                     backgroundColor = `rgb(${r}, ${g}, ${b})`;
                                 }
                             } else {
-                                // Если у всех одинаковое количество очков
                                 backgroundColor = '#FF9800';
                             }
                             
@@ -640,7 +623,6 @@ class MatchManager {
     createPlayoffMatchCard(match) {
         const isCompleted = this.isMatchCompleted(match);
         const currentFormat = match.format || 'bo1';
-        const requiredWins = this.getRequiredWins(currentFormat);
         const winner = this.getMatchWinner(match);
         const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
         const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
@@ -696,12 +678,10 @@ class MatchManager {
         const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
         const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
         
-        // Определяем победителя и проигравшего
         const winner = this.getMatchWinner(match);
         const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
         const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
         
-        // Если команды удалены, показываем сообщение
         if (!team1Exists || !team2Exists) {
             return `
                 <div class="match-card deleted" data-match-id="${matchId}">
@@ -764,7 +744,6 @@ class MatchManager {
         matchData.createdAt = Date.now();
         matchData.updatedAt = Date.now();
         
-        // Устанавливаем формат по умолчанию, если не указан
         if (!matchData.format) {
             matchData.format = 'bo1';
         }
@@ -813,7 +792,6 @@ class MatchManager {
 
         await this.database.ref(`matches/${matchId}`).update(updateData);
         
-        // Автоматически обновляем UI
         this.updateMatchUI();
     }
 
@@ -838,6 +816,7 @@ class VotingSystem {
             this.votes = snapshot.val() || {};
             console.log('📥 Обновлены данные голосов:', this.votes);
             this.updateVoteResults();
+            updateAudienceAwardsDisplay();
         });
     }
 
@@ -850,7 +829,6 @@ class VotingSystem {
             return;
         }
 
-        // Группируем голоса по матчам и игрокам
         const matchVotes = {};
         
         Object.values(this.votes).forEach(vote => {
@@ -883,6 +861,10 @@ class VotingSystem {
                     <div class="vote-match-header">
                         <h4>${matchData.matchInfo.team1Name} vs ${matchData.matchInfo.team2Name}</h4>
                         <div class="vote-match-score">${matchData.matchInfo.score}</div>
+                        <div class="vote-actions">
+                            <button class="edit-vote-btn" onclick="editVote('${matchId}')">✏️ Редактировать</button>
+                            <button class="delete-vote-btn" onclick="deleteVote('${matchId}')">🗑️ Удалить</button>
+                        </div>
                     </div>
                     <div class="vote-players">
                         ${topPlayers.map(player => `
@@ -900,13 +882,15 @@ class VotingSystem {
 
     async submitVote(matchId, selectedPlayers) {
         const voteId = `vote_${Date.now()}`;
+        
+        const match = matchManager.getMatch(matchId);
         const voteData = {
             matchId: matchId,
             matchInfo: {
-                team1Name: selectedPlayers[0]?.teamName || '',
-                team2Name: selectedPlayers[1]?.teamName || '',
-                score: '0:0', // Можно добавить реальный счет из матча
-                time: new Date().toLocaleString('ru-RU')
+                team1Name: match.team1Name,
+                team2Name: match.team2Name,
+                score: `${match.score1 || 0}:${match.score2 || 0}`,
+                time: match.time || new Date().toLocaleString('ru-RU')
             },
             selectedPlayers: selectedPlayers,
             timestamp: Date.now()
@@ -915,9 +899,365 @@ class VotingSystem {
         await this.database.ref(`audienceAwards/votes/${voteId}`).set(voteData);
         return voteId;
     }
+
+    async deleteVote(matchId) {
+        if (!confirm('❌ Вы уверены, что хотите удалить все голоса за этот матч? Это действие нельзя отменить.')) {
+            return;
+        }
+        
+        try {
+            const votesToDelete = [];
+            Object.entries(this.votes).forEach(([voteId, vote]) => {
+                if (vote.matchId === matchId) {
+                    votesToDelete.push(voteId);
+                }
+            });
+            
+            for (const voteId of votesToDelete) {
+                await this.database.ref(`audienceAwards/votes/${voteId}`).remove();
+            }
+            
+            console.log('✅ Голоса удалены:', votesToDelete.length);
+            alert(`✅ Удалено ${votesToDelete.length} голосов за матч`);
+            
+        } catch (error) {
+            console.error('❌ Ошибка удаления голосов:', error);
+            alert('❌ Ошибка удаления голосов');
+        }
+    }
+
+    async editVote(matchId) {
+        showEditVoteModal(matchId);
+    }
 }
 
-// === ПРОСТОЕ УПРАВЛЕНИЕ СОСТОЯНИЕМ ===
+// === ФУНКЦИИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ ===
+function populateVoteMatchSelect() {
+    const select = document.getElementById('voteMatchSelect');
+    if (!select || !matchManager) return;
+    
+    select.innerHTML = '<option value="">-- Выберите матч --</option>';
+    
+    const matches = matchManager.matches;
+    const teams = teamsManager.getAllTeams();
+    
+    Object.entries(matches).forEach(([matchId, match]) => {
+        const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
+        const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+        
+        if (team1Exists && team2Exists) {
+            const option = document.createElement('option');
+            option.value = matchId;
+            option.textContent = `${match.team1Name} vs ${match.team2Name} - ${match.time || 'Время не указано'} - ${match.score1 || 0}:${match.score2 || 0}`;
+            select.appendChild(option);
+        }
+    });
+}
+
+function showVotingModal(matchId) {
+    const match = matchManager.getMatch(matchId);
+    if (!match) return;
+    
+    const teams = teamsManager.getAllTeams();
+    const team1 = teams[match.team1Id];
+    const team2 = teams[match.team2Id];
+    
+    if (!team1 || !team2) {
+        alert('❌ Не удалось загрузить данные команд');
+        return;
+    }
+    
+    window.currentVotingMatchId = matchId;
+    
+    const matchInfo = document.getElementById('votingMatchInfo');
+    matchInfo.innerHTML = `
+        <div class="match-teams">
+            <div class="team-name">${match.team1Name}</div>
+            <div class="vs">vs</div>
+            <div class="team-name">${match.team2Name}</div>
+        </div>
+        <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+        <div class="match-stage">${matchManager.getStageName(match.stage)}</div>
+        ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
+    `;
+    
+    const team1Column = document.getElementById('team1Voting');
+    team1Column.innerHTML = `
+        <h3>${match.team1Name}</h3>
+        ${team1.players.map((player, index) => `
+            <div class="player-vote-item" data-team="team1" data-player-index="${index}">
+                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
+                <div class="player-vote-name">${player.name}</div>
+                <div class="player-vote-role">${player.role}</div>
+                <div class="reason-input-container hidden">
+                    <textarea class="reason-input" placeholder="Почему вы выбрали этого игрока? (необязательно)" rows="3"></textarea>
+                </div>
+            </div>
+        `).join('')}
+    `;
+    
+    const team2Column = document.getElementById('team2Voting');
+    team2Column.innerHTML = `
+        <h3>${match.team2Name}</h3>
+        ${team2.players.map((player, index) => `
+            <div class="player-vote-item" data-team="team2" data-player-index="${index}">
+                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
+                <div class="player-vote-name">${player.name}</div>
+                <div class="player-vote-role">${player.role}</div>
+                <div class="reason-input-container hidden">
+                    <textarea class="reason-input" placeholder="Почему вы выбрали этого игрока? (необязательно)" rows="3"></textarea>
+                </div>
+            </div>
+        `).join('')}
+    `;
+    
+    document.querySelectorAll('.player-vote-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (e.target.classList.contains('reason-input')) return;
+            
+            e.stopPropagation();
+            const wasSelected = this.classList.contains('selected');
+            
+            if (!wasSelected) {
+                this.classList.add('selected');
+                this.querySelector('.reason-input-container').classList.remove('hidden');
+                this.querySelector('.reason-input').focus();
+            } else {
+                this.classList.remove('selected');
+                this.querySelector('.reason-input-container').classList.add('hidden');
+                this.querySelector('.reason-input').value = '';
+            }
+        });
+        
+        let tapTimer;
+        
+        item.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+            tapTimer = setTimeout(() => {
+                this.classList.add('touch-active');
+            }, 300);
+        });
+        
+        item.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+            clearTimeout(tapTimer);
+            setTimeout(() => {
+                this.classList.remove('touch-active');
+            }, 1000);
+        });
+        
+        item.addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+            clearTimeout(tapTimer);
+            this.classList.remove('touch-active');
+        });
+    });
+    
+    document.getElementById('votingModal').classList.remove('hidden');
+}
+
+async function submitVote() {
+    const selectedPlayers = document.querySelectorAll('.player-vote-item.selected');
+    const matchId = window.currentVotingMatchId;
+    
+    if (selectedPlayers.length === 0) {
+        alert('❌ Выберите хотя бы одного игрока');
+        return;
+    }
+    
+    const match = matchManager.getMatch(matchId);
+    const teams = teamsManager.getAllTeams();
+    
+    const votes = Array.from(selectedPlayers).map(player => {
+        const team = player.getAttribute('data-team');
+        const playerIndex = parseInt(player.getAttribute('data-player-index'));
+        const teamData = team === 'team1' ? teams[match.team1Id] : teams[match.team2Id];
+        const playerData = teamData.players[playerIndex];
+        const reason = player.querySelector('.reason-input').value.trim();
+        
+        return {
+            teamId: team === 'team1' ? match.team1Id : match.team2Id,
+            teamName: team === 'team1' ? match.team1Name : match.team2Name,
+            playerName: playerData.name,
+            playerRole: playerData.role,
+            reason: reason || ''
+        };
+    });
+    
+    try {
+        await votingSystem.submitVote(matchId, votes);
+        closeVotingModal();
+        alert('✅ Ваш голос успешно отправлен!');
+        updateAudienceAwardsDisplay();
+        
+    } catch (error) {
+        console.error('❌ Ошибка отправки голоса:', error);
+        alert('❌ Ошибка отправки голоса');
+    }
+}
+
+function closeVotingModal() {
+    document.getElementById('votingModal').classList.add('hidden');
+    window.currentVotingMatchId = null;
+    
+    document.querySelectorAll('.player-vote-item').forEach(item => {
+        item.classList.remove('selected');
+        item.classList.remove('touch-active');
+        item.querySelector('.reason-input-container').classList.add('hidden');
+        item.querySelector('.reason-input').value = '';
+    });
+}
+
+function showEditVoteModal(matchId) {
+    const match = matchManager.getMatch(matchId);
+    if (!match) return;
+    
+    const existingVotes = Object.values(votingSystem.votes).filter(vote => vote.matchId === matchId);
+    
+    const matchInfo = document.getElementById('editVoteInfo');
+    matchInfo.innerHTML = `
+        <div class="match-teams">
+            <div class="team-name">${match.team1Name}</div>
+            <div class="vs">vs</div>
+            <div class="team-name">${match.team2Name}</div>
+        </div>
+        <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+        <div class="total-votes">Всего голосов: ${existingVotes.length}</div>
+    `;
+    
+    const votesList = document.getElementById('existingVotesList');
+    if (existingVotes.length === 0) {
+        votesList.innerHTML = '<div class="no-data">Нет голосов за этот матч</div>';
+    } else {
+        votesList.innerHTML = existingVotes.map((vote, index) => `
+            <div class="existing-vote-item">
+                <div class="vote-header">
+                    <strong>Голос #${index + 1}</strong>
+                    <span class="vote-time">${new Date(vote.timestamp).toLocaleString('ru-RU')}</span>
+                </div>
+                <div class="vote-players">
+                    ${vote.selectedPlayers.map(player => `
+                        <div class="voted-player">
+                            <span class="player-name">${player.playerName}</span>
+                            <span class="player-team">(${player.teamName})</span>
+                            ${player.reason ? `<div class="player-reason">Причина: ${player.reason}</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    document.getElementById('deleteAllVotesBtn').onclick = () => {
+        votingSystem.deleteVote(matchId);
+        closeEditVoteModal();
+    };
+    
+    document.getElementById('editVoteModal').classList.remove('hidden');
+}
+
+function closeEditVoteModal() {
+    document.getElementById('editVoteModal').classList.add('hidden');
+}
+
+// Глобальные функции для управления голосованием
+window.deleteVote = function(matchId) {
+    if (votingSystem) {
+        votingSystem.deleteVote(matchId);
+    }
+};
+
+window.editVote = function(matchId) {
+    if (votingSystem) {
+        votingSystem.editVote(matchId);
+    }
+};
+
+async function updateAudienceAwardsDisplay() {
+    const container = document.getElementById('audienceAwardsContent');
+    if (!container) return;
+    
+    try {
+        const snapshot = await database.ref('audienceAwards/votes').once('value');
+        const votes = snapshot.val() || {};
+        
+        if (Object.keys(votes).length === 0) {
+            container.innerHTML = '<div class="no-data">Пока нет голосов от зрителей</div>';
+            return;
+        }
+        
+        const matchesVotes = {};
+        Object.values(votes).forEach(vote => {
+            if (!matchesVotes[vote.matchId]) {
+                matchesVotes[vote.matchId] = {
+                    matchInfo: vote.matchInfo,
+                    players: {}
+                };
+            }
+            
+            vote.selectedPlayers.forEach(player => {
+                const playerKey = `${player.teamId}_${player.playerName}`;
+                if (!matchesVotes[vote.matchId].players[playerKey]) {
+                    matchesVotes[vote.matchId].players[playerKey] = {
+                        ...player,
+                        votes: 0,
+                        reasons: []
+                    };
+                }
+                matchesVotes[vote.matchId].players[playerKey].votes++;
+                if (player.reason) {
+                    matchesVotes[vote.matchId].players[playerKey].reasons.push(player.reason);
+                }
+            });
+        });
+        
+        container.innerHTML = Object.entries(matchesVotes).map(([matchId, matchData]) => {
+            const topPlayers = Object.values(matchData.players)
+                .sort((a, b) => b.votes - a.votes)
+                .slice(0, 3);
+
+            return `
+                <div class="award-match-card">
+                    <div class="award-match-header">
+                        <h3>${matchData.matchInfo.team1Name} vs ${matchData.matchInfo.team2Name}</h3>
+                        <div class="award-match-score">${matchData.matchInfo.score}</div>
+                        <div class="award-match-time">${matchData.matchInfo.time}</div>
+                        ${securityManager && securityManager.isAuthenticated ? `
+                            <div class="award-actions">
+                                <button class="edit-btn" onclick="editVote('${matchId}')">✏️ Редактировать</button>
+                                <button class="delete-btn" onclick="deleteVote('${matchId}')">🗑️ Удалить</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="award-players">
+                        ${topPlayers.map(player => `
+                            <div class="award-player-card ${player.votes === Math.max(...topPlayers.map(p => p.votes)) ? 'top-player' : ''}">
+                                <div class="player-award-name">${player.playerName}</div>
+                                <div class="player-award-role">${player.playerRole}</div>
+                                <div class="player-award-team">${player.teamName}</div>
+                                <div class="player-award-votes">❤️ ${player.votes} голосов</div>
+                                ${player.reasons && player.reasons.length > 0 ? `
+                                    <div class="player-reasons">
+                                        <strong>Причины выбора:</strong>
+                                        <ul>
+                                            ${player.reasons.map(reason => reason ? `<li>${reason}</li>` : '').join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('❌ Ошибка загрузки голосов:', error);
+        container.innerHTML = '<div class="no-data">Ошибка загрузки голосов</div>';
+    }
+}
+
+// === ОСТАЛЬНЫЕ ФУНКЦИИ (сокращенно для экономии места) ===
 const appState = {
     currentEditingTeamId: null,
     currentDisplayedTeamId: null,
@@ -928,9 +1268,6 @@ function getAppState() {
     return appState;
 }
 
-// === ОСНОВНЫЕ ФУНКЦИИ ИНТЕРФЕЙСА ===
-
-// Навигация
 function toggleDropdown() {
     const dropdown = document.querySelector('.dropdown');
     if (dropdown) {
@@ -957,7 +1294,6 @@ function showSection(sectionName) {
     appState.currentDisplayedTeamId = null;
 }
 
-// Отображение данных
 function updateTeamsDropdown() {
     const dropdown = document.getElementById('teamsDropdown');
     if (!dropdown || !teamsManager) return;
@@ -1067,7 +1403,6 @@ function createTeamCard(teamId, team) {
     return card;
 }
 
-// Модальные окна
 function closeAllModals() {
     document.querySelectorAll('.modal').forEach(modal => {
         modal.classList.add('hidden');
@@ -1079,7 +1414,6 @@ function closeEditTeamModal() {
     appState.currentEditingTeamId = null;
 }
 
-// Админ-панель
 function openAdminTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -1118,7 +1452,6 @@ function updateAdminTeamsList() {
     });
 }
 
-// Глобальные функции для вызова из HTML
 window.editTeam = function(teamId) {
     console.log('✏️ Редактирование команды:', teamId);
     if (!securityManager || !securityManager.isAuthenticated) {
@@ -1256,7 +1589,6 @@ window.updateTeamsCount = async function() {
     }
 };
 
-// Функции для работы с матчами
 function showAddMatchModal() {
     if (!securityManager || !securityManager.isAuthenticated) {
         securityManager.showAuthModal();
@@ -1382,7 +1714,6 @@ function closeAddMatchModal() {
     }
 }
 
-// Функции для редактирования результатов матчей
 function setupMatchEditing() {
     document.addEventListener('click', (e) => {
         const matchCard = e.target.closest('.match-card');
@@ -1395,7 +1726,6 @@ function setupMatchEditing() {
                 const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
                 
                 if (!team1Exists || !team2Exists) {
-                    // Показываем подтверждение удаления для матчей с удаленными командами
                     if (confirm('🗑️ Этот матч содержит удаленные команды. Хотите удалить этот матч?')) {
                         matchManager.deleteMatch(matchId);
                     }
@@ -1420,7 +1750,6 @@ function showEditMatchResultModal(matchId) {
     const match = matchManager.getMatch(matchId);
     if (!match) return;
     
-    // Проверяем существование команд
     const teams = teamsManager ? teamsManager.getAllTeams() : {};
     const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
     const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
@@ -1443,7 +1772,6 @@ function showEditMatchResultModal(matchId) {
     score1Input.value = match.score1 || 0;
     score2Input.value = match.score2 || 0;
     
-    // Заполняем выпадающий список формата
     if (formatSelect) {
         formatSelect.innerHTML = `
             <option value="bo1" ${match.format === 'bo1' ? 'selected' : ''}>Bo1 (1 победа)</option>
@@ -1452,7 +1780,6 @@ function showEditMatchResultModal(matchId) {
         `;
     }
     
-    // Настраиваем кнопку удаления
     if (deleteMatchBtn) {
         deleteMatchBtn.onclick = () => {
             if (matchManager) {
@@ -1487,14 +1814,12 @@ async function saveMatchResult() {
         return;
     }
     
-    // Проверяем, что счет соответствует формату
     const requiredWins = matchManager.getRequiredWins(format);
     if (score1 > requiredWins || score2 > requiredWins) {
         alert(`❌ Счет не может превышать ${requiredWins} для формата ${matchManager.getFormatName(format)}`);
         return;
     }
     
-    // Проверяем, что только одна команда может иметь необходимое количество побед
     if ((score1 >= requiredWins && score2 >= requiredWins) || (score1 === requiredWins && score2 === requiredWins)) {
         alert(`❌ Только одна команда может иметь ${requiredWins} побед в формате ${matchManager.getFormatName(format)}`);
         return;
@@ -1505,7 +1830,6 @@ async function saveMatchResult() {
         closeEditMatchResultModal();
         alert('✅ Результат матча сохранен!');
         
-        // Принудительное обновление UI
         if (matchManager.updateMatchUI) {
             matchManager.updateMatchUI();
         }
@@ -1523,255 +1847,10 @@ function closeEditMatchResultModal() {
     }
 }
 
-// === ФУНКЦИИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ ===
-
-// Функция для заполнения списка матчей для голосования
-function populateVoteMatchSelect() {
-    const select = document.getElementById('voteMatchSelect');
-    if (!select || !matchManager) return;
-    
-    select.innerHTML = '<option value="">-- Выберите матч --</option>';
-    
-    const matches = matchManager.matches;
-    const teams = teamsManager.getAllTeams();
-    
-    Object.entries(matches).forEach(([matchId, match]) => {
-        // Проверяем, что обе команды существуют
-        const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
-        const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
-        
-        if (team1Exists && team2Exists) {
-            const option = document.createElement('option');
-            option.value = matchId;
-            option.textContent = `${match.team1Name} vs ${match.team2Name} - ${match.time || 'Время не указано'} - ${match.score1 || 0}:${match.score2 || 0}`;
-            select.appendChild(option);
-        }
-    });
-}
-
-// Функция для показа модального окна голосования
-function showVotingModal(matchId) {
-    const match = matchManager.getMatch(matchId);
-    if (!match) return;
-    
-    const teams = teamsManager.getAllTeams();
-    const team1 = teams[match.team1Id];
-    const team2 = teams[match.team2Id];
-    
-    if (!team1 || !team2) {
-        alert('❌ Не удалось загрузить данные команд');
-        return;
-    }
-    
-    // Обновляем информацию о матче
-    const matchInfo = document.getElementById('votingMatchInfo');
-    matchInfo.innerHTML = `
-        <div class="match-teams">
-            <div class="team-name">${match.team1Name}</div>
-            <div class="vs">vs</div>
-            <div class="team-name">${match.team2Name}</div>
-        </div>
-        <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
-        <div class="match-stage">${matchManager.getStageName(match.stage)}</div>
-        ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
-    `;
-    
-    // Заполняем игроков команды 1 с MMR
-    const team1Column = document.getElementById('team1Voting');
-    team1Column.innerHTML = `
-        <h3>${match.team1Name}</h3>
-        ${team1.players.map((player, index) => `
-            <div class="player-vote-item" data-team="team1" data-player-index="${index}">
-                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
-                <div class="player-vote-name">${player.name}</div>
-                <div class="player-vote-role">${player.role}</div>
-            </div>
-        `).join('')}
-    `;
-    
-    // Заполняем игроков команды 2 с MMR
-    const team2Column = document.getElementById('team2Voting');
-    team2Column.innerHTML = `
-        <h3>${match.team2Name}</h3>
-        ${team2.players.map((player, index) => `
-            <div class="player-vote-item" data-team="team2" data-player-index="${index}">
-                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
-                <div class="player-vote-name">${player.name}</div>
-                <div class="player-vote-role">${player.role}</div>
-            </div>
-        `).join('')}
-    `;
-    
-    // Добавляем обработчики выбора игроков
-    document.querySelectorAll('.player-vote-item').forEach(item => {
-        // Обработчик клика для выбора/снятия выбора
-        item.addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('selected');
-        });
-        
-        // Обработчик для показа MMR на мобильных (тап и удержание)
-        let tapTimer;
-        
-        item.addEventListener('touchstart', function(e) {
-            e.stopPropagation();
-            tapTimer = setTimeout(() => {
-                this.classList.add('touch-active');
-            }, 300); // Показываем MMR после 300ms удержания
-        });
-        
-        item.addEventListener('touchend', function(e) {
-            e.stopPropagation();
-            clearTimeout(tapTimer);
-            setTimeout(() => {
-                this.classList.remove('touch-active');
-            }, 1000); // Скрываем MMR через 1 секунду
-        });
-        
-        item.addEventListener('touchmove', function(e) {
-            e.stopPropagation();
-            clearTimeout(tapTimer);
-            this.classList.remove('touch-active');
-        });
-    });
-    
-    // Закрытие MMR при тапе вне карточки
-    document.addEventListener('touchstart', function() {
-        document.querySelectorAll('.player-vote-item').forEach(item => {
-            item.classList.remove('touch-active');
-        });
-    });
-    
-    // Показываем модальное окно
-    document.getElementById('votingModal').classList.remove('hidden');
-    window.currentVotingMatchId = matchId;
-}
-
-// Функция для отправки голоса
-async function submitVote() {
-    const selectedPlayers = document.querySelectorAll('.player-vote-item.selected');
-    const matchId = window.currentVotingMatchId;
-    
-    if (selectedPlayers.length === 0) {
-        alert('❌ Выберите хотя бы одного игрока');
-        return;
-    }
-    
-    const match = matchManager.getMatch(matchId);
-    const teams = teamsManager.getAllTeams();
-    
-    const votes = Array.from(selectedPlayers).map(player => {
-        const team = player.getAttribute('data-team');
-        const playerIndex = parseInt(player.getAttribute('data-player-index'));
-        const teamData = team === 'team1' ? teams[match.team1Id] : teams[match.team2Id];
-        const playerData = teamData.players[playerIndex];
-        
-        return {
-            teamId: team === 'team1' ? match.team1Id : match.team2Id,
-            teamName: team === 'team1' ? match.team1Name : match.team2Name,
-            playerName: playerData.name,
-            playerRole: playerData.role
-        };
-    });
-    
-    try {
-        await votingSystem.submitVote(matchId, votes);
-        closeVotingModal();
-        alert('✅ Ваш голос успешно отправлен!');
-        updateAudienceAwardsDisplay();
-        
-    } catch (error) {
-        console.error('❌ Ошибка отправки голоса:', error);
-        alert('❌ Ошибка отправки голоса');
-    }
-}
-
-// Функция для закрытия модального окна голосования
-function closeVotingModal() {
-    document.getElementById('votingModal').classList.add('hidden');
-    window.currentVotingMatchId = null;
-    
-    // Сбрасываем выбор игроков
-    document.querySelectorAll('.player-vote-item').forEach(item => {
-        item.classList.remove('selected');
-        item.classList.remove('touch-active');
-    });
-}
-
-// Функция для обновления отображения приза зрительских симпатий
-async function updateAudienceAwardsDisplay() {
-    const container = document.getElementById('audienceAwardsContent');
-    if (!container) return;
-    
-    try {
-        const snapshot = await database.ref('audienceAwards/votes').once('value');
-        const votes = snapshot.val() || {};
-        
-        if (Object.keys(votes).length === 0) {
-            container.innerHTML = '<div class="no-data">Пока нет голосов от зрителей</div>';
-            return;
-        }
-        
-        // Группируем голоса по матчам
-        const matchesVotes = {};
-        Object.values(votes).forEach(vote => {
-            if (!matchesVotes[vote.matchId]) {
-                matchesVotes[vote.matchId] = {
-                    matchInfo: vote.matchInfo,
-                    players: {}
-                };
-            }
-            
-            vote.selectedPlayers.forEach(player => {
-                const playerKey = `${player.teamId}_${player.playerName}`;
-                if (!matchesVotes[vote.matchId].players[playerKey]) {
-                    matchesVotes[vote.matchId].players[playerKey] = {
-                        ...player,
-                        votes: 0
-                    };
-                }
-                matchesVotes[vote.matchId].players[playerKey].votes++;
-            });
-        });
-        
-        container.innerHTML = Object.entries(matchesVotes).map(([matchId, matchData]) => {
-            const topPlayers = Object.values(matchData.players)
-                .sort((a, b) => b.votes - a.votes)
-                .slice(0, 3); // Топ-3 игрока
-            
-            return `
-                <div class="award-match-card">
-                    <div class="award-match-header">
-                        <h3>${matchData.matchInfo.team1Name} vs ${matchData.matchInfo.team2Name}</h3>
-                        <div class="award-match-score">${matchData.matchInfo.score}</div>
-                        <div class="award-match-time">${matchData.matchInfo.time}</div>
-                    </div>
-                    <div class="award-players">
-                        ${topPlayers.map(player => `
-                            <div class="award-player-card ${player.votes === Math.max(...topPlayers.map(p => p.votes)) ? 'top-player' : ''}">
-                                <div class="player-award-name">${player.playerName}</div>
-                                <div class="player-award-role">${player.playerRole}</div>
-                                <div class="player-award-team">${player.teamName}</div>
-                                <div class="player-award-votes">❤️ ${player.votes} голосов</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-    } catch (error) {
-        console.error('❌ Ошибка загрузки голосов:', error);
-        container.innerHTML = '<div class="no-data">Ошибка загрузки голосов</div>';
-    }
-}
-
-// Утилиты
 function updateConnectionStatus(connected) {
     const status = document.getElementById('connectionStatus');
     if (!status) return;
     
-    // Показываем статус только авторизованным пользователям
     const isAuthorized = securityManager && securityManager.isAuthenticated;
     
     if (!isAuthorized) {
@@ -1793,7 +1872,6 @@ function updateConnectionStatus(connected) {
     }
 }
 
-// Инициализация приложения
 async function initializeApp() {
     try {
         console.log('🚀 Инициализация Tournament App...');
@@ -1818,13 +1896,10 @@ async function initializeApp() {
         
         securityManager.init();
         
-        // Инициализируем статус подключения (скрыт для неавторизованных)
         updateConnectionStatus(true);
         
-        // Заполняем список матчей для голосования
         populateVoteMatchSelect();
         
-        // Обновляем отображение приза зрительских симпатий
         updateAudienceAwardsDisplay();
         
         console.log('✅ Tournament App успешно инициализирован');
@@ -1940,11 +2015,12 @@ function setupEventListeners() {
         closeEditMatchResultModal.addEventListener('click', closeEditMatchResultModal);
     }
     
-    // Обработчики для системы голосования
     const selectMatchForVote = document.getElementById('selectMatchForVote');
     const closeVotingModal = document.getElementById('closeVotingModal');
     const cancelVote = document.getElementById('cancelVote');
     const submitVoteBtn = document.getElementById('submitVote');
+    const closeEditVoteModal = document.getElementById('closeEditVoteModal');
+    const closeEditVoteBtn = document.getElementById('closeEditVoteBtn');
     
     if (selectMatchForVote) {
         selectMatchForVote.addEventListener('click', function() {
@@ -1972,6 +2048,14 @@ function setupEventListeners() {
         submitVoteBtn.addEventListener('click', submitVote);
     }
     
+    if (closeEditVoteModal) {
+        closeEditVoteModal.addEventListener('click', closeEditVoteModal);
+    }
+    
+    if (closeEditVoteBtn) {
+        closeEditVoteBtn.addEventListener('click', closeEditVoteModal);
+    }
+    
     document.addEventListener('click', (event) => {
         if (event.target.classList.contains('modal')) {
             event.target.classList.add('hidden');
@@ -1991,7 +2075,6 @@ function setupEventListeners() {
     console.log('✅ Основные обработчики событий настроены');
 }
 
-// Создание анимированного фона
 function createAnimatedBackground() {
     const bg = document.getElementById('animatedBg');
     if (!bg) return;
@@ -2015,7 +2098,6 @@ function createAnimatedBackground() {
     }
 }
 
-// Запуск приложения
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM загружен, запуск приложения...');
     createAnimatedBackground();
