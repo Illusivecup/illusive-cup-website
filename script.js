@@ -46,6 +46,7 @@ function initializeEventListeners() {
     document.getElementById('groupStageBtn').addEventListener('click', showGroupStage);
     document.getElementById('bracketBtn').addEventListener('click', showBracket);
     document.getElementById('scheduleBtn').addEventListener('click', showSchedule);
+    document.getElementById('audienceAwardBtn').addEventListener('click', showAudienceAward);
     
     // Кнопки модальных окон
     document.getElementById('closeEditTeamModal').addEventListener('click', closeEditTeamModal);
@@ -159,6 +160,15 @@ function setupRealTimeListeners() {
     }, (error) => {
         console.error('❌ Ошибка загрузки турнирных данных:', error);
     });
+
+    // Слушатель для приза зрительских симпатий
+    database.ref('audienceAwards').on('value', (snapshot) => {
+        const awardsData = snapshot.val();
+        console.log('📥 Загружены данные приза:', awardsData);
+        displayAudienceAwards(awardsData);
+    }, (error) => {
+        console.error('❌ Ошибка загрузки приза:', error);
+    });
 }
 
 // === СОЗДАНИЕ ДЕМО-ДАННЫХ ===
@@ -187,28 +197,6 @@ function createDemoData() {
                 { name: "DEM", role: "Саппорт 4", mmr: 2900 },
                 { name: "ДИКИЙ ОГУРЕЦ", role: "Саппорт", mmr: 2800 }
             ]
-        },
-        team3: {
-            name: "Команда 3",
-            slogan: "",
-            players: [
-                { name: "Игрок 1", role: "Керри", mmr: 3000 },
-                { name: "Игрок 2", role: "Мидер", mmr: 3000 },
-                { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
-                { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
-                { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
-            ]
-        },
-        team4: {
-            name: "Команда 4",
-            slogan: "",
-            players: [
-                { name: "Игрок 1", role: "Керри", mmr: 3000 },
-                { name: "Игрок 2", role: "Мидер", mmr: 3000 },
-                { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
-                { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
-                { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
-            ]
         }
     };
 
@@ -226,14 +214,14 @@ function createDemoData() {
     // Создаем демо-сетку
     const demoBracket = {
         quarterfinals: [
-            { team1: "1 место группы", team2: "4 место группы", score1: null, score2: null },
-            { team1: "2 место группы", team2: "3 место группы", score1: null, score2: null }
+            { team1: "", team2: "", score1: null, score2: null },
+            { team1: "", team2: "", score1: null, score2: null }
         ],
         semifinals: [
-            { team1: "Победитель 1/4", team2: "Победитель 1/4", score1: null, score2: null }
+            { team1: "", team2: "", score1: null, score2: null }
         ],
         final: [
-            { team1: "Победитель 1/2", team2: "Победитель 1/2", score1: null, score2: null }
+            { team1: "", team2: "", score1: null, score2: null }
         ]
     };
     
@@ -243,10 +231,7 @@ function createDemoData() {
     
     // Создаем демо-расписание
     const demoSchedule = [
-        { time: "15:00", match: "Labubu Team vs unluck", stage: "Групповой этап" },
-        { time: "16:30", match: "Команда 3 vs Команда 4", stage: "Групповой этап" },
-        { time: "19:00", match: "Полуфинал 1", stage: "Полуфинал" },
-        { time: "21:00", match: "ГРАНД-ФИНАЛ", stage: "Финал" }
+        { time: "15:00", match: "Labubu Team vs unluck", stage: "Групповой этап" }
     ];
     
     database.ref('schedule').set(demoSchedule).catch(error => {
@@ -257,21 +242,18 @@ function createDemoData() {
     const demoTournament = {
         format: "round_robin",
         settings: {
-            totalTeams: 4,
+            totalTeams: 2,
             groups: 1,
-            advancingTeams: 4
+            advancingTeams: 2
         },
         groupStage: {
             groupA: {
                 teams: [
                     { name: "Labubu Team", wins: 0, losses: 0, points: 0 },
-                    { name: "unluck", wins: 0, losses: 0, points: 0 },
-                    { name: "Команда 3", wins: 0, losses: 0, points: 0 },
-                    { name: "Команда 4", wins: 0, losses: 0, points: 0 }
+                    { name: "unluck", wins: 0, losses: 0, points: 0 }
                 ],
                 matches: [
-                    { team1: "Labubu Team", team2: "unluck", score1: 0, score2: 0, completed: false },
-                    { team1: "Команда 3", team2: "Команда 4", score1: 0, score2: 0, completed: false }
+                    { team1: "Labubu Team", team2: "unluck", score1: 0, score2: 0, completed: false }
                 ]
             }
         }
@@ -279,6 +261,23 @@ function createDemoData() {
 
     database.ref('tournament').set(demoTournament).catch(error => {
         console.error('❌ Ошибка создания турнирных данных:', error);
+    });
+
+    // Создаем данные для приза зрительских симпатий
+    const demoAwards = {
+        matches: [
+            {
+                matchId: "match1",
+                teams: ["Labubu Team", "unluck"],
+                bestPlayers: [
+                    { name: "", team: "", role: "" }
+                ]
+            }
+        ]
+    };
+
+    database.ref('audienceAwards').set(demoAwards).catch(error => {
+        console.error('❌ Ошибка создания приза:', error);
     });
 }
 
@@ -310,8 +309,23 @@ function displayGroupStage() {
         
         if (!group.teams) return;
         
-        // Сортируем команды по очкам (по убыванию)
-        const sortedTeams = [...group.teams].sort((a, b) => (b.points || 0) - (a.points || 0));
+        // Сортируем команды по статусу и очкам
+        const sortedTeams = [...group.teams].sort((a, b) => {
+            // Команды без поражений (0 поражений) - наверх
+            if (a.losses === 0 && b.losses !== 0) return -1;
+            if (a.losses !== 0 && b.losses === 0) return 1;
+            
+            // Команды с равным количеством побед и поражений - посередине
+            if (a.wins === a.losses && b.wins !== b.losses) return 1;
+            if (a.wins !== a.losses && b.wins === b.losses) return -1;
+            
+            // Команды без побед (0 побед) - вниз
+            if (a.wins === 0 && b.wins !== 0) return 1;
+            if (a.wins !== 0 && b.wins === 0) return -1;
+            
+            // Сортировка по очкам (по убыванию)
+            return (b.points || 0) - (a.points || 0);
+        });
         
         groupHTML += `
             <div class="group-container">
@@ -324,15 +338,28 @@ function displayGroupStage() {
                         <div>Поражения</div>
                         <div>Очки</div>
                     </div>
-                    ${sortedTeams.map((team, index) => `
-                        <div class="table-row ${index < (tournamentData.settings?.advancingTeams || 2) ? 'qualifying' : ''}">
-                            <div class="team-name">${team.name || 'Без названия'}</div>
-                            <div>${(team.wins || 0) + (team.losses || 0)}</div>
-                            <div>${team.wins || 0}</div>
-                            <div>${team.losses || 0}</div>
-                            <div class="points">${team.points || 0}</div>
-                        </div>
-                    `).join('')}
+                    ${sortedTeams.map((team, index) => {
+                        let rowClass = '';
+                        if (team.losses === 0 && team.wins > 0) {
+                            rowClass = 'undefeated'; // Без поражений - проходит в гранд-финал
+                        } else if (team.wins === 0 && team.losses > 0) {
+                            rowClass = 'eliminated'; // Без побед - вылетает
+                        } else if (team.wins === team.losses) {
+                            rowClass = 'equal'; // Равное количество
+                        } else if (team.wins === 0 && team.losses === 0) {
+                            rowClass = 'new-team'; // Новая команда
+                        }
+                        
+                        return `
+                            <div class="table-row ${rowClass}">
+                                <div class="team-name">${team.name || 'Без названия'}</div>
+                                <div>${(team.wins || 0) + (team.losses || 0)}</div>
+                                <div>${team.wins || 0}</div>
+                                <div>${team.losses || 0}</div>
+                                <div class="points">${team.points || 0}</div>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;
@@ -502,11 +529,29 @@ function displayBracket(bracketData) {
         bracketHTML += `
             <div class="bracket-round">
                 <h3>${getRoundName(round)}</h3>
-                ${matches.map(match => `
+                ${matches.map((match, index) => `
                     <div class="match ${round === 'final' ? 'final' : ''}">
-                        <div>${match.team1 || 'TBD'}</div>
-                        <div>${match.score1 !== null ? match.score1 : '?'} - ${match.score2 !== null ? match.score2 : '?'}</div>
-                        <div>${match.team2 || 'TBD'}</div>
+                        <div class="team-select-container">
+                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="1">
+                                <option value="">-- Выберите команду --</option>
+                                ${Object.keys(teamsData).map(teamId => 
+                                    `<option value="${teamId}" ${match.team1 === teamId ? 'selected' : ''}>${teamsData[teamId].name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="score-container">
+                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="1" value="${match.score1 !== null ? match.score1 : ''}" placeholder="0">
+                            <span> - </span>
+                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="2" value="${match.score2 !== null ? match.score2 : ''}" placeholder="0">
+                        </div>
+                        <div class="team-select-container">
+                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="2">
+                                <option value="">-- Выберите команду --</option>
+                                ${Object.keys(teamsData).map(teamId => 
+                                    `<option value="${teamId}" ${match.team2 === teamId ? 'selected' : ''}>${teamsData[teamId].name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -535,6 +580,31 @@ function displaySchedule(scheduleData) {
     `).join('');
 }
 
+// === ОТОБРАЖЕНИЕ ПРИЗА ЗРИТЕЛЬСКИХ СИМПАТИЙ ===
+function displayAudienceAwards(awardsData) {
+    const container = document.getElementById('audienceAwardsContent');
+    if (!container) return;
+    
+    if (!awardsData || !awardsData.matches || awardsData.matches.length === 0) {
+        container.innerHTML = '<p>Информация о лучших игроках матчей пока не добавлена</p>';
+        return;
+    }
+    
+    container.innerHTML = awardsData.matches.map(match => `
+        <div class="award-match">
+            <h4>${match.teams ? match.teams.join(' vs ') : 'Матч'}</h4>
+            <div class="best-players">
+                ${match.bestPlayers ? match.bestPlayers.map(player => `
+                    <div class="player-award">
+                        <strong>${player.name || 'Не указан'}</strong> 
+                        (${player.team || 'Не указана'}) - ${player.role || 'Роль не указана'}
+                    </div>
+                `).join('') : '<p>Лучшие игроки не выбраны</p>'}
+            </div>
+        </div>
+    `).join('');
+}
+
 // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
 function getRoundName(round) {
     const roundNames = {
@@ -547,7 +617,6 @@ function getRoundName(round) {
 
 function showErrorMessage(message) {
     console.error('❌ Ошибка:', message);
-    // Можно добавить уведомление для пользователя
     if (isEditor) {
         alert('Ошибка: ' + message);
     }
@@ -568,7 +637,6 @@ function showTeams() {
         teamsContent.classList.remove('hidden');
     }
     
-    // Если не выбрана конкретная команда, показываем все
     if (!currentDisplayedTeamId) {
         displayTeamsCards();
     }
@@ -601,6 +669,15 @@ function showSchedule() {
     currentDisplayedTeamId = null;
 }
 
+function showAudienceAward() {
+    hideAllSections();
+    const audienceAwardContent = document.getElementById('audienceAwardContent');
+    if (audienceAwardContent) {
+        audienceAwardContent.classList.remove('hidden');
+    }
+    currentDisplayedTeamId = null;
+}
+
 function hideAllSections() {
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.add('hidden');
@@ -614,6 +691,7 @@ function showAdminPanel() {
         adminPanel.classList.remove('hidden');
         updateAdminTeamsList();
         document.getElementById('totalTeams').value = Object.keys(teamsData).length;
+        loadBracketSettings();
     }
 }
 
@@ -681,7 +759,6 @@ function updateTeamsCount() {
     }
     
     if (targetCount > currentCount) {
-        // Добавляем новые команды
         for (let i = currentCount + 1; i <= targetCount; i++) {
             const newTeamId = `team${i}`;
             if (!teamsData[newTeamId]) {
@@ -700,14 +777,12 @@ function updateTeamsCount() {
             }
         }
     } else if (targetCount < currentCount) {
-        // Удаляем лишние команды
         const teamIds = Object.keys(teamsData).sort();
         for (let i = teamIds.length - 1; i >= targetCount; i--) {
             delete teamsData[teamIds[i]];
         }
     }
     
-    // Сохраняем изменения в Firebase
     database.ref('teams').set(teamsData).then(() => {
         alert(`✅ Количество команд обновлено: ${targetCount}`);
         updateAdminTeamsList();
@@ -756,7 +831,6 @@ function editTeam(teamId) {
     if (nameInput) nameInput.value = team.name || '';
     if (sloganInput) sloganInput.value = team.slogan || '';
     
-    // Заполнение игроков
     const playersContainer = document.getElementById('playersEditContainer');
     if (playersContainer) {
         playersContainer.innerHTML = '';
@@ -785,7 +859,6 @@ function addPlayerField(name = '', role = '', mmr = '3000') {
         <button type="button" class="remove-player">🗑️</button>
     `;
     
-    // Добавляем обработчик для кнопки удаления
     const removeBtn = playerDiv.querySelector('.remove-player');
     if (removeBtn) {
         removeBtn.addEventListener('click', function() {
@@ -822,21 +895,19 @@ function saveTeamChanges() {
         }
     });
     
-    // Рассчитываем новый средний MMR
     const newMMR = calculateTeamMMR(players);
     
-    // Обновление в Firebase
     database.ref('teams/' + currentEditingTeamId).update({
         name: name,
         slogan: slogan,
         players: players,
         mmr: newMMR
     }).then(() => {
+        alert('✅ Команда обновлена');
         closeEditTeamModal();
-        alert('✅ Команда сохранена!');
     }).catch(error => {
-        console.error('❌ Ошибка сохранения команды:', error);
-        alert('❌ Ошибка сохранения команды: ' + error.message);
+        console.error('❌ Ошибка обновления команды:', error);
+        alert('❌ Ошибка обновления команды: ' + error.message);
     });
 }
 
@@ -848,57 +919,144 @@ function closeEditTeamModal() {
     currentEditingTeamId = null;
 }
 
-// === УПРАВЛЕНИЕ ГРУППОВЫМ ЭТАПОМ ===
-function saveGroupStageSettings() {
-    const formatInput = document.getElementById('tournamentFormat');
-    const groupsInput = document.getElementById('groupsCount');
-    const advancingInput = document.getElementById('advancingTeams');
-    
-    if (!formatInput || !groupsInput || !advancingInput) return;
-    
-    const format = formatInput.value;
-    const groupsCount = groupsInput.value;
-    const advancingTeams = advancingInput.value;
-    
-    const settings = {
-        format: format,
-        settings: {
-            totalTeams: Object.keys(teamsData).length,
-            groups: parseInt(groupsCount),
-            advancingTeams: parseInt(advancingTeams)
+// === НАСТРОЙКА СЕТКИ ===
+function loadBracketSettings() {
+    database.ref('bracket').once('value').then(snapshot => {
+        const bracketData = snapshot.val();
+        if (bracketData) {
+            displayBracket(bracketData);
         }
-    };
-    
-    // Обновление в Firebase
-    database.ref('tournament').update(settings).then(() => {
-        alert('✅ Настройки группового этапа сохранены!');
     }).catch(error => {
-        console.error('❌ Ошибка сохранения настроек:', error);
-        alert('❌ Ошибка сохранения настроек: ' + error.message);
+        console.error('❌ Ошибка загрузки сетки:', error);
+    });
+}
+
+function saveBracketChanges() {
+    const bracketData = {};
+    
+    document.querySelectorAll('.bracket-round').forEach(roundElement => {
+        const roundTitle = roundElement.querySelector('h3');
+        if (!roundTitle) return;
+        
+        const roundKey = getRoundKey(roundTitle.textContent);
+        const matches = [];
+        
+        roundElement.querySelectorAll('.match').forEach(matchElement => {
+            const team1Select = matchElement.querySelector('[data-team="1"]');
+            const team2Select = matchElement.querySelector('[data-team="2"]');
+            const score1Input = matchElement.querySelector('[data-team="1"]');
+            const score2Input = matchElement.querySelector('[data-team="2"]');
+            
+            const match = {
+                team1: team1Select ? team1Select.value : '',
+                team2: team2Select ? team2Select.value : '',
+                score1: score1Input ? (score1Input.value ? parseInt(score1Input.value) : null) : null,
+                score2: score2Input ? (score2Input.value ? parseInt(score2Input.value) : null) : null
+            };
+            
+            matches.push(match);
+        });
+        
+        bracketData[roundKey] = matches;
+    });
+    
+    database.ref('bracket').set(bracketData).then(() => {
+        alert('✅ Турнирная сетка сохранена');
+    }).catch(error => {
+        console.error('❌ Ошибка сохранения сетки:', error);
+        alert('❌ Ошибка сохранения сетки: ' + error.message);
+    });
+}
+
+function getRoundKey(roundName) {
+    const roundMapping = {
+        'Четвертьфиналы': 'quarterfinals',
+        'Полуфиналы': 'semifinals',
+        'Финал': 'final'
+    };
+    return roundMapping[roundName] || roundName.toLowerCase();
+}
+
+// === НАСТРОЙКА РАСПИСАНИЯ ===
+function addScheduleMatch() {
+    const scheduleList = document.getElementById('scheduleEditList');
+    if (!scheduleList) return;
+    
+    const matchDiv = document.createElement('div');
+    matchDiv.className = 'schedule-edit-item';
+    matchDiv.innerHTML = `
+        <input type="text" placeholder="Время (например, 15:00)" class="match-time">
+        <input type="text" placeholder="Матч (например, Team A vs Team B)" class="match-teams">
+        <input type="text" placeholder="Стадия (например, Групповой этап)" class="match-stage">
+        <button type="button" class="remove-schedule-match">🗑️</button>
+    `;
+    
+    const removeBtn = matchDiv.querySelector('.remove-schedule-match');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            matchDiv.remove();
+        });
+    }
+    
+    scheduleList.appendChild(matchDiv);
+}
+
+function saveScheduleChanges() {
+    const scheduleData = [];
+    
+    document.querySelectorAll('.schedule-edit-item').forEach(item => {
+        const timeInput = item.querySelector('.match-time');
+        const teamsInput = item.querySelector('.match-teams');
+        const stageInput = item.querySelector('.match-stage');
+        
+        if (timeInput && teamsInput && stageInput) {
+            scheduleData.push({
+                time: timeInput.value,
+                match: teamsInput.value,
+                stage: stageInput.value
+            });
+        }
+    });
+    
+    database.ref('schedule').set(scheduleData).then(() => {
+        alert('✅ Расписание сохранено');
+    }).catch(error => {
+        console.error('❌ Ошибка сохранения расписания:', error);
+        alert('❌ Ошибка сохранения расписания: ' + error.message);
+    });
+}
+
+// === НАСТРОЙКА ГРУППОВОГО ЭТАПА ===
+function saveGroupStageSettings() {
+    if (!tournamentData || !tournamentData.groupStage) {
+        alert('❌ Данные группового этапа не загружены');
+        return;
+    }
+    
+    database.ref('tournament/groupStage').set(tournamentData.groupStage).then(() => {
+        alert('✅ Настройки группового этапа сохранены');
+    }).catch(error => {
+        console.error('❌ Ошибка сохранения группового этапа:', error);
+        alert('❌ Ошибка сохранения группового этапа: ' + error.message);
     });
 }
 
 // === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
 function loadInitialData() {
+    // Данные уже загружаются через real-time listeners
     console.log('🔄 Загрузка начальных данных...');
-    // Данные уже загружаются через слушатели
 }
 
-// === ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ===
+// === ОБНОВЛЕНИЕ НАСТРОЕК КОМАНД ===
 function updateTeamsSettings() {
-    alert('Настройки команд сохранены');
+    const totalTeams = Object.keys(teamsData).length;
+    document.getElementById('totalTeams').value = totalTeams;
+    updateAdminTeamsList();
 }
 
-function saveBracketChanges() {
-    alert('Функция сохранения сетки в разработке');
-}
+// === ОБРАБОТКА ОШИБОК ===
+window.addEventListener('error', function(e) {
+    console.error('🚨 Глобальная ошибка:', e.error);
+});
 
-function saveScheduleChanges() {
-    alert('Функция сохранения расписания в разработке');
-}
-
-function addScheduleMatch() {
-    alert('Функция добавления матча в разработке');
-}
-
-console.log('🚀 Приложение Illusive Cup инициализировано!');
+console.log('✅ Tournament System загружен!');
