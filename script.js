@@ -9,71 +9,81 @@ const firebaseConfig = {
     appId: "1:465786550229:web:9a1d4a3015b9cb0a3caf5c"
 };
 
-// === СИСТЕМА УПРАВЛЕНИЯ СОСТОЯНИЕМ ===
-class AppState {
-    static instance = null;
-    
-    static getInstance() {
-        if (!this.instance) {
-            this.instance = new AppState();
-        }
-        return this.instance;
-    }
-    
-    constructor() {
-        this.teamsManager = null;
-        this.scheduleManager = null;
-        this.currentEditingTeamId = null;
-        this.currentDisplayedTeamId = null;
-    }
-    
-    setTeamsManager(manager) { this.teamsManager = manager; }
-    getTeamsManager() { return this.teamsManager; }
-    
-    setScheduleManager(manager) { this.scheduleManager = manager; }
-    getScheduleManager() { return this.scheduleManager; }
-    
-    setCurrentEditingTeamId(id) { this.currentEditingTeamId = id; }
-    getCurrentEditingTeamId() { return this.currentEditingTeamId; }
-    
-    setCurrentDisplayedTeamId(id) { this.currentDisplayedTeamId = id; }
-    getCurrentDisplayedTeamId() { return this.currentDisplayedTeamId; }
-}
+// === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
+let database;
+let teamsManager;
+let securityManager;
 
 // === СИСТЕМА БЕЗОПАСНОСТИ ===
 class SecurityManager {
-    static EDITOR_PASSWORD = 'IllusiveCup2025!';
-    static isAuthenticated = false;
-    
-    static init() {
+    constructor() {
+        this.EDITOR_PASSWORD = 'IllusiveCup2025!';
+        this.isAuthenticated = false;
+        this.init();
+    }
+
+    init() {
         this.checkExistingSession();
         this.setupEventListeners();
     }
-    
-    static setupEventListeners() {
-        // Обработчики для модального окна авторизации
-        document.getElementById('confirmAuth')?.addEventListener('click', () => this.handleAuthConfirm());
-        document.getElementById('cancelAuth')?.addEventListener('click', () => this.handleAuthCancel());
-        document.getElementById('closeAuthModal')?.addEventListener('click', () => this.handleAuthCancel());
-        
-        // Обработчик для кнопки админки
-        document.getElementById('adminBtn')?.addEventListener('click', () => this.showAdminPanel());
+
+    setupEventListeners() {
+        // Кнопка админки
+        document.getElementById('adminBtn').addEventListener('click', () => {
+            this.handleAdminButtonClick();
+        });
+
+        // Модальное окно авторизации
+        document.getElementById('confirmAuth').addEventListener('click', () => {
+            this.handleAuthConfirm();
+        });
+
+        document.getElementById('cancelAuth').addEventListener('click', () => {
+            this.hideAuthModal();
+        });
+
+        document.getElementById('closeAuthModal').addEventListener('click', () => {
+            this.hideAuthModal();
+        });
+
+        // Закрытие админки
+        document.getElementById('closeAdminPanel').addEventListener('click', () => {
+            this.hideAdminPanel();
+        });
+
+        // Enter в поле пароля
+        document.getElementById('editorPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.handleAuthConfirm();
+            }
+        });
     }
-    
-    static async handleAuthConfirm() {
+
+    handleAdminButtonClick() {
+        if (this.isAuthenticated) {
+            this.showAdminPanel();
+        } else {
+            this.showAuthModal();
+        }
+    }
+
+    async handleAuthConfirm() {
         const passwordInput = document.getElementById('editorPassword');
-        const password = passwordInput?.value || '';
+        const password = passwordInput.value.trim();
         
         if (!password) {
             alert('❌ Введите пароль');
             return;
         }
+
+        const isValid = await this.authenticate(password);
         
-        const success = await this.authenticate(password);
-        
-        if (success) {
+        if (isValid) {
+            this.isAuthenticated = true;
+            this.startSession();
             this.hideAuthModal();
             this.showAdminInterface();
+            this.showAdminPanel();
             alert('✅ Успешная авторизация!');
         } else {
             alert('❌ Неверный пароль');
@@ -81,43 +91,34 @@ class SecurityManager {
             passwordInput.focus();
         }
     }
-    
-    static handleAuthCancel() {
-        this.hideAuthModal();
-    }
-    
-    static async authenticate(password) {
+
+    async authenticate(password) {
         // Имитация задержки для безопасности
-        await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-        
-        if (password === this.EDITOR_PASSWORD) {
-            this.isAuthenticated = true;
-            this.startSession();
-            return true;
-        }
-        return false;
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return password === this.EDITOR_PASSWORD;
     }
-    
-    static startSession() {
+
+    startSession() {
         const sessionData = {
             authenticated: true,
             timestamp: Date.now()
         };
         localStorage.setItem('editor_session', JSON.stringify(sessionData));
     }
-    
-    static checkExistingSession() {
+
+    checkExistingSession() {
         try {
             const sessionData = localStorage.getItem('editor_session');
             if (!sessionData) return;
-            
+
             const data = JSON.parse(sessionData);
             const sessionAge = Date.now() - data.timestamp;
-            
-            // Сессия действительна 30 минут
-            if (data.authenticated && sessionAge < (30 * 60 * 1000)) {
+
+            // Сессия действительна 8 часов
+            if (data.authenticated && sessionAge < (8 * 60 * 60 * 1000)) {
                 this.isAuthenticated = true;
                 this.showAdminInterface();
+                console.log('✅ Сессия восстановлена');
             } else {
                 this.clearSession();
             }
@@ -125,61 +126,43 @@ class SecurityManager {
             this.clearSession();
         }
     }
-    
-    static clearSession() {
+
+    clearSession() {
         localStorage.removeItem('editor_session');
         this.isAuthenticated = false;
     }
-    
-    static requireAuth() {
-        if (!this.isAuthenticated) {
-            this.showAuthModal();
-            return false;
-        }
-        return true;
-    }
-    
-    static showAdminInterface() {
+
+    showAdminInterface() {
         const adminBtn = document.getElementById('adminBtn');
-        if (adminBtn) {
-            adminBtn.classList.remove('hidden');
-        }
+        adminBtn.classList.remove('hidden');
     }
-    
-    static hideAdminInterface() {
+
+    hideAdminInterface() {
         const adminBtn = document.getElementById('adminBtn');
-        if (adminBtn) {
-            adminBtn.classList.add('hidden');
-        }
+        adminBtn.classList.add('hidden');
     }
-    
-    static showAuthModal() {
+
+    showAuthModal() {
         const modal = document.getElementById('authModal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            const editorPassword = document.getElementById('editorPassword');
-            if (editorPassword) {
-                editorPassword.value = '';
-                editorPassword.focus();
-            }
-        }
+        modal.classList.remove('hidden');
+        document.getElementById('editorPassword').focus();
     }
-    
-    static hideAuthModal() {
+
+    hideAuthModal() {
         const modal = document.getElementById('authModal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+        modal.classList.add('hidden');
+        document.getElementById('editorPassword').value = '';
     }
-    
-    static showAdminPanel() {
-        if (!this.requireAuth()) return;
-        
+
+    showAdminPanel() {
         const panel = document.getElementById('adminPanel');
-        if (panel) {
-            panel.classList.remove('hidden');
-            updateAdminTeamsList();
-        }
+        panel.classList.remove('hidden');
+        updateAdminTeamsList();
+    }
+
+    hideAdminPanel() {
+        const panel = document.getElementById('adminPanel');
+        panel.classList.add('hidden');
     }
 }
 
@@ -189,11 +172,11 @@ class TeamsManager {
         this.database = database;
         this.teams = {};
     }
-    
+
     async initialize() {
         await this.setupListeners();
     }
-    
+
     async setupListeners() {
         return new Promise((resolve) => {
             this.database.ref('teams').on('value', (snapshot) => {
@@ -202,27 +185,25 @@ class TeamsManager {
             });
         });
     }
-    
+
     handleTeamsUpdate(teamsData) {
         this.teams = teamsData || {};
         console.log('📥 Обновлены данные команд:', this.teams);
         updateConnectionStatus(true);
         this.updateUI();
     }
-    
+
     updateUI() {
         updateTeamsDropdown();
         updateAdminTeamsList();
         
-        const teamsContent = document.getElementById('teamsContent');
-        if (teamsContent && !teamsContent.classList.contains('hidden')) {
-            const appState = AppState.getInstance();
-            if (appState.getCurrentDisplayedTeamId()) {
-                showSingleTeamCard(appState.getCurrentDisplayedTeamId());
-            }
+        // Обновляем визитку если она открыта
+        const appState = getAppState();
+        if (appState.currentDisplayedTeamId) {
+            showSingleTeamCard(appState.currentDisplayedTeamId);
         }
     }
-    
+
     calculateTeamMMR(players) {
         if (!players || players.length === 0) return 0;
         
@@ -232,158 +213,49 @@ class TeamsManager {
         
         return Math.round(totalMMR / players.length);
     }
-    
+
     async updateTeam(teamId, teamData) {
         teamData.mmr = this.calculateTeamMMR(teamData.players);
         await this.database.ref(`teams/${teamId}`).update(teamData);
         return teamId;
     }
-    
+
     async createTeam(teamId, teamData) {
         teamData.mmr = this.calculateTeamMMR(teamData.players);
         await this.database.ref(`teams/${teamId}`).set(teamData);
         return teamId;
     }
-    
+
     async deleteTeam(teamId) {
         await this.database.ref(`teams/${teamId}`).remove();
         delete this.teams[teamId];
     }
-    
+
     getTeam(teamId) {
         return this.teams[teamId];
     }
-    
+
     getAllTeams() {
         return { ...this.teams };
     }
 }
 
-// === ГЛАВНОЕ ПРИЛОЖЕНИЕ ===
-class TournamentApp {
-    constructor() {
-        this.database = null;
-        this.appState = AppState.getInstance();
-    }
-    
-    async initialize() {
-        try {
-            console.log('🚀 Инициализация Tournament App...');
-            
-            await this.initializeFirebase();
-            await this.initializeManagers();
-            this.initializeSystems();
-            this.initializeUI();
-            
-            console.log('✅ Tournament App успешно инициализирован');
-            
-        } catch (error) {
-            console.error('❌ Ошибка инициализации:', error);
-        }
-    }
-    
-    async initializeFirebase() {
-        try {
-            firebase.initializeApp(firebaseConfig);
-            this.database = firebase.database();
-            window.database = this.database;
-            console.log('🔥 Firebase успешно инициализирован');
-        } catch (error) {
-            console.error('❌ Ошибка Firebase:', error);
-            throw new Error('Не удалось подключиться к базе данных');
-        }
-    }
-    
-    async initializeManagers() {
-        const teamsManager = new TeamsManager(this.database);
-        this.appState.setTeamsManager(teamsManager);
-        await teamsManager.initialize();
-    }
-    
-    initializeSystems() {
-        SecurityManager.init();
-    }
-    
-    initializeUI() {
-        this.createAnimatedBackground();
-        this.setupEventListeners();
-        this.setupGlobalHandlers();
-    }
-    
-    setupEventListeners() {
-        // Навигация
-        document.getElementById('teamsDropdownBtn')?.addEventListener('click', toggleDropdown);
-        document.getElementById('scheduleBtn')?.addEventListener('click', () => showSection('schedule'));
-        document.getElementById('groupStageBtn')?.addEventListener('click', () => showSection('groupStage'));
-        document.getElementById('playoffBtn')?.addEventListener('click', () => showSection('playoff'));
-        document.getElementById('audienceAwardBtn')?.addEventListener('click', () => showSection('audienceAward'));
-        
-        // Модальные окна
-        document.getElementById('closeEditTeamModal')?.addEventListener('click', closeEditTeamModal);
-        document.getElementById('closeAdminPanel')?.addEventListener('click', closeAdminPanel);
-        document.getElementById('saveTeamBtn')?.addEventListener('click', saveTeamChanges);
-        document.getElementById('cancelEditTeamBtn')?.addEventListener('click', closeEditTeamModal);
-        
-        // Админ-панель
-        document.getElementById('applyTeamsCountBtn')?.addEventListener('click', updateTeamsCount);
-        
-        // Вкладки админки
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                openAdminTab(this.getAttribute('data-tab'));
-            });
-        });
-    }
-    
-    setupGlobalHandlers() {
-        // Закрытие модальных окон при клике вне их
-        document.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal')) {
-                event.target.classList.add('hidden');
-            }
-            
-            if (!event.target.closest('.dropdown') && !event.target.closest('.nav-btn')) {
-                closeAllDropdowns();
-            }
-        });
-        
-        // Закрытие по ESC
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                closeAllModals();
-            }
-        });
-    }
-    
-    createAnimatedBackground() {
-        const bg = document.getElementById('animatedBg');
-        if (!bg) return;
-        
-        const particleCount = 15;
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.classList.add('particle');
-            
-            const size = Math.random() * 10 + 5;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.animationDelay = `${Math.random() * 20}s`;
-            particle.style.animationDuration = `${15 + Math.random() * 10}s`;
-            
-            bg.appendChild(particle);
-        }
-    }
+// === ПРОСТОЕ УПРАВЛЕНИЕ СОСТОЯНИЕМ ===
+const appState = {
+    currentEditingTeamId: null,
+    currentDisplayedTeamId: null
+};
+
+function getAppState() {
+    return appState;
 }
 
-// === ФУНКЦИИ ИНТЕРФЕЙСА ===
+// === ОСНОВНЫЕ ФУНКЦИИ ИНТЕРФЕЙСА ===
 
 // Навигация
 function toggleDropdown() {
     const dropdown = document.querySelector('.dropdown');
-    if (dropdown) {
-        dropdown.classList.toggle('active');
-    }
+    dropdown.classList.toggle('active');
 }
 
 function closeAllDropdowns() {
@@ -393,27 +265,25 @@ function closeAllDropdowns() {
 }
 
 function showSection(sectionName) {
+    // Скрываем все секции
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.add('hidden');
     });
     
+    // Показываем нужную секцию
     const targetSection = document.getElementById(`${sectionName}Content`);
     if (targetSection) {
         targetSection.classList.remove('hidden');
     }
     
-    const appState = AppState.getInstance();
-    appState.setCurrentDisplayedTeamId(null);
+    // Сбрасываем выбранную команду
+    appState.currentDisplayedTeamId = null;
 }
 
 // Отображение данных
 function updateTeamsDropdown() {
     const dropdown = document.getElementById('teamsDropdown');
-    if (!dropdown) return;
-    
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
+    if (!dropdown || !teamsManager) return;
     
     const teams = teamsManager.getAllTeams();
     dropdown.innerHTML = '';
@@ -421,33 +291,31 @@ function updateTeamsDropdown() {
     Object.keys(teams).forEach(teamId => {
         const team = teams[teamId];
         const link = document.createElement('a');
+        link.href = '#';
         link.textContent = team.name || 'Без названия';
-        link.addEventListener('click', () => showSingleTeamCard(teamId));
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSingleTeamCard(teamId);
+        });
         dropdown.appendChild(link);
     });
 }
 
 function showSingleTeamCard(teamId) {
     const container = document.getElementById('singleTeamCard');
-    if (!container) return;
-    
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
+    if (!container || !teamsManager) return;
     
     const team = teamsManager.getTeam(teamId);
-    if (team) {
-        const card = createTeamCard(teamId, team);
-        container.innerHTML = '';
-        container.appendChild(card);
-        appState.setCurrentDisplayedTeamId(teamId);
-    }
+    if (!team) return;
     
+    const card = createTeamCard(teamId, team);
+    container.innerHTML = '';
+    container.appendChild(card);
+    appState.currentDisplayedTeamId = teamId;
+    
+    // Показываем секцию команд
     hideAllSections();
-    const teamsContent = document.getElementById('teamsContent');
-    if (teamsContent) {
-        teamsContent.classList.remove('hidden');
-    }
+    document.getElementById('teamsContent').classList.remove('hidden');
     closeAllDropdowns();
 }
 
@@ -472,8 +340,8 @@ function createTeamCard(teamId, team) {
         </div>
     `).join('');
     
-    const editButton = SecurityManager.isAuthenticated ? 
-        `<button class="edit-team-btn" data-team-id="${teamId}">✏️ Редактировать</button>` : '';
+    const editButton = securityManager.isAuthenticated ? 
+        `<button class="edit-team-btn" onclick="editTeam('${teamId}')">✏️ Редактировать</button>` : '';
     
     card.innerHTML = `
         <div class="card-header">
@@ -521,14 +389,6 @@ function createTeamCard(teamId, team) {
         });
     });
     
-    // Кнопка редактирования
-    if (SecurityManager.isAuthenticated) {
-        const editBtn = card.querySelector('.edit-team-btn');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => editTeam(teamId));
-        }
-    }
-    
     return card;
 }
 
@@ -540,40 +400,30 @@ function closeAllModals() {
 }
 
 function closeEditTeamModal() {
-    const modal = document.getElementById('editTeamModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-function closeAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    if (panel) {
-        panel.classList.add('hidden');
-    }
+    document.getElementById('editTeamModal').classList.add('hidden');
+    appState.currentEditingTeamId = null;
 }
 
 // Админ-панель
 function openAdminTab(tabName) {
+    // Деактивируем все кнопки
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
+    // Скрываем все вкладки
     document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.remove('active');
     });
     
-    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
-    document.getElementById(tabName)?.classList.add('active');
+    // Активируем выбранную кнопку и вкладку
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(tabName).classList.add('active');
 }
 
 function updateAdminTeamsList() {
     const container = document.getElementById('adminTeamsList');
-    if (!container) return;
-    
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
+    if (!container || !teamsManager) return;
     
     const teams = teamsManager.getAllTeams();
     container.innerHTML = '';
@@ -587,64 +437,19 @@ function updateAdminTeamsList() {
                 <strong>${team.name || 'Без названия'}</strong>
                 <span>MMR: ${team.mmr || '0'}</span>
             </div>
-            <button class="edit-btn" data-team-id="${teamId}">✏️</button>
+            <button class="edit-btn" onclick="editTeam('${teamId}')">✏️</button>
         `;
-        
-        const editBtn = teamElement.querySelector('.edit-btn');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => editTeam(teamId));
-        }
-        
         container.appendChild(teamElement);
     });
 }
 
-async function updateTeamsCount() {
-    if (!SecurityManager.requireAuth()) return;
-    
-    const input = document.getElementById('totalTeams');
-    const count = parseInt(input?.value) || 4;
-    
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
-    
-    const currentTeams = teamsManager.getAllTeams();
-    const currentCount = Object.keys(currentTeams).length;
-    
-    if (count < currentCount) {
-        // Удаляем лишние команды
-        const teamIds = Object.keys(currentTeams);
-        for (let i = count; i < currentCount; i++) {
-            await teamsManager.deleteTeam(teamIds[i]);
-        }
-    } else if (count > currentCount) {
-        // Добавляем новые команды
-        for (let i = currentCount + 1; i <= count; i++) {
-            const teamId = `team${i}`;
-            const newTeam = {
-                name: `Новая команда ${i}`,
-                slogan: '',
-                players: Array(5).fill().map(() => ({
-                    name: '',
-                    role: '',
-                    mmr: 3000
-                })),
-                mmr: 3000
-            };
-            await teamsManager.createTeam(teamId, newTeam);
-        }
+// Глобальные функции для вызова из HTML
+window.editTeam = function(teamId) {
+    if (!securityManager.isAuthenticated) {
+        securityManager.showAuthModal();
+        return;
     }
     
-    updateAdminTeamsList();
-    alert(`✅ Количество команд обновлено: ${count}`);
-}
-
-function editTeam(teamId) {
-    if (!SecurityManager.requireAuth()) return;
-    
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
     if (!teamsManager) return;
     
     const team = teamsManager.getTeam(teamId);
@@ -653,7 +458,7 @@ function editTeam(teamId) {
     const modal = document.getElementById('editTeamModal');
     if (!modal) return;
     
-    appState.setCurrentEditingTeamId(teamId);
+    appState.currentEditingTeamId = teamId;
     
     document.getElementById('editTeamName').value = team.name || '';
     document.getElementById('editTeamSlogan').value = team.slogan || '';
@@ -678,20 +483,16 @@ function editTeam(teamId) {
     });
     
     modal.classList.remove('hidden');
-}
+};
 
-async function saveTeamChanges() {
-    if (!SecurityManager.requireAuth()) return;
+window.saveTeamChanges = async function() {
+    if (!securityManager.isAuthenticated || !teamsManager) return;
     
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
-    
-    const teamId = appState.getCurrentEditingTeamId();
+    const teamId = appState.currentEditingTeamId;
     if (!teamId) return;
     
-    const name = document.getElementById('editTeamName')?.value || '';
-    const slogan = document.getElementById('editTeamSlogan')?.value || '';
+    const name = document.getElementById('editTeamName').value.trim();
+    const slogan = document.getElementById('editTeamSlogan').value.trim();
     
     const players = [];
     const playerForms = document.querySelectorAll('.player-edit-form');
@@ -702,11 +503,16 @@ async function saveTeamChanges() {
         const mmrInput = form.querySelector('.player-mmr');
         
         players.push({
-            name: nameInput?.value || '',
-            role: roleInput?.value || '',
+            name: nameInput?.value.trim() || '',
+            role: roleInput?.value.trim() || '',
             mmr: parseInt(mmrInput?.value) || 3000
         });
     });
+    
+    if (!name) {
+        alert('❌ Введите название команды');
+        return;
+    }
     
     const teamData = {
         name,
@@ -722,7 +528,54 @@ async function saveTeamChanges() {
         console.error('❌ Ошибка сохранения команды:', error);
         alert('❌ Ошибка сохранения команды');
     }
-}
+};
+
+window.updateTeamsCount = async function() {
+    if (!securityManager.isAuthenticated || !teamsManager) return;
+    
+    const input = document.getElementById('totalTeams');
+    const count = parseInt(input.value) || 4;
+    
+    if (count < 2 || count > 16) {
+        alert('❌ Количество команд должно быть от 2 до 16');
+        return;
+    }
+    
+    const currentTeams = teamsManager.getAllTeams();
+    const currentCount = Object.keys(currentTeams).length;
+    
+    try {
+        if (count < currentCount) {
+            // Удаляем лишние команды
+            const teamIds = Object.keys(currentTeams);
+            for (let i = count; i < currentCount; i++) {
+                await teamsManager.deleteTeam(teamIds[i]);
+            }
+        } else if (count > currentCount) {
+            // Добавляем новые команды
+            for (let i = currentCount + 1; i <= count; i++) {
+                const teamId = `team${i}`;
+                const newTeam = {
+                    name: `Новая команда ${i}`,
+                    slogan: '',
+                    players: Array(5).fill().map(() => ({
+                        name: '',
+                        role: '',
+                        mmr: 3000
+                    })),
+                    mmr: 3000
+                };
+                await teamsManager.createTeam(teamId, newTeam);
+            }
+        }
+        
+        updateAdminTeamsList();
+        alert(`✅ Количество команд обновлено: ${count}`);
+    } catch (error) {
+        console.error('❌ Ошибка обновления команд:', error);
+        alert('❌ Ошибка обновления команд');
+    }
+};
 
 // Утилиты
 function updateConnectionStatus(connected) {
@@ -739,12 +592,75 @@ function updateConnectionStatus(connected) {
     } else {
         status.classList.remove('hidden');
         dot.classList.remove('connected');
-        text.textContent = 'Подключение к турниру...';
+        text.textContent = 'Нет подключения';
     }
 }
 
 // Инициализация приложения
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new TournamentApp();
-    app.initialize();
-});
+async function initializeApp() {
+    try {
+        console.log('🚀 Инициализация Tournament App...');
+        
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+        window.database = database;
+        console.log('🔥 Firebase успешно инициализирован');
+        
+        // Инициализация менеджеров
+        securityManager = new SecurityManager();
+        teamsManager = new TeamsManager(database);
+        
+        await teamsManager.initialize();
+        
+        // Настройка обработчиков событий
+        setupEventListeners();
+        
+        console.log('✅ Tournament App успешно инициализирован');
+        
+    } catch (error) {
+        console.error('❌ Ошибка инициализации:', error);
+    }
+}
+
+function setupEventListeners() {
+    // Навигация
+    document.getElementById('teamsDropdownBtn').addEventListener('click', toggleDropdown);
+    document.getElementById('scheduleBtn').addEventListener('click', () => showSection('schedule'));
+    document.getElementById('groupStageBtn').addEventListener('click', () => showSection('groupStage'));
+    document.getElementById('playoffBtn').addEventListener('click', () => showSection('playoff'));
+    document.getElementById('audienceAwardBtn').addEventListener('click', () => showSection('audienceAward'));
+    
+    // Закрытие модальных окон
+    document.getElementById('closeEditTeamModal').addEventListener('click', closeEditTeamModal);
+    document.getElementById('cancelEditTeamBtn').addEventListener('click', closeEditTeamModal);
+    
+    // Вкладки админки
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            openAdminTab(this.getAttribute('data-tab'));
+        });
+    });
+    
+    // Глобальные обработчики
+    document.addEventListener('click', (event) => {
+        // Закрытие модальных окон при клике вне их
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.add('hidden');
+        }
+        
+        // Закрытие выпадающих списков при клике вне их
+        if (!event.target.closest('.dropdown') && !event.target.closest('.nav-btn')) {
+            closeAllDropdowns();
+        }
+    });
+    
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeAllModals();
+        }
+    });
+}
+
+// Запуск приложения
+document.addEventListener('DOMContentLoaded', initializeApp);

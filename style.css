@@ -1137,4 +1137,103 @@ body {
     .winner-name {
         font-size: 1.5em;
     }
+
+/* Дополнительные стили для админки */
+.admin-team-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-light);
+    transition: all var(--transition-normal);
+}
+
+.admin-team-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-team-item:last-child {
+    border-bottom: none;
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.team-info strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.team-info span {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.edit-btn {
+    background: var(--accent-primary);
+    color: var(--text-primary);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+}
+
+.edit-btn:hover,
+.edit-btn:focus {
+    background: #45a049;
+    transform: scale(1.05);
+    outline: none;
+}
+
+.player-edit-form {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-light);
+}
+
+.player-edit-form h4 {
+    color: var(--accent-primary);
+    margin-bottom: 15px;
+    font-family: 'Exo 2', sans-serif;
+}
+
+.player-fields {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+}
+
+.player-fields input {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all var(--transition-normal);
+}
+
+.player-fields input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* Адаптивность для форм редактирования */
+@media (max-width: 768px) {
+    .player-fields {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-team-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
 }
