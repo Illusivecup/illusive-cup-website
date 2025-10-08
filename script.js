@@ -692,6 +692,7 @@ function showAdminPanel() {
         updateAdminTeamsList();
         document.getElementById('totalTeams').value = Object.keys(teamsData).length;
         loadBracketSettings();
+        loadScheduleSettings();
     }
 }
 
@@ -924,18 +925,68 @@ function loadBracketSettings() {
     database.ref('bracket').once('value').then(snapshot => {
         const bracketData = snapshot.val();
         if (bracketData) {
-            displayBracket(bracketData);
+            displayBracketSettings(bracketData);
         }
     }).catch(error => {
         console.error('❌ Ошибка загрузки сетки:', error);
     });
 }
 
+function displayBracketSettings(bracketData) {
+    const container = document.getElementById('bracketSettingsContainer');
+    if (!container) return;
+    
+    if (!bracketData) {
+        container.innerHTML = '<p>Турнирная сетка пока не сформирована</p>';
+        return;
+    }
+    
+    let bracketHTML = '';
+    
+    Object.keys(bracketData).forEach(round => {
+        const matches = bracketData[round];
+        if (!Array.isArray(matches)) return;
+        
+        bracketHTML += `
+            <div class="bracket-round">
+                <h4>${getRoundName(round)}</h4>
+                ${matches.map((match, index) => `
+                    <div class="match ${round === 'final' ? 'final' : ''}">
+                        <div class="team-select-container">
+                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="1">
+                                <option value="">-- Выберите команду --</option>
+                                ${Object.keys(teamsData).map(teamId => 
+                                    `<option value="${teamId}" ${match.team1 === teamId ? 'selected' : ''}>${teamsData[teamId].name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="score-container">
+                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="1" value="${match.score1 !== null ? match.score1 : ''}" placeholder="0">
+                            <span> - </span>
+                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="2" value="${match.score2 !== null ? match.score2 : ''}" placeholder="0">
+                        </div>
+                        <div class="team-select-container">
+                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="2">
+                                <option value="">-- Выберите команду --</option>
+                                ${Object.keys(teamsData).map(teamId => 
+                                    `<option value="${teamId}" ${match.team2 === teamId ? 'selected' : ''}>${teamsData[teamId].name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    });
+    
+    container.innerHTML = bracketHTML;
+}
+
 function saveBracketChanges() {
     const bracketData = {};
     
-    document.querySelectorAll('.bracket-round').forEach(roundElement => {
-        const roundTitle = roundElement.querySelector('h3');
+    document.querySelectorAll('#bracketSettingsContainer .bracket-round').forEach(roundElement => {
+        const roundTitle = roundElement.querySelector('h4');
         if (!roundTitle) return;
         
         const roundKey = getRoundKey(roundTitle.textContent);
@@ -944,8 +995,8 @@ function saveBracketChanges() {
         roundElement.querySelectorAll('.match').forEach(matchElement => {
             const team1Select = matchElement.querySelector('[data-team="1"]');
             const team2Select = matchElement.querySelector('[data-team="2"]');
-            const score1Input = matchElement.querySelector('[data-team="1"]');
-            const score2Input = matchElement.querySelector('[data-team="2"]');
+            const score1Input = matchElement.querySelector('.score-input[data-team="1"]');
+            const score2Input = matchElement.querySelector('.score-input[data-team="2"]');
             
             const match = {
                 team1: team1Select ? team1Select.value : '',
@@ -978,6 +1029,49 @@ function getRoundKey(roundName) {
 }
 
 // === НАСТРОЙКА РАСПИСАНИЯ ===
+function loadScheduleSettings() {
+    database.ref('schedule').once('value').then(snapshot => {
+        const scheduleData = snapshot.val();
+        if (scheduleData) {
+            displayScheduleSettings(scheduleData);
+        }
+    }).catch(error => {
+        console.error('❌ Ошибка загрузки расписания:', error);
+    });
+}
+
+function displayScheduleSettings(scheduleData) {
+    const container = document.getElementById('scheduleEditList');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (!scheduleData || scheduleData.length === 0) {
+        addScheduleMatch(); // Добавляем пустое поле по умолчанию
+        return;
+    }
+    
+    scheduleData.forEach(match => {
+        const matchDiv = document.createElement('div');
+        matchDiv.className = 'schedule-edit-item';
+        matchDiv.innerHTML = `
+            <input type="text" placeholder="Время (например, 15:00)" class="match-time" value="${match.time || ''}">
+            <input type="text" placeholder="Матч (например, Team A vs Team B)" class="match-teams" value="${match.match || ''}">
+            <input type="text" placeholder="Стадия (например, Групповой этап)" class="match-stage" value="${match.stage || ''}">
+            <button type="button" class="remove-schedule-match">🗑️</button>
+        `;
+        
+        const removeBtn = matchDiv.querySelector('.remove-schedule-match');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                matchDiv.remove();
+            });
+        }
+        
+        container.appendChild(matchDiv);
+    });
+}
+
 function addScheduleMatch() {
     const scheduleList = document.getElementById('scheduleEditList');
     if (!scheduleList) return;
@@ -1009,7 +1103,8 @@ function saveScheduleChanges() {
         const teamsInput = item.querySelector('.match-teams');
         const stageInput = item.querySelector('.match-stage');
         
-        if (timeInput && teamsInput && stageInput) {
+        if (timeInput && teamsInput && stageInput && 
+            timeInput.value.trim() && teamsInput.value.trim() && stageInput.value.trim()) {
             scheduleData.push({
                 time: timeInput.value,
                 match: teamsInput.value,
@@ -1028,22 +1123,35 @@ function saveScheduleChanges() {
 
 // === НАСТРОЙКА ГРУППОВОГО ЭТАПА ===
 function saveGroupStageSettings() {
-    if (!tournamentData || !tournamentData.groupStage) {
-        alert('❌ Данные группового этапа не загружены');
-        return;
-    }
+    const formatInput = document.getElementById('tournamentFormat');
+    const groupsInput = document.getElementById('groupsCount');
+    const advancingInput = document.getElementById('advancingTeams');
     
-    database.ref('tournament/groupStage').set(tournamentData.groupStage).then(() => {
-        alert('✅ Настройки группового этапа сохранены');
+    if (!formatInput || !groupsInput || !advancingInput) return;
+    
+    const format = formatInput.value;
+    const groupsCount = parseInt(groupsInput.value) || 1;
+    const advancingTeams = parseInt(advancingInput.value) || 2;
+    
+    const settings = {
+        format: format,
+        settings: {
+            totalTeams: Object.keys(teamsData).length,
+            groups: groupsCount,
+            advancingTeams: advancingTeams
+        }
+    };
+    
+    database.ref('tournament').update(settings).then(() => {
+        alert('✅ Настройки группового этапа сохранены!');
     }).catch(error => {
-        console.error('❌ Ошибка сохранения группового этапа:', error);
-        alert('❌ Ошибка сохранения группового этапа: ' + error.message);
+        console.error('❌ Ошибка сохранения настроек:', error);
+        alert('❌ Ошибка сохранения настроек: ' + error.message);
     });
 }
 
 // === ЗАГРУЗКА НАЧАЛЬНЫХ ДАННЫХ ===
 function loadInitialData() {
-    // Данные уже загружаются через real-time listeners
     console.log('🔄 Загрузка начальных данных...');
 }
 
