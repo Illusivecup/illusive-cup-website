@@ -22,7 +22,6 @@ class AppState {
     
     constructor() {
         this.teamsManager = null;
-        this.bracketManager = null;
         this.scheduleManager = null;
         this.tournamentData = {};
         this.currentEditingTeamId = null;
@@ -31,9 +30,6 @@ class AppState {
     
     setTeamsManager(manager) { this.teamsManager = manager; }
     getTeamsManager() { return this.teamsManager; }
-    
-    setBracketManager(manager) { this.bracketManager = manager; }
-    getBracketManager() { return this.bracketManager; }
     
     setScheduleManager(manager) { this.scheduleManager = manager; }
     getScheduleManager() { return this.scheduleManager; }
@@ -249,17 +245,19 @@ class ValidationSystem {
         };
     }
     
-    static validateBracketMatch(match) {
+    static validateScheduleMatch(match) {
         const errors = [];
         
-        if (match.team1 && match.team2 && match.team1 === match.team2) {
+        if (!match.team1 || !match.team2) {
+            errors.push('Выберите обе команды');
+        }
+        
+        if (match.team1 === match.team2) {
             errors.push('Команда не может играть против себя');
         }
         
-        if (match.score1 !== null && match.score2 !== null) {
-            if (match.score1 < 0 || match.score2 < 0) {
-                errors.push('Счет не может быть отрицательным');
-            }
+        if (match.completed && (match.score1 === null || match.score2 === null)) {
+            errors.push('Для завершенного матча укажите счет');
         }
         
         return {
@@ -320,7 +318,6 @@ class SecurityManager {
     static isAuthenticated = false;
     static sessionTimeout = 30 * 60 * 1000;
     static sessionTimer = null;
-    static eventListenersSetup = false;
     
     static init() {
         this.checkExistingSession();
@@ -359,8 +356,7 @@ class SecurityManager {
         const sessionData = {
             authenticated: true,
             timestamp: Date.now(),
-            userAgent: navigator.userAgent,
-            ipHash: this.generateIPHash()
+            userAgent: navigator.userAgent
         };
         
         localStorage.setItem('editor_session', JSON.stringify(sessionData));
@@ -446,11 +442,6 @@ class SecurityManager {
         if (connectionStatus) connectionStatus.classList.remove('hidden');
         
         console.log('👑 Режим редактора активирован');
-        
-        if (!this.eventListenersSetup) {
-            EventManager.setupAdminEventListeners();
-            this.eventListenersSetup = true;
-        }
     }
     
     static hideAdminInterface() {
@@ -501,49 +492,6 @@ class SecurityManager {
     
     static delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    
-    static generateIPHash() {
-        return btoa(navigator.userAgent + navigator.language).slice(0, 16);
-    }
-}
-
-// === СИСТЕМА УПРАВЛЕНИЯ СОБЫТИЯМИ ===
-class EventManager {
-    static handlers = new Map();
-    
-    static setupAdminEventListeners() {
-        this.removeAdminEventListeners();
-        
-        const eventMap = [
-            ['generateAccessLink', 'click', generateAccessLink],
-            ['copyLinkBtn', 'click', copyAccessLink],
-            ['changePasswordBtn', 'click', changePassword],
-            ['applyTeamsCountBtn', 'click', updateTeamsCount],
-            ['updateTeamsBtn', 'click', updateTeamsSettings],
-            ['saveBracketBtn', 'click', saveBracketChanges],
-            ['saveScheduleBtn', 'click', saveScheduleChanges],
-            ['addScheduleMatchBtn', 'click', addScheduleMatch],
-            ['saveGroupStageBtn', 'click', saveGroupStageSettings]
-        ];
-        
-        eventMap.forEach(([id, event, handler]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                const boundHandler = handler.bind(this);
-                element.addEventListener(event, boundHandler);
-                this.handlers.set(`${id}_${event}`, { element, event, handler: boundHandler });
-            }
-        });
-    }
-    
-    static removeAdminEventListeners() {
-        this.handlers.forEach(({ element, event, handler }, key) => {
-            if (element && element.removeEventListener) {
-                element.removeEventListener(event, handler);
-            }
-            this.handlers.delete(key);
-        });
     }
 }
 
@@ -674,39 +622,6 @@ class TeamsManager extends BaseManager {
     }
 }
 
-// === МЕНЕДЖЕР СЕТКИ ===
-class BracketManager extends BaseManager {
-    constructor(database) {
-        super(database, 'Bracket');
-        this.bracket = {};
-    }
-    
-    async setupListeners() {
-        return new Promise((resolve, reject) => {
-            this.database.ref('bracket').on('value', (snapshot) => {
-                PerformanceOptimizer.throttle('bracket_display', () => {
-                    this.handleBracketUpdate(snapshot.val());
-                }, 500);
-                resolve();
-            }, reject);
-        });
-    }
-    
-    handleBracketUpdate(bracketData) {
-        this.bracket = bracketData || {};
-        PerformanceOptimizer.setCachedData('bracket', this.bracket);
-        
-        const bracketContent = document.getElementById('bracketContent');
-        if (bracketContent && !bracketContent.classList.contains('hidden')) {
-            displayBracket(this.bracket);
-        }
-    }
-    
-    async updateBracket(bracketData) {
-        await this.database.ref('bracket').set(bracketData);
-    }
-}
-
 // === МЕНЕДЖЕР РАСПИСАНИЯ ===
 class ScheduleManager extends BaseManager {
     constructor(database) {
@@ -782,16 +697,13 @@ class TournamentApp {
     
     async initializeManagers() {
         const teamsManager = new TeamsManager(this.database);
-        const bracketManager = new BracketManager(this.database);
         const scheduleManager = new ScheduleManager(this.database);
         
         this.appState.setTeamsManager(teamsManager);
-        this.appState.setBracketManager(bracketManager);
         this.appState.setScheduleManager(scheduleManager);
         
         await Promise.all([
             teamsManager.initialize(),
-            bracketManager.initialize(),
             scheduleManager.initialize()
         ]);
     }
@@ -812,7 +724,6 @@ class TournamentApp {
     async loadInitialData() {
         const managers = [
             this.appState.getTeamsManager(),
-            this.appState.getBracketManager(),
             this.appState.getScheduleManager()
         ];
         
@@ -836,6 +747,7 @@ class TournamentApp {
                 this.appState.setTournamentData(data);
                 PerformanceOptimizer.setCachedData('tournament', data);
                 this.safeDisplayGroupStage();
+                this.safeDisplayPlayoff();
             },
             'audienceAwards': (snapshot) => {
                 const data = snapshot.val();
@@ -852,9 +764,9 @@ class TournamentApp {
     setupEventListeners() {
         const navElements = [
             ['teamsDropdownBtn', 'click', this.toggleDropdown],
-            ['groupStageBtn', 'click', () => this.showSection('groupStage')],
-            ['bracketBtn', 'click', () => this.showSection('bracket')],
             ['scheduleBtn', 'click', () => this.showSection('schedule')],
+            ['groupStageBtn', 'click', () => this.showSection('groupStage')],
+            ['playoffBtn', 'click', () => this.showSection('playoff')],
             ['audienceAwardBtn', 'click', () => this.showSection('audienceAward')],
             ['adminBtn', 'click', this.showAdminPanel]
         ];
@@ -1010,6 +922,14 @@ class TournamentApp {
         }
     }
     
+    safeDisplayPlayoff() {
+        try {
+            displayPlayoff();
+        } catch (error) {
+            console.error('Ошибка отображения плей-офф:', error);
+        }
+    }
+    
     safeDisplayAudienceAwards(data) {
         try {
             displayAudienceAwards(data);
@@ -1145,50 +1065,6 @@ function toggleDropdown() {
     }
 }
 
-function showTeams() {
-    hideAllSections();
-    const teamsContent = document.getElementById('teamsContent');
-    if (teamsContent) {
-        teamsContent.classList.remove('hidden');
-    }
-}
-
-function showGroupStage() {
-    hideAllSections();
-    const groupStageContent = document.getElementById('groupStageContent');
-    if (groupStageContent) {
-        groupStageContent.classList.remove('hidden');
-    }
-    AppState.getInstance().setCurrentDisplayedTeamId(null);
-}
-
-function showBracket() {
-    hideAllSections();
-    const bracketContent = document.getElementById('bracketContent');
-    if (bracketContent) {
-        bracketContent.classList.remove('hidden');
-    }
-    AppState.getInstance().setCurrentDisplayedTeamId(null);
-}
-
-function showSchedule() {
-    hideAllSections();
-    const scheduleContent = document.getElementById('scheduleContent');
-    if (scheduleContent) {
-        scheduleContent.classList.remove('hidden');
-    }
-    AppState.getInstance().setCurrentDisplayedTeamId(null);
-}
-
-function showAudienceAward() {
-    hideAllSections();
-    const audienceAwardContent = document.getElementById('audienceAwardContent');
-    if (audienceAwardContent) {
-        audienceAwardContent.classList.remove('hidden');
-    }
-    AppState.getInstance().setCurrentDisplayedTeamId(null);
-}
-
 function hideAllSections() {
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.add('hidden');
@@ -1232,7 +1108,11 @@ function showSingleTeamCard(teamId) {
         appState.setCurrentDisplayedTeamId(teamId);
     }
     
-    showTeams();
+    hideAllSections();
+    const teamsContent = document.getElementById('teamsContent');
+    if (teamsContent) {
+        teamsContent.classList.remove('hidden');
+    }
     toggleDropdown();
 }
 
@@ -1309,78 +1189,50 @@ function createTeamCard(teamId, team) {
     return card;
 }
 
-function displayBracket(bracketData) {
-    const container = document.getElementById('bracketContainer');
-    if (!container) return;
-    
-    if (!bracketData) {
-        container.innerHTML = '<p>Турнирная сетка пока не сформирована</p>';
-        return;
-    }
-    
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
-    
-    let bracketHTML = '';
-    
-    Object.keys(bracketData).forEach(round => {
-        const matches = bracketData[round];
-        if (!Array.isArray(matches)) return;
-        
-        bracketHTML += `
-            <div class="bracket-round">
-                <h3>${getRoundName(round)}</h3>
-                ${matches.map((match, index) => `
-                    <div class="match ${round === 'final' ? 'final' : ''}">
-                        <div class="team-select-container">
-                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="1">
-                                <option value="">-- Выберите команду --</option>
-                                ${Object.keys(teamsManager.getAllTeams()).map(teamId => {
-                                    const team = teamsManager.getTeam(teamId);
-                                    return `<option value="${teamId}" ${match.team1 === teamId ? 'selected' : ''}>${team.name}</option>`;
-                                }).join('')}
-                            </select>
-                        </div>
-                        <div class="score-container">
-                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="1" value="${match.score1 !== null ? match.score1 : ''}" placeholder="0">
-                            <span> - </span>
-                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="2" value="${match.score2 !== null ? match.score2 : ''}" placeholder="0">
-                        </div>
-                        <div class="team-select-container">
-                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="2">
-                                <option value="">-- Выберите команду --</option>
-                                ${Object.keys(teamsManager.getAllTeams()).map(teamId => {
-                                    const team = teamsManager.getTeam(teamId);
-                                    return `<option value="${teamId}" ${match.team2 === teamId ? 'selected' : ''}>${team.name}</option>`;
-                                }).join('')}
-                            </select>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    });
-    
-    container.innerHTML = bracketHTML;
-}
-
 function displaySchedule(scheduleData) {
-    const container = document.getElementById('scheduleList');
-    if (!container) return;
+    const upcomingContainer = document.getElementById('upcomingMatches');
+    const completedContainer = document.getElementById('completedMatches');
+    
+    if (!upcomingContainer || !completedContainer) return;
     
     if (!scheduleData || scheduleData.length === 0) {
-        container.innerHTML = '<p>Расписание матчей пока не опубликовано</p>';
+        upcomingContainer.innerHTML = '<p>Запланированные матчи не добавлены</p>';
+        completedContainer.innerHTML = '<p>Проведённые матчи не добавлены</p>';
         return;
     }
     
-    container.innerHTML = scheduleData.map(match => `
+    const upcomingMatches = [];
+    const completedMatches = [];
+    
+    scheduleData.forEach(match => {
+        if (match.completed) {
+            completedMatches.push(match);
+        } else {
+            upcomingMatches.push(match);
+        }
+    });
+    
+    // Отображаем запланированные матчи
+    upcomingContainer.innerHTML = upcomingMatches.map(match => `
         <div class="match-slot">
             <div class="time">${match.time || 'TBD'}</div>
-            <div class="teams">${match.match || 'Матч не назначен'}</div>
+            <div class="teams">${match.team1 || 'TBD'} vs ${match.team2 || 'TBD'}</div>
             <div class="court">${match.stage || 'Групповой этап'}</div>
         </div>
-    `).join('');
+    `).join('') || '<p>Нет запланированных матчей</p>';
+    
+    // Отображаем проведённые матчи
+    completedContainer.innerHTML = completedMatches.map(match => `
+        <div class="match-slot">
+            <div class="time">${match.time || 'TBD'}</div>
+            <div class="teams">
+                ${match.team1 || 'TBD'} ${match.score1 !== null ? match.score1 : ''} 
+                - 
+                ${match.score2 !== null ? match.score2 : ''} ${match.team2 || 'TBD'}
+            </div>
+            <div class="court">${match.stage || 'Групповой этап'}</div>
+        </div>
+    `).join('') || '<p>Нет проведённых матчей</p>';
 }
 
 function displayGroupStage() {
@@ -1402,18 +1254,14 @@ function displayGroupStage() {
         
         if (!group.teams) return;
         
-        const sortedTeams = [...group.teams].sort((a, b) => {
-            if (a.losses === 0 && b.losses !== 0) return -1;
-            if (a.losses !== 0 && b.losses === 0) return 1;
-            
-            if (a.wins === a.losses && b.wins !== b.losses) return 1;
-            if (a.wins !== a.losses && b.wins === b.losses) return -1;
-            
-            if (a.wins === 0 && b.wins !== 0) return 1;
-            if (a.wins !== 0 && b.wins === 0) return -1;
-            
-            return (b.points || 0) - (a.points || 0);
+        // Рассчитываем счет для каждой команды (победы - поражения)
+        const teamsWithScore = group.teams.map(team => {
+            const score = (team.wins || 0) - (team.losses || 0);
+            return { ...team, score };
         });
+        
+        // Сортируем по счету (по убыванию)
+        const sortedTeams = teamsWithScore.sort((a, b) => b.score - a.score);
         
         groupHTML += `
             <div class="group-container">
@@ -1424,27 +1272,25 @@ function displayGroupStage() {
                         <div>Матчи</div>
                         <div>Победы</div>
                         <div>Поражения</div>
-                        <div>Очки</div>
+                        <div>Счёт</div>
                     </div>
                     ${sortedTeams.map((team, index) => {
-                        let rowClass = '';
-                        if (team.losses === 0 && team.wins > 0) {
-                            rowClass = 'undefeated';
-                        } else if (team.wins === 0 && team.losses > 0) {
-                            rowClass = 'eliminated';
-                        } else if (team.wins === team.losses) {
-                            rowClass = 'equal';
-                        } else if (team.wins === 0 && team.losses === 0) {
-                            rowClass = 'new-team';
+                        let rowClass = 'middle-team';
+                        if (index === 0) {
+                            rowClass = 'top-team';
+                        } else if (index === sortedTeams.length - 1) {
+                            rowClass = 'bottom-team';
                         }
+                        
+                        const totalMatches = (team.wins || 0) + (team.losses || 0);
                         
                         return `
                             <div class="table-row ${rowClass}">
                                 <div class="team-name">${team.name || 'Без названия'}</div>
-                                <div>${(team.wins || 0) + (team.losses || 0)}</div>
+                                <div>${totalMatches}</div>
                                 <div>${team.wins || 0}</div>
                                 <div>${team.losses || 0}</div>
-                                <div class="points">${team.points || 0}</div>
+                                <div class="score">${team.score}</div>
                             </div>
                         `;
                     }).join('')}
@@ -1454,6 +1300,52 @@ function displayGroupStage() {
     });
 
     container.innerHTML = groupHTML;
+}
+
+function displayPlayoff() {
+    const thirdPlaceContainer = document.getElementById('thirdPlaceMatch');
+    const grandFinalContainer = document.getElementById('grandFinalMatch');
+    const winnerContainer = document.getElementById('winnerSection');
+    
+    if (!thirdPlaceContainer || !grandFinalContainer || !winnerContainer) return;
+    
+    const appState = AppState.getInstance();
+    const playoffData = appState.getTournamentData()?.playoff || {};
+    
+    // Матч за 3 место
+    thirdPlaceContainer.innerHTML = playoffData.thirdPlace ? `
+        <div class="playoff-match-content">
+            <div class="playoff-team">${playoffData.thirdPlace.team1 || 'TBD'}</div>
+            <div class="playoff-score">
+                ${playoffData.thirdPlace.score1 !== null ? playoffData.thirdPlace.score1 : '?'} 
+                - 
+                ${playoffData.thirdPlace.score2 !== null ? playoffData.thirdPlace.score2 : '?'}
+            </div>
+            <div class="playoff-team">${playoffData.thirdPlace.team2 || 'TBD'}</div>
+        </div>
+    ` : '<p>Матч за 3 место не назначен</p>';
+    
+    // Грандфинал
+    grandFinalContainer.innerHTML = playoffData.grandFinal ? `
+        <div class="playoff-match-content">
+            <div class="playoff-team">${playoffData.grandFinal.team1 || 'TBD'}</div>
+            <div class="playoff-score">
+                ${playoffData.grandFinal.score1 !== null ? playoffData.grandFinal.score1 : '?'} 
+                - 
+                ${playoffData.grandFinal.score2 !== null ? playoffData.grandFinal.score2 : '?'}
+            </div>
+            <div class="playoff-team">${playoffData.grandFinal.team2 || 'TBD'}</div>
+        </div>
+    ` : '<p>Грандфинал не назначен</p>';
+    
+    // Победитель
+    winnerContainer.innerHTML = playoffData.winner ? `
+        <div class="winner-content">
+            <div class="winner-icon">👑</div>
+            <div class="winner-name">${playoffData.winner}</div>
+            <div class="winner-subtitle">Победитель Illusive Cup 2025</div>
+        </div>
+    ` : '<p>Победитель ещё не определён</p>';
 }
 
 function displayAudienceAwards(awardsData) {
@@ -1488,6 +1380,9 @@ function showAdminPanel() {
     if (adminPanel) {
         adminPanel.classList.remove('hidden');
         updateAdminTeamsList();
+        loadScheduleSettings();
+        loadGroupStageSettings();
+        loadPlayoffSettings();
         
         const totalTeamsInput = document.getElementById('totalTeams');
         if (totalTeamsInput) {
@@ -1497,11 +1392,6 @@ function showAdminPanel() {
                 totalTeamsInput.value = Object.keys(teamsManager.getAllTeams()).length;
             }
         }
-        
-        loadBracketSettings();
-        loadScheduleSettings();
-        loadGroupStageMatches();
-        EventManager.setupAdminEventListeners();
     }
 }
 
@@ -1592,14 +1482,8 @@ async function updateTeamsCount() {
                 const newTeam = {
                     name: "Новая команда " + (currentCount + i + 1),
                     slogan: "",
-                    players: [
-                        { name: "Игрок 1", role: "Керри", mmr: 3000 },
-                        { name: "Игрок 2", role: "Мидер", mmr: 3000 },
-                        { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
-                        { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
-                        { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
-                    ],
-                    mmr: 3000
+                    players: [],
+                    mmr: 0
                 };
                 await teamsManager.database.ref('teams/' + newTeamId).set(newTeam);
             }
@@ -1617,33 +1501,6 @@ async function updateTeamsCount() {
         ErrorHandler.showError('Количество команд успешно обновлено');
     } catch (error) {
         ErrorHandler.showError('Ошибка при обновлении команд: ' + error.message);
-    }
-}
-
-// Вспомогательные функции
-function getRoundName(round) {
-    const roundNames = {
-        'quarterfinals': 'Четвертьфиналы',
-        'semifinals': 'Полуфиналы', 
-        'final': 'Финал'
-    };
-    return roundNames[round] || round;
-}
-
-function updateConnectionStatus(connected) {
-    const statusElement = document.getElementById('connectionStatus');
-    const statusDot = statusElement?.querySelector('.status-dot');
-    const statusText = statusElement?.querySelector('.status-text');
-    
-    if (statusElement && statusDot && statusText) {
-        if (connected) {
-            statusDot.classList.add('connected');
-            statusText.textContent = 'Подключено к турниру';
-            statusElement.classList.remove('hidden');
-        } else {
-            statusDot.classList.remove('connected');
-            statusText.textContent = 'Нет подключения';
-        }
     }
 }
 
@@ -1703,88 +1560,64 @@ async function updateTeamsSettings() {
     ErrorHandler.showError('Функция в разработке');
 }
 
-async function saveBracketChanges() {
-    if (!SecurityManager.requireAuth()) return;
-    
-    const appState = AppState.getInstance();
-    const bracketManager = appState.getBracketManager();
-    if (!bracketManager) return;
-    
-    const bracketData = {};
-    const rounds = ['quarterfinals', 'semifinals', 'final'];
-    
-    rounds.forEach(round => {
-        const matches = [];
-        const matchElements = document.querySelectorAll(`.team-select[data-round="${round}"]`);
-        
-        // Группируем элементы по матчам
-        const matchesCount = matchElements.length / 2;
-        
-        for (let i = 0; i < matchesCount; i++) {
-            const team1Select = document.querySelector(`.team-select[data-round="${round}"][data-match="${i}"][data-team="1"]`);
-            const team2Select = document.querySelector(`.team-select[data-round="${round}"][data-match="${i}"][data-team="2"]`);
-            const score1Input = document.querySelector(`.score-input[data-round="${round}"][data-match="${i}"][data-team="1"]`);
-            const score2Input = document.querySelector(`.score-input[data-round="${round}"][data-match="${i}"][data-team="2"]`);
-            
-            if (team1Select && team2Select) {
-                matches.push({
-                    team1: team1Select.value,
-                    team2: team2Select.value,
-                    score1: score1Input ? parseInt(score1Input.value) || null : null,
-                    score2: score2Input ? parseInt(score2Input.value) || null : null
-                });
-            }
-        }
-        
-        bracketData[round] = matches;
-    });
-    
-    try {
-        await bracketManager.updateBracket(bracketData);
-        ErrorHandler.showError('Турнирная сетка сохранена');
-    } catch (error) {
-        ErrorHandler.showError('Ошибка сохранения сетки: ' + error.message);
-    }
-}
-
-async function saveScheduleChanges() {
-    if (!SecurityManager.requireAuth()) return;
-    
+// Управление расписанием
+function loadScheduleSettings() {
     const appState = AppState.getInstance();
     const scheduleManager = appState.getScheduleManager();
+    if (!scheduleManager) return;
+    
+    const scheduleData = scheduleManager.schedule;
+    const container = document.getElementById('scheduleEditList');
+    if (!container) return;
+    
     const teamsManager = appState.getTeamsManager();
+    if (!teamsManager) return;
     
-    if (!scheduleManager || !teamsManager) return;
+    const teams = teamsManager.getAllTeams();
     
-    const scheduleItems = document.querySelectorAll('.schedule-edit-item');
-    const scheduleData = [];
+    container.innerHTML = '';
     
-    scheduleItems.forEach(item => {
-        const stageSelect = item.querySelector('.stage-select');
-        const timeInput = item.querySelector('.time-input');
-        const team1Select = item.querySelector('.team1-select');
-        const team2Select = item.querySelector('.team2-select');
+    scheduleData.forEach((match, index) => {
+        const matchElement = document.createElement('div');
+        matchElement.className = 'schedule-edit-item';
+        matchElement.innerHTML = `
+            <select class="form-input stage-select">
+                <option value="Групповой этап" ${match.stage === 'Групповой этап' ? 'selected' : ''}>Групповой этап</option>
+                <option value="Плей-офф" ${match.stage === 'Плей-офф' ? 'selected' : ''}>Плей-офф</option>
+            </select>
+            <input type="time" value="${match.time || ''}" class="form-input time-input">
+            <select class="form-input team1-select">
+                <option value="">-- Команда 1 --</option>
+                ${Object.keys(teams).map(teamId => {
+                    const team = teams[teamId];
+                    return `<option value="${teamId}" ${match.team1 === teamId ? 'selected' : ''}>${team.name}</option>`;
+                }).join('')}
+            </select>
+            <span>vs</span>
+            <select class="form-input team2-select">
+                <option value="">-- Команда 2 --</option>
+                ${Object.keys(teams).map(teamId => {
+                    const team = teams[teamId];
+                    return `<option value="${teamId}" ${match.team2 === teamId ? 'selected' : ''}>${team.name}</option>`;
+                }).join('')}
+            </select>
+            <div>
+                <input type="number" class="form-input" placeholder="Счет 1" value="${match.score1 !== null ? match.score1 : ''}" min="0">
+                <input type="number" class="form-input" placeholder="Счет 2" value="${match.score2 !== null ? match.score2 : ''}" min="0">
+                <label><input type="checkbox" ${match.completed ? 'checked' : ''}> Завершен</label>
+            </div>
+            <button class="remove-schedule-match" data-index="${index}">🗑️</button>
+        `;
         
-        if (stageSelect && timeInput && team1Select && team2Select) {
-            const team1 = teamsManager.getTeam(team1Select.value);
-            const team2 = teamsManager.getTeam(team2Select.value);
-            
-            if (team1 && team2) {
-                scheduleData.push({
-                    stage: stageSelect.value,
-                    time: timeInput.value,
-                    match: `${team1.name} vs ${team2.name}`
-                });
-            }
-        }
+        container.appendChild(matchElement);
     });
     
-    try {
-        await scheduleManager.updateSchedule(scheduleData);
-        ErrorHandler.showError('Расписание сохранено');
-    } catch (error) {
-        ErrorHandler.showError('Ошибка сохранения расписания: ' + error.message);
-    }
+    // Добавляем обработчики для кнопок удаления
+    container.querySelectorAll('.remove-schedule-match').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.schedule-edit-item').remove();
+        });
+    });
 }
 
 function addScheduleMatch() {
@@ -1822,6 +1655,11 @@ function addScheduleMatch() {
                 return `<option value="${teamId}">${team.name}</option>`;
             }).join('')}
         </select>
+        <div>
+            <input type="number" class="form-input" placeholder="Счет 1" min="0">
+            <input type="number" class="form-input" placeholder="Счет 2" min="0">
+            <label><input type="checkbox"> Завершен</label>
+        </div>
         <button class="remove-schedule-match">🗑️</button>
     `;
     
@@ -1836,8 +1674,55 @@ function addScheduleMatch() {
     }
 }
 
+async function saveScheduleChanges() {
+    if (!SecurityManager.requireAuth()) return;
+    
+    const appState = AppState.getInstance();
+    const scheduleManager = appState.getScheduleManager();
+    const teamsManager = appState.getTeamsManager();
+    
+    if (!scheduleManager || !teamsManager) return;
+    
+    const scheduleItems = document.querySelectorAll('.schedule-edit-item');
+    const scheduleData = [];
+    
+    for (const item of scheduleItems) {
+        const stageSelect = item.querySelector('.stage-select');
+        const timeInput = item.querySelector('.time-input');
+        const team1Select = item.querySelector('.team1-select');
+        const team2Select = item.querySelector('.team2-select');
+        const score1Input = item.querySelector('input[placeholder="Счет 1"]');
+        const score2Input = item.querySelector('input[placeholder="Счет 2"]');
+        const completedCheckbox = item.querySelector('input[type="checkbox"]');
+        
+        if (stageSelect && timeInput && team1Select && team2Select) {
+            const team1 = teamsManager.getTeam(team1Select.value);
+            const team2 = teamsManager.getTeam(team2Select.value);
+            
+            if (team1 && team2) {
+                scheduleData.push({
+                    stage: stageSelect.value,
+                    time: timeInput.value,
+                    team1: team1Select.value,
+                    team2: team2Select.value,
+                    score1: score1Input && score1Input.value !== '' ? parseInt(score1Input.value) : null,
+                    score2: score2Input && score2Input.value !== '' ? parseInt(score2Input.value) : null,
+                    completed: completedCheckbox ? completedCheckbox.checked : false
+                });
+            }
+        }
+    }
+    
+    try {
+        await scheduleManager.updateSchedule(scheduleData);
+        ErrorHandler.showError('Расписание сохранено');
+    } catch (error) {
+        ErrorHandler.showError('Ошибка сохранения расписания: ' + error.message);
+    }
+}
+
 // Управление групповым этапом
-function loadGroupStageMatches() {
+function loadGroupStageSettings() {
     const container = document.getElementById('groupStageMatchesContainer');
     if (!container) return;
     
@@ -1860,7 +1745,7 @@ function loadGroupStageMatches() {
                         <option value="">-- Команда 1 --</option>
                         ${Object.keys(teams).map(teamId => {
                             const team = teams[teamId];
-                            return `<option value="${teamId}" ${match.team1 === team.name ? 'selected' : ''}>${team.name}</option>`;
+                            return `<option value="${teamId}" ${match.team1 === teamId ? 'selected' : ''}>${team.name}</option>`;
                         }).join('')}
                     </select>
                     <input type="number" class="score1-input" data-match="${index}" value="${match.score1 || 0}" min="0">
@@ -1870,7 +1755,7 @@ function loadGroupStageMatches() {
                         <option value="">-- Команда 2 --</option>
                         ${Object.keys(teams).map(teamId => {
                             const team = teams[teamId];
-                            return `<option value="${teamId}" ${match.team2 === team.name ? 'selected' : ''}>${team.name}</option>`;
+                            return `<option value="${teamId}" ${match.team2 === teamId ? 'selected' : ''}>${team.name}</option>`;
                         }).join('')}
                     </select>
                     <button class="save-match-score" data-match="${index}">💾</button>
@@ -1918,8 +1803,8 @@ async function saveGroupStageMatch(matchIndex) {
     try {
         // Обновляем матч в базе данных
         await database.ref(`tournament/groupStage/groupA/matches/${matchIndex}`).update({
-            team1: team1.name,
-            team2: team2.name,
+            team1: team1Select.value,
+            team2: team2Select.value,
             score1: score1,
             score2: score2,
             completed: score1 > 0 || score2 > 0
@@ -1934,23 +1819,110 @@ async function saveGroupStageMatch(matchIndex) {
 async function saveGroupStageSettings() {
     if (!SecurityManager.requireAuth()) return;
     
-    const formatSelect = document.getElementById('tournamentFormat');
     const groupsCount = document.getElementById('groupsCount');
-    const advancingTeams = document.getElementById('advancingTeams');
     
-    if (!formatSelect || !groupsCount || !advancingTeams) return;
+    if (!groupsCount) return;
     
     try {
-        await database.ref('tournament/settings').update({
-            format: formatSelect.value,
-            groups: parseInt(groupsCount.value) || 1,
-            advancingTeams: parseInt(advancingTeams.value) || 4
+        await database.ref('tournament/groupStage').update({
+            groups: parseInt(groupsCount.value) || 1
         });
         
         ErrorHandler.showError('Настройки группового этапа сохранены');
     } catch (error) {
         ErrorHandler.showError('Ошибка сохранения настроек: ' + error.message);
     }
+}
+
+// Управление плей-офф
+function loadPlayoffSettings() {
+    const appState = AppState.getInstance();
+    const playoffData = appState.getTournamentData()?.playoff || {};
+    const teamsManager = appState.getTeamsManager();
+    
+    if (!teamsManager) return;
+    
+    const teams = teamsManager.getAllTeams();
+    const teamOptions = Object.keys(teams).map(teamId => 
+        `<option value="${teamId}">${teams[teamId].name}</option>`
+    ).join('');
+    
+    // Обновляем селекты команд
+    ['thirdPlaceTeam1', 'thirdPlaceTeam2', 'grandFinalTeam1', 'grandFinalTeam2', 'playoffWinner'].forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.innerHTML = '<option value="">-- Выберите команду --</option>' + teamOptions;
+        }
+    });
+    
+    // Устанавливаем значения
+    if (playoffData.thirdPlace) {
+        setSelectValue('thirdPlaceTeam1', playoffData.thirdPlace.team1);
+        setSelectValue('thirdPlaceTeam2', playoffData.thirdPlace.team2);
+        setInputValue('thirdPlaceScore1', playoffData.thirdPlace.score1);
+        setInputValue('thirdPlaceScore2', playoffData.thirdPlace.score2);
+    }
+    
+    if (playoffData.grandFinal) {
+        setSelectValue('grandFinalTeam1', playoffData.grandFinal.team1);
+        setSelectValue('grandFinalTeam2', playoffData.grandFinal.team2);
+        setInputValue('grandFinalScore1', playoffData.grandFinal.score1);
+        setInputValue('grandFinalScore2', playoffData.grandFinal.score2);
+    }
+    
+    setSelectValue('playoffWinner', playoffData.winner);
+}
+
+async function savePlayoffSettings() {
+    if (!SecurityManager.requireAuth()) return;
+    
+    const playoffData = {
+        thirdPlace: {
+            team1: getSelectValue('thirdPlaceTeam1'),
+            team2: getSelectValue('thirdPlaceTeam2'),
+            score1: getInputValue('thirdPlaceScore1'),
+            score2: getInputValue('thirdPlaceScore2')
+        },
+        grandFinal: {
+            team1: getSelectValue('grandFinalTeam1'),
+            team2: getSelectValue('grandFinalTeam2'),
+            score1: getInputValue('grandFinalScore1'),
+            score2: getInputValue('grandFinalScore2')
+        },
+        winner: getSelectValue('playoffWinner')
+    };
+    
+    try {
+        await database.ref('tournament/playoff').set(playoffData);
+        ErrorHandler.showError('Настройки плей-офф сохранены');
+    } catch (error) {
+        ErrorHandler.showError('Ошибка сохранения плей-офф: ' + error.message);
+    }
+}
+
+// Вспомогательные функции для плей-офф
+function setSelectValue(selectId, value) {
+    const select = document.getElementById(selectId);
+    if (select && value) {
+        select.value = value;
+    }
+}
+
+function setInputValue(inputId, value) {
+    const input = document.getElementById(inputId);
+    if (input && value !== null) {
+        input.value = value;
+    }
+}
+
+function getSelectValue(selectId) {
+    const select = document.getElementById(selectId);
+    return select ? select.value : null;
+}
+
+function getInputValue(inputId) {
+    const input = document.getElementById(inputId);
+    return input && input.value !== '' ? parseInt(input.value) : null;
 }
 
 // Функции редактирования команд
@@ -1981,15 +1953,6 @@ function editTeam(teamId) {
         });
         
         modal.classList.remove('hidden');
-        
-        // Добавляем обработчик для кнопки закрытия
-        const closeBtn = document.getElementById('closeEditTeamModal');
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                modal.classList.add('hidden');
-                appState.setCurrentEditingTeamId(null);
-            };
-        }
     }
 }
 
@@ -2098,120 +2061,22 @@ async function deleteTeam(teamId) {
     }
 }
 
-function loadBracketSettings() {
-    const appState = AppState.getInstance();
-    const bracketManager = appState.getBracketManager();
-    if (!bracketManager) return;
+// Вспомогательные функции
+function updateConnectionStatus(connected) {
+    const statusElement = document.getElementById('connectionStatus');
+    const statusDot = statusElement?.querySelector('.status-dot');
+    const statusText = statusElement?.querySelector('.status-text');
     
-    const bracketData = bracketManager.bracket;
-    
-    const container = document.getElementById('bracketSettingsContainer');
-    if (!container) return;
-    
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
-    
-    const teams = teamsManager.getAllTeams();
-    
-    let bracketHTML = '';
-    
-    const rounds = ['quarterfinals', 'semifinals', 'final'];
-    
-    rounds.forEach(round => {
-        const matches = bracketData[round] || [];
-        
-        bracketHTML += `
-            <div class="bracket-round">
-                <h4>${getRoundName(round)}</h4>
-                ${matches.map((match, index) => `
-                    <div class="match ${round === 'final' ? 'final' : ''}">
-                        <div class="team-select-container">
-                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="1">
-                                <option value="">-- Выберите команду --</option>
-                                ${Object.keys(teams).map(teamId => {
-                                    const team = teams[teamId];
-                                    return `<option value="${teamId}" ${match.team1 === teamId ? 'selected' : ''}>${team.name}</option>`;
-                                }).join('')}
-                            </select>
-                        </div>
-                        <div class="score-container">
-                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="1" value="${match.score1 || ''}" placeholder="0" min="0">
-                            <span> - </span>
-                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="2" value="${match.score2 || ''}" placeholder="0" min="0">
-                        </div>
-                        <div class="team-select-container">
-                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="2">
-                                <option value="">-- Выберите команду --</option>
-                                ${Object.keys(teams).map(teamId => {
-                                    const team = teams[teamId];
-                                    return `<option value="${teamId}" ${match.team2 === teamId ? 'selected' : ''}>${team.name}</option>`;
-                                }).join('')}
-                            </select>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    });
-    
-    container.innerHTML = bracketHTML;
-}
-
-function loadScheduleSettings() {
-    const appState = AppState.getInstance();
-    const scheduleManager = appState.getScheduleManager();
-    if (!scheduleManager) return;
-    
-    const scheduleData = scheduleManager.schedule;
-    const container = document.getElementById('scheduleEditList');
-    if (!container) return;
-    
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
-    
-    const teams = teamsManager.getAllTeams();
-    
-    container.innerHTML = '';
-    
-    scheduleData.forEach((match, index) => {
-        const matchElement = document.createElement('div');
-        matchElement.className = 'schedule-edit-item';
-        matchElement.innerHTML = `
-            <select class="form-input stage-select">
-                <option value="Групповой этап" ${match.stage === 'Групповой этап' ? 'selected' : ''}>Групповой этап</option>
-                <option value="Плей-офф" ${match.stage === 'Плей-офф' ? 'selected' : ''}>Плей-офф</option>
-            </select>
-            <input type="time" value="${match.time || ''}" class="form-input time-input">
-            <select class="form-input team1-select">
-                <option value="">-- Команда 1 --</option>
-                ${Object.keys(teams).map(teamId => {
-                    const team = teams[teamId];
-                    const isSelected = match.match && match.match.includes(team.name) && match.match.split(' vs ')[0] === team.name;
-                    return `<option value="${teamId}" ${isSelected ? 'selected' : ''}>${team.name}</option>`;
-                }).join('')}
-            </select>
-            <span>vs</span>
-            <select class="form-input team2-select">
-                <option value="">-- Команда 2 --</option>
-                ${Object.keys(teams).map(teamId => {
-                    const team = teams[teamId];
-                    const isSelected = match.match && match.match.includes(team.name) && match.match.split(' vs ')[1] === team.name;
-                    return `<option value="${teamId}" ${isSelected ? 'selected' : ''}>${team.name}</option>`;
-                }).join('')}
-            </select>
-            <button class="remove-schedule-match" data-index="${index}">🗑️</button>
-        `;
-        
-        container.appendChild(matchElement);
-    });
-    
-    // Добавляем обработчики для кнопок удаления
-    container.querySelectorAll('.remove-schedule-match').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            this.closest('.schedule-edit-item').remove();
-        });
-    });
+    if (statusElement && statusDot && statusText) {
+        if (connected) {
+            statusDot.classList.add('connected');
+            statusText.textContent = 'Подключено к турниру';
+            statusElement.classList.remove('hidden');
+        } else {
+            statusDot.classList.remove('connected');
+            statusText.textContent = 'Нет подключения';
+        }
+    }
 }
 
 // === ЗАПУСК ПРИЛОЖЕНИЯ ===
