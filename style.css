@@ -455,6 +455,7 @@ body {
     margin-bottom: 25px;
     transition: all var(--transition-normal);
     backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-medium);
 }
 
 .team-visiting-card:hover {
@@ -465,7 +466,7 @@ body {
 
 .card-header {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(33, 150, 243, 0.2));
-    padding: 25px;
+    padding: 30px;
     position: relative;
     overflow: hidden;
 }
@@ -488,27 +489,30 @@ body {
 
 .team-name-bublas {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(1.2rem, 4vw, 2em);
-    font-weight: 700;
-    background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+    font-size: clamp(1.5rem, 5vw, 2.8em);
+    font-weight: 900;
+    background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary), #CDDC39);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     position: relative;
     z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
 }
 
 .team-subtitle {
     color: var(--text-secondary);
-    font-size: 1.1em;
+    font-size: 1.3em;
     font-style: italic;
     position: relative;
     z-index: 1;
+    font-weight: 500;
 }
 
 .team-card-content {
-    padding: 25px;
+    padding: 30px;
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 30px;
@@ -517,31 +521,31 @@ body {
 .players-section-bublas {
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-medium);
-    padding: 20px;
+    padding: 25px;
     border: 1px solid var(--border-light);
 }
 
 .section-title-bublas {
     font-family: 'Exo 2', sans-serif;
-    font-size: 1.3em;
-    font-weight: 600;
+    font-size: 1.5em;
+    font-weight: 700;
     color: var(--accent-primary);
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     text-align: center;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
 .player-grid-bublas {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
 }
 
 .player-card-bublas {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
-    padding: 15px;
+    padding: 20px;
     border: 1px solid var(--border-light);
     transition: all var(--transition-normal);
     text-align: center;
@@ -549,21 +553,23 @@ body {
 
 .player-card-bublas:hover {
     background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-light);
 }
 
 .player-role-bublas {
-    font-size: 0.9em;
+    font-size: 1.1em;
     color: var(--accent-secondary);
-    margin-bottom: 8px;
-    font-weight: 500;
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .player-name-bublas {
     font-family: 'Exo 2', sans-serif;
-    font-size: 1.1em;
-    font-weight: 600;
+    font-size: 1.3em;
+    font-weight: 700;
     color: var(--text-primary);
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -572,78 +578,85 @@ body {
 
 .player-name-bublas:hover {
     color: var(--accent-primary);
+    transform: scale(1.05);
 }
 
 .stats-section-bublas {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
 }
 
 .mmr-display-bublas {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(139, 195, 74, 0.15));
     border-radius: var(--radius-medium);
-    padding: 20px;
+    padding: 25px;
     text-align: center;
     border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .mmr-label-bublas {
-    font-size: 0.9em;
+    font-size: 1.1em;
     color: var(--text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
 .mmr-value-bublas {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2em;
-    font-weight: 700;
+    font-size: 2.5em;
+    font-weight: 900;
     color: var(--accent-primary);
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
 }
 
 .tournament-section-bublas {
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-medium);
-    padding: 20px;
+    padding: 25px;
     text-align: center;
     border: 1px solid var(--border-light);
 }
 
 .tournament-text-bublas {
-    font-size: 0.9em;
+    font-size: 1.1em;
     color: var(--text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
 .tournament-badge-bublas {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.2em;
-    font-weight: 700;
+    font-size: 1.4em;
+    font-weight: 900;
     color: #FFD700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
 .team-footer-bublas {
     background: rgba(255, 255, 255, 0.02);
-    padding: 15px 25px;
+    padding: 20px 30px;
     text-align: center;
     color: var(--text-secondary);
-    font-size: 0.9em;
+    font-size: 1em;
     border-top: 1px solid var(--border-light);
+    font-weight: 500;
 }
 
 .edit-team-btn {
     background: linear-gradient(135deg, #2196F3, #1976D2);
     color: var(--text-primary);
     border: none;
-    padding: 10px 20px;
+    padding: 12px 25px;
     border-radius: 25px;
     cursor: pointer;
     font-family: 'Exo 2', sans-serif;
-    font-weight: 600;
-    margin-top: 10px;
+    font-weight: 700;
+    margin-top: 15px;
     transition: all var(--transition-normal);
+    font-size: 1.1em;
 }
 
 .edit-team-btn:hover,
@@ -657,19 +670,19 @@ body {
 .group-container {
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-medium);
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 25px;
+    margin-bottom: 30px;
     border: 1px solid var(--border-light);
 }
 
 .group-container h3 {
     color: var(--accent-primary);
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     text-align: center;
     font-family: 'Orbitron', sans-serif;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 1.3em;
+    letter-spacing: 2px;
+    font-size: 1.5em;
 }
 
 .group-table {
@@ -683,21 +696,23 @@ body {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
     background: rgba(76, 175, 80, 0.2);
-    padding: 15px 20px;
-    font-weight: 600;
+    padding: 18px 25px;
+    font-weight: 700;
     color: var(--accent-primary);
     text-align: center;
     border-bottom: 1px solid var(--border-light);
+    font-size: 1.1em;
 }
 
 .table-row {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-    padding: 12px 20px;
+    padding: 15px 25px;
     border-bottom: 1px solid var(--border-light);
     text-align: center;
     align-items: center;
     transition: all var(--transition-normal);
+    font-size: 1.1em;
 }
 
 .table-row:hover {
@@ -706,13 +721,15 @@ body {
 
 .team-name {
     text-align: left;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
+    font-size: 1.1em;
 }
 
 .points {
-    font-weight: 700;
+    font-weight: 900;
     color: #FFD700;
+    font-size: 1.2em;
 }
 
 /* ЦВЕТОВАЯ КОДИРОВКА ДЛЯ ГРУППОВОГО ЭТАПА */
@@ -1351,7 +1368,8 @@ body {
 }
 
 .schedule-edit-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: 150px 100px 1fr auto 1fr auto;
     gap: 10px;
     align-items: center;
     padding: 12px;
@@ -1361,7 +1379,8 @@ body {
     border: 1px solid var(--border-light);
 }
 
-.schedule-edit-item input {
+.schedule-edit-item input, 
+.schedule-edit-item select {
     flex: 1;
     padding: 8px 12px;
     background: rgba(255, 255, 255, 0.1);
@@ -1373,7 +1392,8 @@ body {
     font-family: inherit;
 }
 
-.schedule-edit-item input:focus {
+.schedule-edit-item input:focus,
+.schedule-edit-item select:focus {
     outline: none;
     border-color: var(--accent-primary);
 }
@@ -1571,6 +1591,67 @@ body {
     background: #45a049;
 }
 
+/* === УПРАВЛЕНИЕ ГРУППОВЫМ ЭТАПОМ === */
+.group-stage-matches {
+    margin-top: 20px;
+}
+
+.group-match-item {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-small);
+    margin-bottom: 10px;
+    border: 1px solid var(--border-light);
+}
+
+.group-match-item select {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.group-match-item input {
+    width: 60px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-medium);
+    border-radius: 4px;
+    color: var(--text-primary);
+    text-align: center;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.group-match-item input:focus,
+.group-match-item select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.save-match-score {
+    background: var(--accent-primary);
+    color: var(--text-primary);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+}
+
+.save-match-score:hover {
+    background: #45a049;
+    transform: scale(1.05);
+}
+
 /* === АДАПТИВНОСТЬ === */
 @media (max-width: 768px) {
     .container {
@@ -1649,8 +1730,14 @@ body {
     }
     
     .schedule-edit-item {
-        flex-direction: column;
+        grid-template-columns: 1fr;
         gap: 8px;
+    }
+    
+    .group-match-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        text-align: center;
     }
     
     .schedule-settings-header {

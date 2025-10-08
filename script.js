@@ -625,9 +625,7 @@ class TeamsManager extends BaseManager {
         if (teamsContent && !teamsContent.classList.contains('hidden')) {
             const appState = AppState.getInstance();
             if (appState.getCurrentDisplayedTeamId()) {
-                showTeamCard(appState.getCurrentDisplayedTeamId());
-            } else {
-                displayTeamsCards();
+                showSingleTeamCard(appState.getCurrentDisplayedTeamId());
             }
         }
     }
@@ -1153,11 +1151,6 @@ function showTeams() {
     if (teamsContent) {
         teamsContent.classList.remove('hidden');
     }
-    
-    const appState = AppState.getInstance();
-    if (!appState.getCurrentDisplayedTeamId()) {
-        displayTeamsCards();
-    }
 }
 
 function showGroupStage() {
@@ -1218,52 +1211,29 @@ function updateTeamsDropdown() {
         const team = teams[teamId];
         const link = document.createElement('a');
         link.textContent = team.name || 'Без названия';
-        link.addEventListener('click', () => showTeamCard(teamId));
+        link.addEventListener('click', () => showSingleTeamCard(teamId));
         dropdown.appendChild(link);
     });
 }
 
-function showTeamCard(teamId) {
-    const container = document.getElementById('teamsContent');
+function showSingleTeamCard(teamId) {
+    const container = document.getElementById('singleTeamCard');
     if (!container) return;
     
     const appState = AppState.getInstance();
     const teamsManager = appState.getTeamsManager();
     if (!teamsManager) return;
     
-    container.innerHTML = '';
-    
     const team = teamsManager.getTeam(teamId);
     if (team) {
         const card = createTeamCard(teamId, team);
+        container.innerHTML = '';
         container.appendChild(card);
         appState.setCurrentDisplayedTeamId(teamId);
     }
     
     showTeams();
     toggleDropdown();
-}
-
-function displayTeamsCards() {
-    const container = document.getElementById('teamsContent');
-    if (!container) return;
-    
-    const appState = AppState.getInstance();
-    const teamsManager = appState.getTeamsManager();
-    if (!teamsManager) return;
-    
-    const fragment = document.createDocumentFragment();
-    appState.setCurrentDisplayedTeamId(null);
-    
-    const teams = teamsManager.getAllTeams();
-    Object.keys(teams).forEach(teamId => {
-        const team = teams[teamId];
-        const card = createTeamCard(teamId, team);
-        fragment.appendChild(card);
-    });
-    
-    container.innerHTML = '';
-    container.appendChild(fragment);
 }
 
 function createTeamCard(teamId, team) {
@@ -1530,6 +1500,7 @@ function showAdminPanel() {
         
         loadBracketSettings();
         loadScheduleSettings();
+        loadGroupStageMatches();
         EventManager.setupAdminEventListeners();
     }
 }
@@ -1744,26 +1715,26 @@ async function saveBracketChanges() {
     
     rounds.forEach(round => {
         const matches = [];
-        const matchElements = document.querySelectorAll(`[data-round="${round}"]`);
+        const matchElements = document.querySelectorAll(`.team-select[data-round="${round}"]`);
         
-        matchElements.forEach((element, index) => {
-            if (index % 2 === 0) {
-                const matchIndex = Math.floor(index / 2);
-                const team1Select = document.querySelector(`[data-round="${round}"][data-match="${matchIndex}"][data-team="1"]`);
-                const team2Select = document.querySelector(`[data-round="${round}"][data-match="${matchIndex}"][data-team="2"]`);
-                const score1Input = document.querySelector(`.score-input[data-round="${round}"][data-match="${matchIndex}"][data-team="1"]`);
-                const score2Input = document.querySelector(`.score-input[data-round="${round}"][data-match="${matchIndex}"][data-team="2"]`);
-                
-                if (team1Select && team2Select) {
-                    matches.push({
-                        team1: team1Select.value,
-                        team2: team2Select.value,
-                        score1: score1Input ? parseInt(score1Input.value) || null : null,
-                        score2: score2Input ? parseInt(score2Input.value) || null : null
-                    });
-                }
+        // Группируем элементы по матчам
+        const matchesCount = matchElements.length / 2;
+        
+        for (let i = 0; i < matchesCount; i++) {
+            const team1Select = document.querySelector(`.team-select[data-round="${round}"][data-match="${i}"][data-team="1"]`);
+            const team2Select = document.querySelector(`.team-select[data-round="${round}"][data-match="${i}"][data-team="2"]`);
+            const score1Input = document.querySelector(`.score-input[data-round="${round}"][data-match="${i}"][data-team="1"]`);
+            const score2Input = document.querySelector(`.score-input[data-round="${round}"][data-match="${i}"][data-team="2"]`);
+            
+            if (team1Select && team2Select) {
+                matches.push({
+                    team1: team1Select.value,
+                    team2: team2Select.value,
+                    score1: score1Input ? parseInt(score1Input.value) || null : null,
+                    score2: score2Input ? parseInt(score2Input.value) || null : null
+                });
             }
-        });
+        }
         
         bracketData[round] = matches;
     });
@@ -1778,7 +1749,42 @@ async function saveBracketChanges() {
 
 async function saveScheduleChanges() {
     if (!SecurityManager.requireAuth()) return;
-    ErrorHandler.showError('Функция в разработке');
+    
+    const appState = AppState.getInstance();
+    const scheduleManager = appState.getScheduleManager();
+    const teamsManager = appState.getTeamsManager();
+    
+    if (!scheduleManager || !teamsManager) return;
+    
+    const scheduleItems = document.querySelectorAll('.schedule-edit-item');
+    const scheduleData = [];
+    
+    scheduleItems.forEach(item => {
+        const stageSelect = item.querySelector('.stage-select');
+        const timeInput = item.querySelector('.time-input');
+        const team1Select = item.querySelector('.team1-select');
+        const team2Select = item.querySelector('.team2-select');
+        
+        if (stageSelect && timeInput && team1Select && team2Select) {
+            const team1 = teamsManager.getTeam(team1Select.value);
+            const team2 = teamsManager.getTeam(team2Select.value);
+            
+            if (team1 && team2) {
+                scheduleData.push({
+                    stage: stageSelect.value,
+                    time: timeInput.value,
+                    match: `${team1.name} vs ${team2.name}`
+                });
+            }
+        }
+    });
+    
+    try {
+        await scheduleManager.updateSchedule(scheduleData);
+        ErrorHandler.showError('Расписание сохранено');
+    } catch (error) {
+        ErrorHandler.showError('Ошибка сохранения расписания: ' + error.message);
+    }
 }
 
 function addScheduleMatch() {
@@ -1787,21 +1793,164 @@ function addScheduleMatch() {
     const container = document.getElementById('scheduleEditList');
     if (!container) return;
     
+    const appState = AppState.getInstance();
+    const teamsManager = appState.getTeamsManager();
+    if (!teamsManager) return;
+    
+    const teams = teamsManager.getAllTeams();
+    
     const matchElement = document.createElement('div');
     matchElement.className = 'schedule-edit-item';
     matchElement.innerHTML = `
-        <input type="time" placeholder="Время" class="form-input">
-        <input type="text" placeholder="Матч" class="form-input">
-        <input type="text" placeholder="Стадия" class="form-input">
+        <select class="form-input stage-select">
+            <option value="Групповой этап">Групповой этап</option>
+            <option value="Плей-офф">Плей-офф</option>
+        </select>
+        <input type="time" class="form-input time-input">
+        <select class="form-input team1-select">
+            <option value="">-- Команда 1 --</option>
+            ${Object.keys(teams).map(teamId => {
+                const team = teams[teamId];
+                return `<option value="${teamId}">${team.name}</option>`;
+            }).join('')}
+        </select>
+        <span>vs</span>
+        <select class="form-input team2-select">
+            <option value="">-- Команда 2 --</option>
+            ${Object.keys(teams).map(teamId => {
+                const team = teams[teamId];
+                return `<option value="${teamId}">${team.name}</option>`;
+            }).join('')}
+        </select>
         <button class="remove-schedule-match">🗑️</button>
     `;
     
     container.appendChild(matchElement);
+    
+    // Добавляем обработчик для новой кнопки удаления
+    const removeBtn = matchElement.querySelector('.remove-schedule-match');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            matchElement.remove();
+        });
+    }
+}
+
+// Управление групповым этапом
+function loadGroupStageMatches() {
+    const container = document.getElementById('groupStageMatchesContainer');
+    if (!container) return;
+    
+    const appState = AppState.getInstance();
+    const tournamentData = appState.getTournamentData();
+    const teamsManager = appState.getTeamsManager();
+    
+    if (!tournamentData || !tournamentData.groupStage || !teamsManager) return;
+    
+    const groupA = tournamentData.groupStage.groupA;
+    const teams = teamsManager.getAllTeams();
+    
+    let matchesHTML = '';
+    
+    if (groupA && groupA.matches) {
+        groupA.matches.forEach((match, index) => {
+            matchesHTML += `
+                <div class="group-match-item">
+                    <select class="team1-select" data-match="${index}">
+                        <option value="">-- Команда 1 --</option>
+                        ${Object.keys(teams).map(teamId => {
+                            const team = teams[teamId];
+                            return `<option value="${teamId}" ${match.team1 === team.name ? 'selected' : ''}>${team.name}</option>`;
+                        }).join('')}
+                    </select>
+                    <input type="number" class="score1-input" data-match="${index}" value="${match.score1 || 0}" min="0">
+                    <span>vs</span>
+                    <input type="number" class="score2-input" data-match="${index}" value="${match.score2 || 0}" min="0">
+                    <select class="team2-select" data-match="${index}">
+                        <option value="">-- Команда 2 --</option>
+                        ${Object.keys(teams).map(teamId => {
+                            const team = teams[teamId];
+                            return `<option value="${teamId}" ${match.team2 === team.name ? 'selected' : ''}>${team.name}</option>`;
+                        }).join('')}
+                    </select>
+                    <button class="save-match-score" data-match="${index}">💾</button>
+                </div>
+            `;
+        });
+    }
+    
+    container.innerHTML = matchesHTML;
+    
+    // Добавляем обработчики для кнопок сохранения
+    container.querySelectorAll('.save-match-score').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const matchIndex = parseInt(this.getAttribute('data-match'));
+            saveGroupStageMatch(matchIndex);
+        });
+    });
+}
+
+async function saveGroupStageMatch(matchIndex) {
+    if (!SecurityManager.requireAuth()) return;
+    
+    const appState = AppState.getInstance();
+    const teamsManager = appState.getTeamsManager();
+    
+    if (!teamsManager) return;
+    
+    const team1Select = document.querySelector(`.team1-select[data-match="${matchIndex}"]`);
+    const team2Select = document.querySelector(`.team2-select[data-match="${matchIndex}"]`);
+    const score1Input = document.querySelector(`.score1-input[data-match="${matchIndex}"]`);
+    const score2Input = document.querySelector(`.score2-input[data-match="${matchIndex}"]`);
+    
+    if (!team1Select || !team2Select || !score1Input || !score2Input) return;
+    
+    const team1 = teamsManager.getTeam(team1Select.value);
+    const team2 = teamsManager.getTeam(team2Select.value);
+    const score1 = parseInt(score1Input.value) || 0;
+    const score2 = parseInt(score2Input.value) || 0;
+    
+    if (!team1 || !team2) {
+        ErrorHandler.showError('Выберите обе команды');
+        return;
+    }
+    
+    try {
+        // Обновляем матч в базе данных
+        await database.ref(`tournament/groupStage/groupA/matches/${matchIndex}`).update({
+            team1: team1.name,
+            team2: team2.name,
+            score1: score1,
+            score2: score2,
+            completed: score1 > 0 || score2 > 0
+        });
+        
+        ErrorHandler.showError('Результат матча сохранен');
+    } catch (error) {
+        ErrorHandler.showError('Ошибка сохранения результата: ' + error.message);
+    }
 }
 
 async function saveGroupStageSettings() {
     if (!SecurityManager.requireAuth()) return;
-    ErrorHandler.showError('Функция в разработке');
+    
+    const formatSelect = document.getElementById('tournamentFormat');
+    const groupsCount = document.getElementById('groupsCount');
+    const advancingTeams = document.getElementById('advancingTeams');
+    
+    if (!formatSelect || !groupsCount || !advancingTeams) return;
+    
+    try {
+        await database.ref('tournament/settings').update({
+            format: formatSelect.value,
+            groups: parseInt(groupsCount.value) || 1,
+            advancingTeams: parseInt(advancingTeams.value) || 4
+        });
+        
+        ErrorHandler.showError('Настройки группового этапа сохранены');
+    } catch (error) {
+        ErrorHandler.showError('Ошибка сохранения настроек: ' + error.message);
+    }
 }
 
 // Функции редактирования команд
@@ -1832,6 +1981,15 @@ function editTeam(teamId) {
         });
         
         modal.classList.remove('hidden');
+        
+        // Добавляем обработчик для кнопки закрытия
+        const closeBtn = document.getElementById('closeEditTeamModal');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                modal.classList.add('hidden');
+                appState.setCurrentEditingTeamId(null);
+            };
+        }
     }
 }
 
@@ -1946,7 +2104,57 @@ function loadBracketSettings() {
     if (!bracketManager) return;
     
     const bracketData = bracketManager.bracket;
-    displayBracket(bracketData);
+    
+    const container = document.getElementById('bracketSettingsContainer');
+    if (!container) return;
+    
+    const teamsManager = appState.getTeamsManager();
+    if (!teamsManager) return;
+    
+    const teams = teamsManager.getAllTeams();
+    
+    let bracketHTML = '';
+    
+    const rounds = ['quarterfinals', 'semifinals', 'final'];
+    
+    rounds.forEach(round => {
+        const matches = bracketData[round] || [];
+        
+        bracketHTML += `
+            <div class="bracket-round">
+                <h4>${getRoundName(round)}</h4>
+                ${matches.map((match, index) => `
+                    <div class="match ${round === 'final' ? 'final' : ''}">
+                        <div class="team-select-container">
+                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="1">
+                                <option value="">-- Выберите команду --</option>
+                                ${Object.keys(teams).map(teamId => {
+                                    const team = teams[teamId];
+                                    return `<option value="${teamId}" ${match.team1 === teamId ? 'selected' : ''}>${team.name}</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
+                        <div class="score-container">
+                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="1" value="${match.score1 || ''}" placeholder="0" min="0">
+                            <span> - </span>
+                            <input type="number" class="score-input" data-round="${round}" data-match="${index}" data-team="2" value="${match.score2 || ''}" placeholder="0" min="0">
+                        </div>
+                        <div class="team-select-container">
+                            <select class="team-select" data-round="${round}" data-match="${index}" data-team="2">
+                                <option value="">-- Выберите команду --</option>
+                                ${Object.keys(teams).map(teamId => {
+                                    const team = teams[teamId];
+                                    return `<option value="${teamId}" ${match.team2 === teamId ? 'selected' : ''}>${team.name}</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    });
+    
+    container.innerHTML = bracketHTML;
 }
 
 function loadScheduleSettings() {
@@ -1955,7 +2163,55 @@ function loadScheduleSettings() {
     if (!scheduleManager) return;
     
     const scheduleData = scheduleManager.schedule;
-    // Реализация загрузки настроек расписания
+    const container = document.getElementById('scheduleEditList');
+    if (!container) return;
+    
+    const teamsManager = appState.getTeamsManager();
+    if (!teamsManager) return;
+    
+    const teams = teamsManager.getAllTeams();
+    
+    container.innerHTML = '';
+    
+    scheduleData.forEach((match, index) => {
+        const matchElement = document.createElement('div');
+        matchElement.className = 'schedule-edit-item';
+        matchElement.innerHTML = `
+            <select class="form-input stage-select">
+                <option value="Групповой этап" ${match.stage === 'Групповой этап' ? 'selected' : ''}>Групповой этап</option>
+                <option value="Плей-офф" ${match.stage === 'Плей-офф' ? 'selected' : ''}>Плей-офф</option>
+            </select>
+            <input type="time" value="${match.time || ''}" class="form-input time-input">
+            <select class="form-input team1-select">
+                <option value="">-- Команда 1 --</option>
+                ${Object.keys(teams).map(teamId => {
+                    const team = teams[teamId];
+                    const isSelected = match.match && match.match.includes(team.name) && match.match.split(' vs ')[0] === team.name;
+                    return `<option value="${teamId}" ${isSelected ? 'selected' : ''}>${team.name}</option>`;
+                }).join('')}
+            </select>
+            <span>vs</span>
+            <select class="form-input team2-select">
+                <option value="">-- Команда 2 --</option>
+                ${Object.keys(teams).map(teamId => {
+                    const team = teams[teamId];
+                    const isSelected = match.match && match.match.includes(team.name) && match.match.split(' vs ')[1] === team.name;
+                    return `<option value="${teamId}" ${isSelected ? 'selected' : ''}>${team.name}</option>`;
+                }).join('')}
+            </select>
+            <button class="remove-schedule-match" data-index="${index}">🗑️</button>
+        `;
+        
+        container.appendChild(matchElement);
+    });
+    
+    // Добавляем обработчики для кнопок удаления
+    container.querySelectorAll('.remove-schedule-match').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            this.closest('.schedule-edit-item').remove();
+        });
+    });
 }
 
 // === ЗАПУСК ПРИЛОЖЕНИЯ ===

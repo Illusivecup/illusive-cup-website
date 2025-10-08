@@ -87,8 +87,9 @@
             <!-- Контентные блоки -->
             <div class="content-area">
                 <!-- Визитки команд -->
-                <div id="teamsContent" class="content-section">
-                    <!-- Карточки команд будут создаваться здесь -->
+                <div id="teamsContent" class="content-section hidden">
+                    <!-- Карточка команды будет создаваться здесь при выборе из dropdown -->
+                    <div id="singleTeamCard"></div>
                 </div>
 
                 <!-- Групповой этап -->
@@ -261,6 +262,14 @@
                         <label>Команд выходит в плей-офф:</label>
                         <input type="number" id="advancingTeams" min="1" max="8" class="form-input" value="4">
                     </div>
+                    
+                    <div class="group-stage-matches">
+                        <h4>Матчи группового этапа</h4>
+                        <div id="groupStageMatchesContainer">
+                            <!-- Матчи группового этапа будут загружаться здесь -->
+                        </div>
+                    </div>
+                    
                     <div class="form-actions">
                         <button id="saveGroupStageBtn" class="save-btn">💾 Сохранить настройки</button>
                     </div>
