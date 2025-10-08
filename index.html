@@ -1,760 +1,331 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Illusive Cup 2025 - Турнир по киберспорту">
-    <meta name="keywords" content="турнир, киберспорт, Dota 2, Illusive Cup">
     <title>Illusive Cup 2025 - Турнир</title>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-    
-    <style>
-        /* Базовые стили */
-        :root {
-            --color-primary: #0c0f1d;
-            --color-secondary: #1a243f;
-            --color-surface: rgba(255, 255, 255, 0.05);
-            --color-accent-green: #4CAF50;
-            --color-text-primary: #ffffff;
-            --color-text-secondary: #a0aec0;
-            --border-light: rgba(255, 255, 255, 0.1);
-            --radius-lg: 12px;
-            --transition-normal: 0.3s ease;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-            color: var(--color-text-primary);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Кнопки */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: var(--radius-lg);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-            text-decoration: none;
-        }
-
-        .btn--primary {
-            background: var(--color-accent-green);
-            color: white;
-        }
-
-        .btn--primary:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .btn--outline {
-            background: transparent;
-            color: var(--color-text-primary);
-            border: 2px solid var(--border-light);
-        }
-
-        .btn--outline:hover {
-            background: var(--color-surface);
-            border-color: var(--color-accent-green);
-        }
-
-        .btn--sm {
-            padding: 8px 16px;
-            font-size: 12px;
-        }
-
-        .btn--danger {
-            background: #f44336;
-            color: white;
-        }
-
-        /* Карточки */
-        .card {
-            background: var(--color-surface);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            transition: all var(--transition-normal);
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            border-color: var(--color-accent-green);
-        }
-
-        /* Формы */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--color-text-secondary);
-            font-weight: 500;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 10px 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            color: var(--color-text-primary);
-            font-size: 14px;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--color-accent-green);
-        }
-
-        /* Шапка приложения */
-        .app-header {
-            background: var(--color-surface);
-            border-bottom: 1px solid var(--border-light);
-            padding: 15px 0;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo h1 {
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .main-nav {
-            display: flex;
-            gap: 10px;
-        }
-
-        .nav-btn {
-            padding: 8px 16px;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            color: var(--color-text-primary);
-            cursor: pointer;
-            transition: all var(--transition-normal);
-        }
-
-        .nav-btn.active,
-        .nav-btn:hover {
-            background: rgba(76, 175, 80, 0.1);
-            border-color: var(--color-accent-green);
-        }
-
-        /* Основной контент */
-        .app-main {
-            padding: 20px 0;
-        }
-
-        .view {
-            display: none;
-        }
-
-        .view.active {
-            display: block;
-        }
-
-        /* Менеджер команд */
-        .team-manager-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .team-list {
-            display: grid;
-            gap: 15px;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        }
-
-        .team-card {
-            background: var(--color-surface);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            padding: 15px;
-        }
-
-        .team-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .team-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .team-mmr {
-            background: var(--color-accent-green);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .team-slogan {
-            font-style: italic;
-            color: var(--color-text-secondary);
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .team-players {
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: var(--color-text-secondary);
-        }
-
-        .team-card-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* Модальные окна */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: var(--color-secondary);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-light);
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--color-text-primary);
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--color-text-secondary);
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .team-manager-header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: stretch;
-            }
-
-            .team-list {
-                grid-template-columns: 1fr;
-            }
-
-            .main-nav {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
-    <div id="app">
-        <div class="loading-overlay" id="initialLoading">
-            <div class="loading-spinner"></div>
-            <p>Загрузка приложения...</p>
+    <div class="container">
+        <!-- Анимированный фон -->
+        <div class="animated-bg" id="animatedBg"></div>
+        
+        <!-- Статус подключения -->
+        <div id="connectionStatus" class="connection-status hidden">
+            <span class="status-dot"></span>
+            <span class="status-text">Подключение к турниру...</span>
+        </div>
+        
+        <header class="main-header">
+            <h1 class="main-title">
+                <span class="title-main">Место встречи</span>
+                <span class="title-highlight">Illusive Cup</span>
+                <span class="title-date">11.10.2025</span>
+            </h1>
+        </header>
+
+        <main class="main-content">
+            <!-- Основные кнопки навигации -->
+            <div class="navigation-grid">
+                <!-- Кнопка Команды с выпадающим списком -->
+                <div class="nav-item dropdown">
+                    <button class="nav-btn teams-btn" id="teamsDropdownBtn">
+                        <span class="btn-icon">🏆</span>
+                        Команды
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-content" id="teamsDropdown">
+                        <!-- Команды будут загружаться из Firebase -->
+                    </div>
+                </div>
+
+                <!-- Кнопка Групповой этап -->
+                <div class="nav-item">
+                    <button class="nav-btn group-stage-btn" id="groupStageBtn">
+                        <span class="btn-icon">📈</span>
+                        Групповой этап
+                    </button>
+                </div>
+
+                <!-- Кнопка Турнирная сетка -->
+                <div class="nav-item">
+                    <button class="nav-btn bracket-btn" id="bracketBtn">
+                        <span class="btn-icon">📊</span>
+                        Турнирная сетка
+                    </button>
+                </div>
+
+                <!-- Кнопка Расписание матчей -->
+                <div class="nav-item">
+                    <button class="nav-btn schedule-btn" id="scheduleBtn">
+                        <span class="btn-icon">⏰</span>
+                        Расписание матчей
+                    </button>
+                </div>
+
+                <!-- Кнопка Приз зрительских симпатий -->
+                <div class="nav-item">
+                    <button class="nav-btn audience-award-btn" id="audienceAwardBtn">
+                        <span class="btn-icon">🎭</span>
+                        Приз зрительских симпатий
+                    </button>
+                </div>
+
+                <!-- Кнопка Управление -->
+                <div class="nav-item">
+                    <button id="adminBtn" class="nav-btn admin-btn hidden">
+                        <span class="btn-icon">⚙️</span>
+                        Управление
+                    </button>
+                </div>
+            </div>
+
+            <!-- Контентные блоки -->
+            <div class="content-area">
+                <!-- Визитки команд -->
+                <div id="teamsContent" class="content-section hidden">
+                    <!-- Карточка команды будет создаваться здесь при выборе из dropdown -->
+                    <div id="singleTeamCard"></div>
+                </div>
+
+                <!-- Групповой этап -->
+                <div id="groupStageContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Групповой этап</h2>
+                        <p>Турнирная таблица и результаты матчей</p>
+                    </div>
+                    <div id="groupStageContainer">
+                        <!-- Таблица группового этапа будет загружаться здесь -->
+                    </div>
+                </div>
+
+                <!-- Турнирная сетка -->
+                <div id="bracketContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Турнирная сетка</h2>
+                        <p>Плей-офф этап турнира</p>
+                    </div>
+                    <div class="bracket-container">
+                        <div class="bracket" id="bracketContainer">
+                            <!-- Сетка будет загружаться из Firebase -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Расписание матчей -->
+                <div id="scheduleContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Расписание матчей</h2>
+                        <p>Время и стадии всех матчей турнира</p>
+                    </div>
+                    <div class="schedule-container">
+                        <div class="schedule-list" id="scheduleList">
+                            <!-- Расписание будет загружаться из Firebase -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Приз зрительских симпатий -->
+                <div id="audienceAwardContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Приз зрительских симпатий</h2>
+                        <p>Лучшие игроки по мнению зрителей</p>
+                    </div>
+                    <div class="audience-awards-container">
+                        <div id="audienceAwardsContent">
+                            <!-- Данные приза зрительских симпатий будут загружаться здесь -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно редактирования команды -->
+    <div id="editTeamModal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>✏️ Редактирование команды</h2>
+                <button class="close-modal" id="closeEditTeamModal">×</button>
+            </div>
+            
+            <div class="edit-form">
+                <div class="form-group">
+                    <label>Название команды:</label>
+                    <input type="text" id="editTeamName" class="form-input" placeholder="Введите название команды">
+                </div>
+                
+                <div class="form-group">
+                    <label>Слоган:</label>
+                    <input type="text" id="editTeamSlogan" class="form-input" placeholder="Введите слоган команды">
+                </div>
+                
+                <div class="form-group">
+                    <label>Игроки:</label>
+                    <div id="playersEditContainer">
+                        <!-- Игроки будут добавляться здесь -->
+                    </div>
+                    <button type="button" id="addPlayerBtn" class="add-btn">➕ Добавить игрока</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button id="saveTeamBtn" class="save-btn">💾 Сохранить команду</button>
+                    <button id="cancelEditTeamBtn" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAjUOjB-mQTdI6G4jwsIXGOHGldGBmC6j4",
-            authDomain: "illusive-cup.firebaseapp.com",
-            databaseURL: "https://illusive-cup-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "illusive-cup",
-            storageBucket: "illusive-cup.firebasestorage.app",
-            messagingSenderId: "465786550229",
-            appId: "1:465786550229:web:9a1d4a3015b9cb0a3caf5c"
-        };
-
-        // Simplified Firebase Service
-        class FirebaseService {
-            constructor() {
-                this.app = null;
-                this.database = null;
-                this.init();
-            }
-
-            init() {
-                try {
-                    this.app = firebase.initializeApp(firebaseConfig);
-                    this.database = firebase.database();
-                    console.log('✅ Firebase initialized');
-                } catch (error) {
-                    console.error('❌ Firebase initialization failed:', error);
-                }
-            }
-
-            async get(path) {
-                try {
-                    const snapshot = await this.database.ref(path).once('value');
-                    return snapshot.val();
-                } catch (error) {
-                    console.error('Firebase get error:', error);
-                    return null;
-                }
-            }
-
-            async set(path, data) {
-                try {
-                    await this.database.ref(path).set(data);
-                    console.log('✅ Data saved to', path);
-                    return true;
-                } catch (error) {
-                    console.error('Firebase set error:', error);
-                    return false;
-                }
-            }
-        }
-
-        // Main Application
-        class IllusiveCupApp {
-            constructor() {
-                this.firebase = new FirebaseService();
-                this.currentView = 'teams';
-                this.teams = [];
-                this.init();
-            }
-
-            async init() {
-                console.log('🚀 Initializing Illusive Cup App...');
-                this.setupAppStructure();
-                this.setupEventListeners();
-                await this.loadTeams();
-                this.loadCurrentView();
+    <!-- Модальное окно управления -->
+    <div id="adminPanel" class="modal hidden">
+        <div class="modal-content large-modal admin-panel">
+            <div class="modal-header">
+                <h2>⚙️ Управление турниром</h2>
+                <button class="close-modal" id="closeAdminPanel">×</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-tab="teamsTab">Команды</button>
+                <button class="tab-btn" data-tab="bracketTab">Сетка</button>
+                <button class="tab-btn" data-tab="scheduleTab">Расписание</button>
+                <button class="tab-btn" data-tab="groupStageTab">Групповой этап</button>
+                <button class="tab-btn" data-tab="accessTab">Доступы</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Вкладка управления командами -->
+                <div id="teamsTab" class="tab-pane active">
+                    <h3>Управление командами</h3>
+                    <div class="form-group">
+                        <label>Количество команд:</label>
+                        <input type="number" id="totalTeams" min="2" max="16" class="form-input" value="4">
+                        <button id="applyTeamsCountBtn" class="save-btn">Применить</button>
+                    </div>
+                    
+                    <div class="teams-list" id="adminTeamsList">
+                        <!-- Список команд для редактирования -->
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button id="updateTeamsBtn" class="save-btn">💾 Сохранить настройки</button>
+                    </div>
+                </div>
                 
-                // Hide loading overlay
-                setTimeout(() => {
-                    const loadingOverlay = document.getElementById('initialLoading');
-                    if (loadingOverlay) loadingOverlay.style.display = 'none';
-                }, 1000);
-
-                console.log('✅ App initialized');
-                this.showNotification('Приложение загружено', 'success');
-            }
-
-            setupAppStructure() {
-                const appContainer = document.getElementById('app');
-                appContainer.innerHTML = `
-                    <div class="app">
-                        <header class="app-header">
-                            <div class="container">
-                                <div class="header-content">
-                                    <div class="logo">
-                                        <h1>🏆 Illusive Cup</h1>
-                                    </div>
-                                    <nav class="main-nav">
-                                        <button class="nav-btn active" data-view="teams">👥 Команды</button>
-                                        <button class="nav-btn" data-view="schedule">📅 Расписание</button>
-                                        <button class="nav-btn" data-view="bracket">🏆 Сетка</button>
-                                    </nav>
-                                </div>
-                            </div>
-                        </header>
-
-                        <main class="app-main">
-                            <div class="container">
-                                <div class="view-container">
-                                    <div id="teamsView" class="view active"></div>
-                                    <div id="scheduleView" class="view"></div>
-                                    <div id="bracketView" class="view"></div>
-                                </div>
-                            </div>
-                        </main>
+                <!-- Вкладка редактирования сетки -->
+                <div id="bracketTab" class="tab-pane">
+                    <h3>Редактирование турнирной сетки</h3>
+                    <div class="bracket-settings-info">
+                        <p>Выберите команды для каждого матча и укажите счет</p>
                     </div>
-                `;
-            }
-
-            setupEventListeners() {
-                document.addEventListener('click', (e) => {
-                    if (e.target.dataset.view) {
-                        this.switchView(e.target.dataset.view);
-                    }
-                });
-            }
-
-            async loadTeams() {
-                try {
-                    const teams = await this.firebase.get('tournament/teams');
-                    this.teams = teams ? Object.values(teams) : [];
-                } catch (error) {
-                    console.error('Error loading teams:', error);
-                    this.teams = [];
-                }
-            }
-
-            switchView(viewName) {
-                if (this.currentView === viewName) return;
-
-                // Update active nav button
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.view === viewName);
-                });
-
-                // Hide current view
-                const currentViewEl = document.getElementById(`${this.currentView}View`);
-                if (currentViewEl) currentViewEl.classList.remove('active');
-
-                this.currentView = viewName;
-
-                // Show new view
-                const newViewEl = document.getElementById(`${viewName}View`);
-                if (newViewEl) newViewEl.classList.add('active');
-
-                this.loadCurrentView();
-            }
-
-            loadCurrentView() {
-                const viewContainer = document.getElementById(`${this.currentView}View`);
-                if (!viewContainer) return;
-
-                switch (this.currentView) {
-                    case 'teams':
-                        this.renderTeamsView(viewContainer);
-                        break;
-                    case 'schedule':
-                        this.renderScheduleView(viewContainer);
-                        break;
-                    case 'bracket':
-                        this.renderBracketView(viewContainer);
-                        break;
-                }
-            }
-
-            renderTeamsView(container) {
-                container.innerHTML = `
-                    <div class="team-manager">
-                        <div class="team-manager-header">
-                            <h2>Управление командами</h2>
-                            <button class="btn btn--primary" id="addTeamBtn">➕ Добавить команду</button>
-                        </div>
-                        <div class="team-list" id="teamList">
-                            ${this.renderTeamList()}
-                        </div>
-                        ${this.renderTeamModal()}
+                    <div class="bracket-settings-container" id="bracketSettingsContainer">
+                        <!-- Сетка будет загружаться динамически -->
                     </div>
-                `;
-
-                this.setupTeamEventListeners();
-            }
-
-            renderTeamList() {
-                if (this.teams.length === 0) {
-                    return `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🏆</div>
-                            <h3>Команды не найдены</h3>
-                            <p>Добавьте первую команду для начала работы</p>
-                        </div>
-                    `;
-                }
-
-                return this.teams.map(team => `
-                    <div class="team-card">
-                        <div class="team-card-header">
-                            <h4 class="team-name">${this.escapeHtml(team.name)}</h4>
-                            <span class="team-mmr">${team.mmr || 0} MMR</span>
-                        </div>
-                        ${team.slogan ? `<p class="team-slogan">"${this.escapeHtml(team.slogan)}"</p>` : ''}
-                        <div class="team-players">
-                            <span class="players-count">${team.players?.length || 0} игроков</span>
-                        </div>
-                        <div class="team-card-actions">
-                            <button class="btn btn--sm btn--outline team-edit-btn" data-team-id="${team.id}">
-                                ✏️ Редактировать
-                            </button>
-                            <button class="btn btn--sm btn--danger team-delete-btn" data-team-id="${team.id}">
-                                🗑️ Удалить
-                            </button>
-                        </div>
+                    <div class="form-actions">
+                        <button id="saveBracketBtn" class="save-btn">💾 Сохранить сетку</button>
                     </div>
-                `).join('');
-            }
-
-            renderTeamModal() {
-                return `
-                    <div class="modal" id="teamModal">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3 id="teamModalTitle">Новая команда</h3>
-                                <button class="modal-close" id="closeTeamModal">&times;</button>
-                            </div>
-                            <form id="teamForm" class="modal-body">
-                                <div class="form-group">
-                                    <label for="teamName" class="form-label">Название команды</label>
-                                    <input type="text" id="teamName" class="form-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="teamSlogan" class="form-label">Слоган команды</label>
-                                    <input type="text" id="teamSlogan" class="form-input">
-                                </div>
-                                <div class="form-actions">
-                                    <button type="button" class="btn btn--outline" id="cancelTeamBtn">Отмена</button>
-                                    <button type="submit" class="btn btn--primary">Сохранить команду</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                `;
-            }
-
-            setupTeamEventListeners() {
-                // Add team button
-                const addTeamBtn = document.getElementById('addTeamBtn');
-                if (addTeamBtn) {
-                    addTeamBtn.addEventListener('click', () => this.openTeamModal());
-                }
-
-                // Team actions
-                document.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('team-edit-btn')) {
-                        const teamId = e.target.dataset.teamId;
-                        this.openTeamModal(teamId);
-                    }
-                    if (e.target.classList.contains('team-delete-btn')) {
-                        const teamId = e.target.dataset.teamId;
-                        this.deleteTeam(teamId);
-                    }
-                });
-
-                // Team modal
-                const modal = document.getElementById('teamModal');
-                if (modal) {
-                    const closeBtn = modal.querySelector('#closeTeamModal');
-                    const cancelBtn = modal.querySelector('#cancelTeamBtn');
-                    const form = modal.querySelector('#teamForm');
-
-                    const closeModal = () => modal.style.display = 'none';
-                    
-                    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-                    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-                    
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) closeModal();
-                    });
-
-                    if (form) {
-                        form.addEventListener('submit', (e) => {
-                            e.preventDefault();
-                            this.saveTeam();
-                        });
-                    }
-                }
-            }
-
-            openTeamModal(teamId = null) {
-                const modal = document.getElementById('teamModal');
-                const form = document.getElementById('teamForm');
+                </div>
                 
-                if (!modal || !form) return;
+                <!-- Вкладка редактирования расписания -->
+                <div id="scheduleTab" class="tab-pane">
+                    <h3>Редактирование расписания</h3>
+                    <div class="schedule-settings-header">
+                        <h4>Матчи расписания</h4>
+                        <button id="addScheduleMatchBtn" class="add-btn">➕ Добавить матч</button>
+                    </div>
+                    <div class="schedule-edit-list" id="scheduleEditList">
+                        <!-- Расписание будет загружаться динамически -->
+                    </div>
+                    <div class="form-actions">
+                        <button id="saveScheduleBtn" class="save-btn">💾 Сохранить расписание</button>
+                    </div>
+                </div>
 
-                form.reset();
-
-                if (teamId) {
-                    const team = this.teams.find(t => t.id === teamId);
-                    if (team) {
-                        document.getElementById('teamName').value = team.name;
-                        document.getElementById('teamSlogan').value = team.slogan || '';
-                        modal.querySelector('#teamModalTitle').textContent = 'Редактирование команды';
-                        form.dataset.teamId = teamId;
-                    }
-                } else {
-                    modal.querySelector('#teamModalTitle').textContent = 'Новая команда';
-                    delete form.dataset.teamId;
-                }
-
-                modal.style.display = 'flex';
-            }
-
-            async saveTeam() {
-                const form = document.getElementById('teamForm');
-                const name = document.getElementById('teamName').value.trim();
-                const slogan = document.getElementById('teamSlogan').value.trim();
-
-                if (!name) {
-                    this.showNotification('Введите название команды', 'error');
-                    return;
-                }
-
-                const teamData = {
-                    name,
-                    slogan,
-                    players: [],
-                    mmr: 0,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now()
-                };
-
-                try {
-                    if (form.dataset.teamId) {
-                        // Update existing team
-                        teamData.id = form.dataset.teamId;
-                        await this.firebase.set(`tournament/teams/${teamData.id}`, teamData);
-                        this.showNotification('Команда обновлена', 'success');
-                    } else {
-                        // Create new team
-                        teamData.id = 'team_' + Date.now();
-                        await this.firebase.set(`tournament/teams/${teamData.id}`, teamData);
-                        this.showNotification('Команда создана', 'success');
-                    }
-
-                    await this.loadTeams();
-                    this.renderTeamsView(document.getElementById('teamsView'));
+                <!-- Вкладка управления групповым этапом -->
+                <div id="groupStageTab" class="tab-pane">
+                    <h3>Управление групповым этапом</h3>
+                    <div class="form-group">
+                        <label>Формат турнира:</label>
+                        <select id="tournamentFormat" class="form-input">
+                            <option value="round_robin">Круговая система</option>
+                            <option value="single_elimination">Олимпийская система</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Количество групп:</label>
+                        <input type="number" id="groupsCount" min="1" max="4" class="form-input" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Команд выходит в плей-офф:</label>
+                        <input type="number" id="advancingTeams" min="1" max="8" class="form-input" value="4">
+                    </div>
                     
-                    const modal = document.getElementById('teamModal');
-                    if (modal) modal.style.display = 'none';
-
-                } catch (error) {
-                    console.error('Error saving team:', error);
-                    this.showNotification('Ошибка сохранения', 'error');
-                }
-            }
-
-            async deleteTeam(teamId) {
-                const team = this.teams.find(t => t.id === teamId);
-                if (!team) return;
-
-                if (!confirm(`Удалить команду "${team.name}"?`)) return;
-
-                try {
-                    await this.firebase.set(`tournament/teams/${teamId}`, null);
-                    this.showNotification('Команда удалена', 'success');
-                    await this.loadTeams();
-                    this.renderTeamsView(document.getElementById('teamsView'));
-                } catch (error) {
-                    console.error('Error deleting team:', error);
-                    this.showNotification('Ошибка удаления', 'error');
-                }
-            }
-
-            renderScheduleView(container) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📅</div>
-                        <h3>Расписание</h3>
-                        <p>Функционал расписания в разработке</p>
+                    <div class="group-stage-matches">
+                        <h4>Матчи группового этапа</h4>
+                        <div id="groupStageMatchesContainer">
+                            <!-- Матчи группового этапа будут загружаться здесь -->
+                        </div>
                     </div>
-                `;
-            }
-
-            renderBracketView(container) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🏆</div>
-                        <h3>Турнирная сетка</h3>
-                        <p>Функционал сетки в разработке</p>
+                    
+                    <div class="form-actions">
+                        <button id="saveGroupStageBtn" class="save-btn">💾 Сохранить настройки</button>
                     </div>
-                `;
-            }
+                </div>
 
-            showNotification(message, type = 'info') {
-                // Simple notification implementation
-                console.log(`${type.toUpperCase()}: ${message}`);
-            }
+                <!-- Вкладка управления доступом -->
+                <div id="accessTab" class="tab-pane">
+                    <h3>🔄 Управление доступом</h3>
+                    <div class="form-group">
+                        <label>Создать временную ссылку:</label>
+                        <select id="accessDuration" class="form-input">
+                            <option value="1">1 час</option>
+                            <option value="6">6 часов</option>
+                            <option value="24" selected>24 часа</option>
+                            <option value="168">7 дней</option>
+                        </select>
+                        <button id="generateAccessLink" class="save-btn">Создать ссылку</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Ссылка для доступа:</label>
+                        <div id="generatedLinkContainer" class="hidden">
+                            <input type="text" id="generatedLink" class="form-input" readonly>
+                            <button id="copyLinkBtn" class="add-btn">📋 Копировать</button>
+                            <div class="link-info">
+                                <small>Ссылка действительна: <span id="linkExpires"></span></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Сменить основной пароль:</label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="Новый пароль">
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="Подтвердите пароль">
+                        <button id="changePasswordBtn" class="save-btn">Сменить пароль</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            escapeHtml(unsafe) {
-                if (!unsafe) return '';
-                return unsafe
-                    .toString()
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
-            }
-        }
+    <!-- Модальное окно авторизации -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Авторизация редактора</h2>
+            </div>
+            <div class="modal-body">
+                <p>Для доступа к панели управления введите пароль:</p>
+                <input type="password" id="editorPassword" class="form-input" placeholder="Пароль">
+                <div class="form-actions">
+                    <button id="confirmAuth" class="save-btn">Войти</button>
+                    <button id="cancelAuth" class="cancel-btn">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            window.illusiveCupApp = new IllusiveCupApp();
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
