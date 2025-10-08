@@ -19,31 +19,59 @@ class SecurityManager {
     constructor() {
         this.EDITOR_PASSWORD = 'IllusiveCup2025!';
         this.isAuthenticated = false;
-        // НЕ вызываем init() здесь - будет вызван после загрузки DOM
+        console.log('🔐 SecurityManager создан');
     }
 
     init() {
         console.log('🔐 Инициализация SecurityManager...');
+        
+        // Проверяем существование элементов
+        this.checkRequiredElements();
+        
         this.checkExistingSession();
         this.setupEventListeners();
+        console.log('✅ SecurityManager инициализирован');
+    }
+
+    checkRequiredElements() {
+        const requiredElements = [
+            'adminBtn',
+            'authModal',
+            'adminPanel',
+            'confirmAuth',
+            'cancelAuth',
+            'closeAuthModal',
+            'closeAdminPanel',
+            'editorPassword'
+        ];
+
+        requiredElements.forEach(id => {
+            const element = document.getElementById(id);
+            console.log(`🔍 ${id}:`, element ? '✅ Найден' : '❌ Не найден');
+        });
     }
 
     setupEventListeners() {
         console.log('🔧 Настройка обработчиков SecurityManager...');
         
-        // Кнопка админки с проверкой существования
+        // Кнопка админки
         const adminBtn = document.getElementById('adminBtn');
-        if (!adminBtn) {
+        if (adminBtn) {
+            adminBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🖱️ Кнопка админки нажата!');
+                this.handleAdminButtonClick();
+            });
+            console.log('✅ Обработчик кнопки админки добавлен');
+        } else {
             console.error('❌ Элемент adminBtn не найден');
-            setTimeout(() => this.setupEventListeners(), 100);
-            return;
         }
 
-        adminBtn.addEventListener('click', () => {
-            this.handleAdminButtonClick();
-        });
-
         // Модальное окно авторизации
+        this.setupAuthModalListeners();
+    }
+
+    setupAuthModalListeners() {
         const confirmAuth = document.getElementById('confirmAuth');
         const cancelAuth = document.getElementById('cancelAuth');
         const closeAuthModal = document.getElementById('closeAuthModal');
@@ -82,10 +110,11 @@ class SecurityManager {
             });
         }
 
-        console.log('✅ Обработчики SecurityManager настроены');
+        console.log('✅ Обработчики модальных окон настроены');
     }
 
     handleAdminButtonClick() {
+        console.log('🎯 Обработка клика админки, авторизован:', this.isAuthenticated);
         if (this.isAuthenticated) {
             this.showAdminPanel();
         } else {
@@ -94,6 +123,7 @@ class SecurityManager {
     }
 
     async handleAuthConfirm() {
+        console.log('🔐 Подтверждение авторизации...');
         const passwordInput = document.getElementById('editorPassword');
         const password = passwordInput.value.trim();
         
@@ -108,7 +138,6 @@ class SecurityManager {
             this.isAuthenticated = true;
             this.startSession();
             this.hideAuthModal();
-            this.showAdminInterface();
             this.showAdminPanel();
             alert('✅ Успешная авторизация!');
         } else {
@@ -130,6 +159,7 @@ class SecurityManager {
             timestamp: Date.now()
         };
         localStorage.setItem('editor_session', JSON.stringify(sessionData));
+        console.log('💾 Сессия сохранена в localStorage');
     }
 
     checkExistingSession() {
@@ -139,11 +169,11 @@ class SecurityManager {
 
             const data = JSON.parse(sessionData);
             const sessionAge = Date.now() - data.timestamp;
+            const maxAge = 8 * 60 * 60 * 1000; // 8 часов
 
             // Сессия действительна 8 часов
-            if (data.authenticated && sessionAge < (8 * 60 * 60 * 1000)) {
+            if (data.authenticated && sessionAge < maxAge) {
                 this.isAuthenticated = true;
-                this.showAdminInterface();
                 console.log('✅ Сессия восстановлена');
             } else {
                 this.clearSession();
@@ -156,23 +186,11 @@ class SecurityManager {
     clearSession() {
         localStorage.removeItem('editor_session');
         this.isAuthenticated = false;
-    }
-
-    showAdminInterface() {
-        const adminBtn = document.getElementById('adminBtn');
-        if (adminBtn) {
-            adminBtn.classList.remove('hidden');
-        }
-    }
-
-    hideAdminInterface() {
-        const adminBtn = document.getElementById('adminBtn');
-        if (adminBtn) {
-            adminBtn.classList.add('hidden');
-        }
+        console.log('🗑️ Сессия очищена');
     }
 
     showAuthModal() {
+        console.log('🪟 Показ модального окна авторизации');
         const modal = document.getElementById('authModal');
         if (modal) {
             modal.classList.remove('hidden');
@@ -184,6 +202,7 @@ class SecurityManager {
     }
 
     hideAuthModal() {
+        console.log('🪟 Скрытие модального окна авторизации');
         const modal = document.getElementById('authModal');
         if (modal) {
             modal.classList.add('hidden');
@@ -195,6 +214,7 @@ class SecurityManager {
     }
 
     showAdminPanel() {
+        console.log('🖥️ Показ админ панели');
         const panel = document.getElementById('adminPanel');
         if (panel) {
             panel.classList.remove('hidden');
@@ -205,6 +225,7 @@ class SecurityManager {
     }
 
     hideAdminPanel() {
+        console.log('🖥️ Скрытие админ панели');
         const panel = document.getElementById('adminPanel');
         if (panel) {
             panel.classList.add('hidden');
@@ -496,7 +517,9 @@ function updateAdminTeamsList() {
 
 // Глобальные функции для вызова из HTML
 window.editTeam = function(teamId) {
+    console.log('✏️ Редактирование команды:', teamId);
     if (!securityManager || !securityManager.isAuthenticated) {
+        console.log('❌ Не авторизован, показываем модалку авторизации');
         if (securityManager) {
             securityManager.showAuthModal();
         }
@@ -539,6 +562,7 @@ window.editTeam = function(teamId) {
 };
 
 window.saveTeamChanges = async function() {
+    console.log('💾 Сохранение изменений команды');
     if (!securityManager || !securityManager.isAuthenticated || !teamsManager) return;
     
     const teamId = appState.currentEditingTeamId;
@@ -584,6 +608,7 @@ window.saveTeamChanges = async function() {
 };
 
 window.updateTeamsCount = async function() {
+    console.log('🔢 Обновление количества команд');
     if (!securityManager || !securityManager.isAuthenticated || !teamsManager) return;
     
     const input = document.getElementById('totalTeams');
@@ -669,10 +694,8 @@ async function initializeApp() {
         // Настройка обработчиков событий
         setupEventListeners();
         
-        // Инициализация SecurityManager после загрузки DOM
-        setTimeout(() => {
-            securityManager.init();
-        }, 100);
+        // Инициализация SecurityManager
+        securityManager.init();
         
         console.log('✅ Tournament App успешно инициализирован');
         
