@@ -59,6 +59,7 @@ function initializeEventListeners() {
     if (adminBtn) {
         adminBtn.addEventListener('click', showAdminPanel);
     }
+    document.getElementById('applyTeamsCountBtn').addEventListener('click', updateTeamsCount);
     document.getElementById('updateTeamsBtn').addEventListener('click', updateTeamsSettings);
     document.getElementById('saveBracketBtn').addEventListener('click', saveBracketChanges);
     document.getElementById('saveScheduleBtn').addEventListener('click', saveScheduleChanges);
@@ -86,6 +87,7 @@ function checkEditorAccess() {
     if (urlParams.get('editor') === 'true') {
         isEditor = true;
         document.getElementById('adminBtn').classList.remove('hidden');
+        document.getElementById('connectionStatus').classList.remove('hidden');
         console.log('👑 Режим редактора активирован');
     }
 }
@@ -167,52 +169,54 @@ function createDemoData() {
         team1: {
             name: "Labubu Team",
             slogan: "Мы команда Labubu, мы милые такие, Но на пути к победе — мы просто стихия!",
-            mmr: 3820,
             players: [
-                { name: "TheNotoriousPudge", role: "Керри" },
-                { name: "RTS", role: "Мидер" },
-                { name: "na paneli", role: "Оффлейнер" },
-                { name: "Insightful", role: "Саппорт" },
-                { name: "nency", role: "Саппорт" }
+                { name: "TheNotoriousPudge", role: "Керри", mmr: 4500 },
+                { name: "RTS", role: "Мидер", mmr: 4200 },
+                { name: "na paneli", role: "Оффлейнер", mmr: 3800 },
+                { name: "Insightful", role: "Саппорт", mmr: 3600 },
+                { name: "nency", role: "Саппорт", mmr: 3400 }
             ]
         },
         team2: {
             name: "unluck", 
             slogan: "",
-            mmr: 2960,
             players: [
-                { name: "Ev1ri", role: "Керри" },
-                { name: "F4cker", role: "Мидер" },
-                { name: "bub1i-k", role: "Оффлейнер" },
-                { name: "DEM", role: "Саппорт 4" },
-                { name: "ДИКИЙ ОГУРЕЦ", role: "Саппорт" }
+                { name: "Ev1ri", role: "Керри", mmr: 3200 },
+                { name: "F4cker", role: "Мидер", mmr: 3100 },
+                { name: "bub1i-k", role: "Оффлейнер", mmr: 3000 },
+                { name: "DEM", role: "Саппорт 4", mmr: 2900 },
+                { name: "ДИКИЙ ОГУРЕЦ", role: "Саппорт", mmr: 2800 }
             ]
         },
         team3: {
             name: "Команда 3",
             slogan: "",
-            mmr: 0,
             players: [
-                { name: "Игрок 1", role: "Керри" },
-                { name: "Игрок 2", role: "Мидер" },
-                { name: "Игрок 3", role: "Оффлейнер" },
-                { name: "Игрок 4", role: "Саппорт" },
-                { name: "Игрок 5", role: "Саппорт" }
+                { name: "Игрок 1", role: "Керри", mmr: 3000 },
+                { name: "Игрок 2", role: "Мидер", mmr: 3000 },
+                { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
+                { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
+                { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
             ]
         },
         team4: {
             name: "Команда 4",
             slogan: "",
-            mmr: 0,
             players: [
-                { name: "Игрок 1", role: "Керри" },
-                { name: "Игрок 2", role: "Мидер" },
-                { name: "Игрок 3", role: "Оффлейнер" },
-                { name: "Игрок 4", role: "Саппорт" },
-                { name: "Игрок 5", role: "Саппорт" }
+                { name: "Игрок 1", role: "Керри", mmr: 3000 },
+                { name: "Игрок 2", role: "Мидер", mmr: 3000 },
+                { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
+                { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
+                { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
             ]
         }
     };
+
+    // Рассчитываем средний MMR для каждой команды
+    Object.keys(demoTeams).forEach(teamId => {
+        const team = demoTeams[teamId];
+        team.mmr = calculateTeamMMR(team.players);
+    });
 
     // Сохраняем демо-команды в Firebase
     database.ref('teams').set(demoTeams).catch(error => {
@@ -276,6 +280,17 @@ function createDemoData() {
     database.ref('tournament').set(demoTournament).catch(error => {
         console.error('❌ Ошибка создания турнирных данных:', error);
     });
+}
+
+// === РАСЧЕТ СРЕДНЕГО MMR КОМАНДЫ ===
+function calculateTeamMMR(players) {
+    if (!players || players.length === 0) return 0;
+    
+    const totalMMR = players.reduce((sum, player) => {
+        return sum + (parseInt(player.mmr) || 0);
+    }, 0);
+    
+    return Math.round(totalMMR / players.length);
 }
 
 // === ОТОБРАЖЕНИЕ ГРУППОВОГО ЭТАПА ===
@@ -402,7 +417,7 @@ function createTeamCard(teamId, team) {
     const playersHTML = players.map((player, index) => `
         <div class="player-card-bublas">
             <div class="player-role-bublas">${player.role || 'Игрок'}</div>
-            <div class="player-name-bublas" data-text="${player.name || 'Неизвестно'}">
+            <div class="player-name-bublas" data-mmr="${player.mmr || '0'}">
                 ${player.name || 'Неизвестно'}
             </div>
         </div>
@@ -440,6 +455,22 @@ function createTeamCard(teamId, team) {
             ${editButton}
         </div>
     `;
+    
+    // Добавляем обработчики для никнеймов игроков
+    card.querySelectorAll('.player-name-bublas').forEach(playerName => {
+        playerName.addEventListener('mouseenter', function() {
+            const mmr = this.getAttribute('data-mmr');
+            this.setAttribute('data-original-text', this.textContent);
+            this.textContent = `MMR: ${mmr}`;
+        });
+        
+        playerName.addEventListener('mouseleave', function() {
+            const originalText = this.getAttribute('data-original-text');
+            if (originalText) {
+                this.textContent = originalText;
+            }
+        });
+    });
     
     // Добавляем обработчик для кнопки редактирования
     if (isEditor) {
@@ -582,6 +613,7 @@ function showAdminPanel() {
     if (adminPanel) {
         adminPanel.classList.remove('hidden');
         updateAdminTeamsList();
+        document.getElementById('totalTeams').value = Object.keys(teamsData).length;
     }
 }
 
@@ -615,14 +647,100 @@ function updateAdminTeamsList() {
         teamItem.className = 'team-admin-item';
         teamItem.innerHTML = `
             <span>${team.name || 'Без названия'}</span>
-            <button class="edit-team-btn" data-team-id="${teamId}">Редактировать</button>
+            <div>
+                <button class="edit-team-btn" data-team-id="${teamId}">Редактировать</button>
+                <button class="delete-team-btn" data-team-id="${teamId}">🗑️</button>
+            </div>
         `;
         
         const editBtn = teamItem.querySelector('.edit-team-btn');
         if (editBtn) {
             editBtn.addEventListener('click', () => editTeam(teamId));
         }
+        
+        const deleteBtn = teamItem.querySelector('.delete-team-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => deleteTeam(teamId));
+        }
+        
         container.appendChild(teamItem);
+    });
+}
+
+// === УПРАВЛЕНИЕ КОМАНДАМИ ===
+function updateTeamsCount() {
+    const totalTeamsInput = document.getElementById('totalTeams');
+    if (!totalTeamsInput) return;
+    
+    const targetCount = parseInt(totalTeamsInput.value);
+    const currentCount = Object.keys(teamsData).length;
+    
+    if (targetCount < 2 || targetCount > 16) {
+        alert('Количество команд должно быть от 2 до 16');
+        return;
+    }
+    
+    if (targetCount > currentCount) {
+        // Добавляем новые команды
+        for (let i = currentCount + 1; i <= targetCount; i++) {
+            const newTeamId = `team${i}`;
+            if (!teamsData[newTeamId]) {
+                teamsData[newTeamId] = {
+                    name: `Команда ${i}`,
+                    slogan: "",
+                    players: [
+                        { name: "Игрок 1", role: "Керри", mmr: 3000 },
+                        { name: "Игрок 2", role: "Мидер", mmr: 3000 },
+                        { name: "Игрок 3", role: "Оффлейнер", mmr: 3000 },
+                        { name: "Игрок 4", role: "Саппорт", mmr: 3000 },
+                        { name: "Игрок 5", role: "Саппорт", mmr: 3000 }
+                    ]
+                };
+                teamsData[newTeamId].mmr = calculateTeamMMR(teamsData[newTeamId].players);
+            }
+        }
+    } else if (targetCount < currentCount) {
+        // Удаляем лишние команды
+        const teamIds = Object.keys(teamsData).sort();
+        for (let i = teamIds.length - 1; i >= targetCount; i--) {
+            delete teamsData[teamIds[i]];
+        }
+    }
+    
+    // Сохраняем изменения в Firebase
+    database.ref('teams').set(teamsData).then(() => {
+        alert(`✅ Количество команд обновлено: ${targetCount}`);
+        updateAdminTeamsList();
+        updateTournamentSettings();
+    }).catch(error => {
+        console.error('❌ Ошибка обновления команд:', error);
+        alert('❌ Ошибка обновления команд: ' + error.message);
+    });
+}
+
+function deleteTeam(teamId) {
+    if (!confirm(`Удалить команду "${teamsData[teamId]?.name}"?`)) return;
+    
+    delete teamsData[teamId];
+    
+    database.ref('teams').set(teamsData).then(() => {
+        alert('✅ Команда удалена');
+        updateAdminTeamsList();
+        updateTournamentSettings();
+        document.getElementById('totalTeams').value = Object.keys(teamsData).length;
+    }).catch(error => {
+        console.error('❌ Ошибка удаления команды:', error);
+        alert('❌ Ошибка удаления команды: ' + error.message);
+    });
+}
+
+function updateTournamentSettings() {
+    const totalTeams = Object.keys(teamsData).length;
+    
+    database.ref('tournament/settings').update({
+        totalTeams: totalTeams
+    }).catch(error => {
+        console.error('❌ Ошибка обновления настроек турнира:', error);
     });
 }
 
@@ -634,11 +752,9 @@ function editTeam(teamId) {
     
     const nameInput = document.getElementById('editTeamName');
     const sloganInput = document.getElementById('editTeamSlogan');
-    const mmrInput = document.getElementById('editTeamMMR');
     
     if (nameInput) nameInput.value = team.name || '';
     if (sloganInput) sloganInput.value = team.slogan || '';
-    if (mmrInput) mmrInput.value = team.mmr || '';
     
     // Заполнение игроков
     const playersContainer = document.getElementById('playersEditContainer');
@@ -646,7 +762,7 @@ function editTeam(teamId) {
         playersContainer.innerHTML = '';
         
         (team.players || []).forEach((player) => {
-            addPlayerField(player.name, player.role);
+            addPlayerField(player.name, player.role, player.mmr);
         });
     }
     
@@ -656,7 +772,7 @@ function editTeam(teamId) {
     }
 }
 
-function addPlayerField(name = '', role = '') {
+function addPlayerField(name = '', role = '', mmr = '3000') {
     const container = document.getElementById('playersEditContainer');
     if (!container) return;
     
@@ -665,6 +781,7 @@ function addPlayerField(name = '', role = '') {
     playerDiv.innerHTML = `
         <input type="text" placeholder="Имя игрока" value="${name}" class="player-name-input">
         <input type="text" placeholder="Роль" value="${role}" class="player-role-input">
+        <input type="number" placeholder="MMR" value="${mmr}" class="player-mmr-input">
         <button type="button" class="remove-player">🗑️</button>
     `;
     
@@ -684,32 +801,36 @@ function saveTeamChanges() {
     
     const nameInput = document.getElementById('editTeamName');
     const sloganInput = document.getElementById('editTeamSlogan');
-    const mmrInput = document.getElementById('editTeamMMR');
     
-    if (!nameInput || !sloganInput || !mmrInput) return;
+    if (!nameInput || !sloganInput) return;
     
     const name = nameInput.value;
     const slogan = sloganInput.value;
-    const mmr = mmrInput.value;
     
     const players = [];
     document.querySelectorAll('.player-edit-row').forEach(row => {
         const nameInput = row.querySelector('.player-name-input');
         const roleInput = row.querySelector('.player-role-input');
+        const mmrInput = row.querySelector('.player-mmr-input');
+        
         if (nameInput && nameInput.value.trim()) {
             players.push({
                 name: nameInput.value,
-                role: roleInput ? roleInput.value : 'Игрок'
+                role: roleInput ? roleInput.value : 'Игрок',
+                mmr: mmrInput ? parseInt(mmrInput.value) || 0 : 0
             });
         }
     });
+    
+    // Рассчитываем новый средний MMR
+    const newMMR = calculateTeamMMR(players);
     
     // Обновление в Firebase
     database.ref('teams/' + currentEditingTeamId).update({
         name: name,
         slogan: slogan,
-        mmr: mmr,
-        players: players
+        players: players,
+        mmr: newMMR
     }).then(() => {
         closeEditTeamModal();
         alert('✅ Команда сохранена!');
@@ -765,11 +886,7 @@ function loadInitialData() {
 
 // === ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ===
 function updateTeamsSettings() {
-    const totalTeamsInput = document.getElementById('totalTeams');
-    if (totalTeamsInput) {
-        const totalTeams = totalTeamsInput.value;
-        alert(`Настройки команд обновлены. Всего команд: ${totalTeams}`);
-    }
+    alert('Настройки команд сохранены');
 }
 
 function saveBracketChanges() {
