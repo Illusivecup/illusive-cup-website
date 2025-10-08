@@ -14,6 +14,7 @@ let database;
 let teamsManager;
 let securityManager;
 let matchManager;
+let votingSystem;
 
 // === СИСТЕМА БЕЗОПАСНОСТИ ===
 class SecurityManager {
@@ -136,6 +137,10 @@ class SecurityManager {
             this.startSession();
             this.hideAuthModal();
             this.showAdminPanel();
+            
+            // Обновляем статус подключения после авторизации
+            updateConnectionStatus(true);
+            
             alert('✅ Успешная авторизация!');
         } else {
             alert('❌ Неверный пароль');
@@ -227,6 +232,9 @@ class SecurityManager {
         if (panel) {
             panel.classList.add('hidden');
         }
+        
+        // Скрываем статус подключения при выходе из админки
+        updateConnectionStatus(false);
     }
 }
 
@@ -1516,7 +1524,6 @@ function closeEditMatchResultModal() {
 }
 
 // === ФУНКЦИИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ ===
-let votingSystem;
 
 // Функция для заполнения списка матчей для голосования
 function populateVoteMatchSelect() {
@@ -1569,24 +1576,26 @@ function showVotingModal(matchId) {
         ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
     `;
     
-    // Заполняем игроков команды 1
+    // Заполняем игроков команды 1 с MMR
     const team1Column = document.getElementById('team1Voting');
     team1Column.innerHTML = `
         <h3>${match.team1Name}</h3>
         ${team1.players.map((player, index) => `
             <div class="player-vote-item" data-team="team1" data-player-index="${index}">
+                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
                 <div class="player-vote-name">${player.name}</div>
                 <div class="player-vote-role">${player.role}</div>
             </div>
         `).join('')}
     `;
     
-    // Заполняем игроков команды 2
+    // Заполняем игроков команды 2 с MMR
     const team2Column = document.getElementById('team2Voting');
     team2Column.innerHTML = `
         <h3>${match.team2Name}</h3>
         ${team2.players.map((player, index) => `
             <div class="player-vote-item" data-team="team2" data-player-index="${index}">
+                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
                 <div class="player-vote-name">${player.name}</div>
                 <div class="player-vote-role">${player.role}</div>
             </div>
@@ -1595,8 +1604,41 @@ function showVotingModal(matchId) {
     
     // Добавляем обработчики выбора игроков
     document.querySelectorAll('.player-vote-item').forEach(item => {
-        item.addEventListener('click', function() {
+        // Обработчик клика для выбора/снятия выбора
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
             this.classList.toggle('selected');
+        });
+        
+        // Обработчик для показа MMR на мобильных (тап и удержание)
+        let tapTimer;
+        
+        item.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+            tapTimer = setTimeout(() => {
+                this.classList.add('touch-active');
+            }, 300); // Показываем MMR после 300ms удержания
+        });
+        
+        item.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+            clearTimeout(tapTimer);
+            setTimeout(() => {
+                this.classList.remove('touch-active');
+            }, 1000); // Скрываем MMR через 1 секунду
+        });
+        
+        item.addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+            clearTimeout(tapTimer);
+            this.classList.remove('touch-active');
+        });
+    });
+    
+    // Закрытие MMR при тапе вне карточки
+    document.addEventListener('touchstart', function() {
+        document.querySelectorAll('.player-vote-item').forEach(item => {
+            item.classList.remove('touch-active');
         });
     });
     
@@ -1652,6 +1694,7 @@ function closeVotingModal() {
     // Сбрасываем выбор игроков
     document.querySelectorAll('.player-vote-item').forEach(item => {
         item.classList.remove('selected');
+        item.classList.remove('touch-active');
     });
 }
 
@@ -1728,6 +1771,14 @@ function updateConnectionStatus(connected) {
     const status = document.getElementById('connectionStatus');
     if (!status) return;
     
+    // Показываем статус только авторизованным пользователям
+    const isAuthorized = securityManager && securityManager.isAuthenticated;
+    
+    if (!isAuthorized) {
+        status.classList.add('hidden');
+        return;
+    }
+    
     const dot = status.querySelector('.status-dot');
     const text = status.querySelector('.status-text');
     
@@ -1766,6 +1817,9 @@ async function initializeApp() {
         setupMatchEditing();
         
         securityManager.init();
+        
+        // Инициализируем статус подключения (скрыт для неавторизованных)
+        updateConnectionStatus(true);
         
         // Заполняем список матчей для голосования
         populateVoteMatchSelect();
@@ -1890,7 +1944,7 @@ function setupEventListeners() {
     const selectMatchForVote = document.getElementById('selectMatchForVote');
     const closeVotingModal = document.getElementById('closeVotingModal');
     const cancelVote = document.getElementById('cancelVote');
-    const submitVote = document.getElementById('submitVote');
+    const submitVoteBtn = document.getElementById('submitVote');
     
     if (selectMatchForVote) {
         selectMatchForVote.addEventListener('click', function() {
@@ -1914,8 +1968,8 @@ function setupEventListeners() {
         cancelVote.addEventListener('click', closeVotingModal);
     }
     
-    if (submitVote) {
-        submitVote.addEventListener('click', submitVote);
+    if (submitVoteBtn) {
+        submitVoteBtn.addEventListener('click', submitVote);
     }
     
     document.addEventListener('click', (event) => {
