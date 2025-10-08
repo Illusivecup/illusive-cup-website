@@ -1782,4 +1782,43 @@ async function updateTeamsCount() {
     } catch (error) {
         ErrorHandler.showError('Ошибка при обновлении команд: ' + error.message);
     }
+
+    // === АВТОМАТИЧЕСКАЯ ДИАГНОСТИКА FIREBASE ===
+function diagnoseFirebase() {
+    console.log('=== 🔧 ДИАГНОСТИКА FIREBASE ===');
+    
+    // Проверка Firebase
+    console.log('1. Firebase библиотека:', typeof firebase);
+    console.log('2. Firebase App:', firebase?.app?.name || 'Не инициализирован');
+    console.log('3. Firebase Database:', typeof firebase?.database);
+    
+    // Проверка менеджеров
+    const appState = AppState.getInstance();
+    console.log('4. AppState:', appState ? 'Создан' : 'Не создан');
+    console.log('5. TeamsManager:', appState?.getTeamsManager() ? 'Создан' : 'Не создан');
+    console.log('6. BracketManager:', appState?.getBracketManager() ? 'Создан' : 'Не создан');
+    
+    // Проверка данных
+    if (appState?.getTeamsManager()) {
+        const teams = appState.getTeamsManager().teams;
+        console.log('7. Данные команд:', teams);
+        console.log('8. Количество команд:', Object.keys(teams).length);
+    }
+    
+    // Проверка подключения Firebase
+    if (firebase.database) {
+        firebase.database().ref('.info/connected').once('value')
+            .then(snap => {
+                console.log('9. Подключение к Firebase:', snap.val());
+            })
+            .catch(err => {
+                console.error('10. Ошибка подключения Firebase:', err);
+            });
+    }
+    
+    console.log('=== ДИАГНОСТИКА ЗАВЕРШЕНА ===');
+}
+
+// Запуск диагностики при загрузке
+setTimeout(diagnoseFirebase, 3000);
 }
