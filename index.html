@@ -15,12 +15,15 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <!-- Firebase SDK будет загружен динамически -->
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <div class="loading-overlay" id="initialLoading">
+            <div class="loading-spinner"></div>
+            <p>Загрузка приложения...</p>
+        </div>
+    </div>
 
     <!-- Загрузка скриптов -->
     <script src="js/utils/state-manager.js"></script>
@@ -33,16 +36,17 @@
     <script src="js/components/schedule-manager.js"></script>
     <script src="js/components/bracket-viewer.js"></script>
     <script src="js/app.js"></script>
-    <!-- В конце body -->
-<script src="js/utils/state-manager.js"></script>
-<script src="js/utils/error-handler.js"></script>
-<script src="js/utils/data-validator.js"></script>
-<script src="js/utils/performance-optimizer.js"></script>
-<script src="js/services/firebase-service.js"></script>
-<script src="js/services/tournament-service.js"></script>
-<script src="js/components/team-manager.js"></script>
-<script src="js/components/schedule-manager.js"></script>
-<script src="js/components/bracket-viewer.js"></script>
-<script src="js/app.js"></script>
+
+    <script>
+        // Скрываем loading overlay когда приложение загружено
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const loadingOverlay = document.getElementById('initialLoading');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
