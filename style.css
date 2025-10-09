@@ -585,9 +585,9 @@ body {
 }
 
 #votingModal .modal-content {
-    width: 90%;
-    max-width: 1000px;
-    max-height: 85vh;
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
 }
 
 .modal-header {
@@ -1224,7 +1224,7 @@ body {
     text-align: center;
 }
 
-/* === СТИЛИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ === */
+/* === УЛУЧШЕННЫЕ СТИЛИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ === */
 .voting-container {
     margin: 20px 0;
 }
@@ -1232,7 +1232,7 @@ body {
 .voting-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    gap: 20px;
     max-height: 50vh;
     overflow-y: auto;
     padding: 10px;
@@ -1241,7 +1241,7 @@ body {
 .voting-column {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-medium);
-    padding: 25px;
+    padding: 20px;
     border: 1px solid var(--border-light);
     max-height: 100%;
     overflow-y: auto;
@@ -1249,73 +1249,81 @@ body {
 
 .voting-column h3 {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     color: var(--accent-primary);
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.4em;
-    padding-bottom: 10px;
+    font-size: 1.2em;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border-light);
 }
 
 .player-vote-item {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
-    padding: 20px;
-    margin-bottom: 15px;
+    padding: 15px;
+    margin-bottom: 10px;
     cursor: pointer;
     transition: all var(--transition-normal);
     border: 2px solid transparent;
     position: relative;
-    min-height: 70px;
+    min-height: 60px;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
 .player-vote-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-light);
 }
 
 .player-vote-item.selected {
-    background: rgba(76, 175, 80, 0.2);
+    background: rgba(76, 175, 80, 0.15);
     border-color: var(--accent-primary);
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
 }
 
 .player-vote-name {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 8px;
-    font-size: 1.2em;
+    margin-bottom: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.player-vote-name:hover {
+    color: var(--accent-primary);
+    transform: scale(1.03);
 }
 
 .player-vote-role {
-    font-size: 1em;
+    font-size: 0.85em;
     color: var(--accent-secondary);
-    font-weight: 600;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 /* Контейнер для ввода причины */
 .reason-input-container {
-    margin-top: 10px;
+    margin-top: 8px;
     animation: slideDown 0.3s ease;
 }
 
 .reason-input {
     width: 100%;
-    padding: 10px;
+    padding: 8px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid var(--border-medium);
-    border-radius: var(--radius-small);
+    border-radius: 6px;
     color: var(--text-primary);
     font-family: 'Roboto', sans-serif;
-    font-size: 14px;
+    font-size: 0.85em;
     resize: vertical;
-    min-height: 60px;
+    min-height: 50px;
     transition: all var(--transition-normal);
 }
 
@@ -1328,13 +1336,13 @@ body {
 /* Стили для показа MMR при наведении */
 .player-vote-item .player-mmr {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 8px;
+    right: 8px;
     background: rgba(76, 175, 80, 0.3);
     color: var(--text-primary);
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
+    padding: 3px 6px;
+    border-radius: 10px;
+    font-size: 0.7em;
     font-weight: 600;
     opacity: 0;
     transition: opacity var(--transition-normal);
@@ -1348,7 +1356,7 @@ body {
 .voting-instructions {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
-    padding: 15px;
+    padding: 12px;
     margin: 15px 0;
     border-left: 4px solid var(--accent-primary);
 }
@@ -1356,61 +1364,228 @@ body {
 .voting-instructions p {
     margin: 0;
     color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+/* Новая секция для кнопки отправки */
+.voting-submit-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-light);
+    text-align: center;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.voting-submit-btn {
+    background: linear-gradient(135deg, var(--accent-primary), #45a049);
+    color: var(--text-primary);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 600;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    min-width: 160px;
+}
+
+.voting-submit-btn:hover {
+    background: linear-gradient(135deg, #45a049, var(--accent-primary));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.voting-submit-btn:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.voting-cancel-btn {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: var(--text-primary);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 600;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    min-width: 160px;
+}
+
+.voting-cancel-btn:hover {
+    background: linear-gradient(135deg, #1976D2, #2196F3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+/* Компактные стили для модального окна голосования */
+.match-info.compact {
+    padding: 10px;
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-small);
+}
+
+.match-info.compact .match-teams {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.match-info.compact .team-name {
+    font-size: 1em;
+    font-weight: 600;
+}
+
+.match-info.compact .vs {
     font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.match-info.compact .match-score {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--accent-primary);
+    text-align: center;
+    margin: 5px 0;
+}
+
+.match-info.compact .match-stage {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Компактные стили для игроков в голосовании */
+.voting-column.compact {
+    padding: 15px;
+    max-height: 300px;
+}
+
+.player-vote-item.compact {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    min-height: 50px;
+    position: relative;
+}
+
+.player-vote-item.compact .player-vote-name {
+    font-size: 0.9em;
+    margin-bottom: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.player-vote-item.compact .player-vote-name:hover {
+    color: var(--accent-primary);
+    transform: scale(1.03);
+}
+
+.player-vote-item.compact .player-vote-role {
+    font-size: 0.75em;
+}
+
+.player-vote-item.compact .player-mmr {
+    font-size: 0.65em;
+    padding: 2px 5px;
+}
+
+/* Компактное поле для причины */
+.reason-input-container.compact {
+    margin-top: 8px;
+    animation: slideDown 0.3s ease;
+}
+
+.reason-input.compact {
+    width: 100%;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.8em;
+    resize: vertical;
+    min-height: 40px;
+    transition: all var(--transition-normal);
+}
+
+.reason-input.compact:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 /* Стили для приза зрительских симпатий */
 .award-match-card {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-medium);
-    padding: 25px;
-    margin-bottom: 20px;
+    padding: 20px;
+    margin-bottom: 15px;
     border: 1px solid var(--border-light);
     box-shadow: var(--shadow-medium);
 }
 
 .award-match-header {
     text-align: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--border-light);
 }
 
 .award-match-header h3 {
     color: var(--accent-primary);
     font-family: 'Orbitron', sans-serif;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    font-size: 1.2em;
 }
 
 .award-match-score {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.8em;
+    font-size: 1.5em;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 10px 0;
+    margin: 8px 0;
 }
 
 .award-match-time {
     color: var(--text-secondary);
-    font-size: 0.9em;
+    font-size: 0.85em;
 }
 
 .award-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
     justify-content: center;
     flex-wrap: wrap;
 }
 
 .award-actions .edit-btn,
 .award-actions .delete-btn {
-    padding: 8px 15px;
+    padding: 6px 12px;
     border: none;
-    border-radius: 15px;
+    border-radius: 12px;
     cursor: pointer;
     font-family: 'Exo 2', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     transition: all var(--transition-normal);
     text-transform: uppercase;
@@ -1424,7 +1599,7 @@ body {
 
 .award-actions .edit-btn:hover {
     background: linear-gradient(135deg, #1976D2, #2196F3);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .award-actions .delete-btn {
@@ -1433,20 +1608,20 @@ body {
 }
 
 .award-actions .delete-btn:hover {
-    background: linear-gradient(135deg, #d32f2f, var(--accent-danger);
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #d32f2f, var(--accent-danger));
+    transform: translateY(-1px);
 }
 
 .award-players {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
 }
 
 .award-player-card {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
-    padding: 20px;
+    padding: 15px;
     text-align: center;
     border: 2px solid var(--border-light);
     transition: all var(--transition-normal);
@@ -1455,40 +1630,51 @@ body {
 .award-player-card.top-player {
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(76, 175, 80, 0.2));
     border-color: #FFD700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    transform: scale(1.03);
 }
 
 .player-award-name {
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .player-award-role {
     color: var(--accent-secondary);
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     text-transform: uppercase;
-    font-size: 0.9em;
+    font-size: 0.85em;
 }
 
 .player-award-team {
     color: var(--text-secondary);
-    margin-bottom: 10px;
-    font-size: 0.9em;
+    margin-bottom: 8px;
+    font-size: 0.85em;
 }
 
 .player-award-votes {
     color: var(--accent-primary);
     font-weight: 600;
-    font-size: 1.1em;
+    font-size: 1em;
+}
+
+.player-award-badge {
+    margin-top: 5px;
+    padding: 3px 8px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: var(--bg-primary);
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
 .player-reasons {
-    margin-top: 10px;
-    padding: 10px;
+    margin-top: 8px;
+    padding: 8px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
     border: 1px solid var(--border-light);
@@ -1496,9 +1682,9 @@ body {
 
 .player-reasons strong {
     color: var(--accent-secondary);
-    font-size: 0.9em;
+    font-size: 0.85em;
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .player-reasons ul {
@@ -1508,33 +1694,34 @@ body {
 }
 
 .player-reasons li {
-    margin-bottom: 3px;
-    font-size: 0.85em;
+    margin-bottom: 2px;
+    font-size: 0.8em;
     line-height: 1.3;
 }
 
 /* Стили для результатов голосования в админке */
 .vote-results-section {
-    margin-top: 30px;
+    margin-top: 25px;
 }
 
 .vote-result-card {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-medium);
-    padding: 20px;
-    margin-bottom: 15px;
+    padding: 15px;
+    margin-bottom: 12px;
     border: 1px solid var(--border-light);
 }
 
 .vote-match-header {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border-light);
 }
 
 .vote-match-header h4 {
     color: var(--accent-primary);
-    margin-bottom: 5px;
+    margin-bottom: 4px;
+    font-size: 1.1em;
 }
 
 .vote-match-score {
@@ -1544,19 +1731,19 @@ body {
 
 .vote-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
     justify-content: center;
     flex-wrap: wrap;
 }
 
 .edit-vote-btn, .delete-vote-btn {
-    padding: 8px 15px;
+    padding: 6px 12px;
     border: none;
-    border-radius: 15px;
+    border-radius: 12px;
     cursor: pointer;
     font-family: 'Exo 2', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     transition: all var(--transition-normal);
     text-transform: uppercase;
@@ -1570,7 +1757,7 @@ body {
 
 .edit-vote-btn:hover {
     background: linear-gradient(135deg, #1976D2, #2196F3);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .delete-vote-btn {
@@ -1580,20 +1767,20 @@ body {
 
 .delete-vote-btn:hover {
     background: linear-gradient(135deg, #d32f2f, var(--accent-danger));
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .vote-players {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .vote-player-result {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
+    padding: 8px 12px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
     border: 1px solid var(--border-light);
@@ -1606,34 +1793,36 @@ body {
 
 .player-name {
     font-weight: 600;
+    font-size: 0.95em;
 }
 
 .player-team {
     color: var(--text-secondary);
-    font-size: 0.9em;
+    font-size: 0.85em;
 }
 
 .vote-count {
     color: var(--accent-primary);
     font-weight: 600;
+    font-size: 0.9em;
 }
 
 /* Стили для модального окна редактирования голосования */
 .existing-votes-container {
-    max-height: 300px;
+    max-height: 250px;
     overflow-y: auto;
-    margin: 15px 0;
+    margin: 12px 0;
     background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-small);
     border: 1px solid var(--border-light);
-    padding: 15px;
+    padding: 12px;
 }
 
 .existing-vote-item {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
-    padding: 15px;
-    margin-bottom: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
     border: 1px solid var(--border-light);
 }
 
@@ -1641,44 +1830,45 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
     border-bottom: 1px solid var(--border-light);
 }
 
 .vote-time {
     color: var(--text-secondary);
-    font-size: 0.8em;
+    font-size: 0.75em;
 }
 
 .vote-players {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .voted-player {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 5px 0;
+    gap: 8px;
+    padding: 4px 0;
 }
 
 .voted-player .player-name {
     font-weight: 600;
+    font-size: 0.9em;
 }
 
 .voted-player .player-team {
     color: var(--text-secondary);
-    font-size: 0.9em;
+    font-size: 0.8em;
 }
 
 .player-reason {
     color: var(--text-secondary);
-    font-size: 0.85em;
+    font-size: 0.8em;
     font-style: italic;
-    margin-top: 3px;
-    padding-left: 10px;
+    margin-top: 2px;
+    padding-left: 8px;
     border-left: 2px solid var(--accent-primary);
 }
 
@@ -1686,8 +1876,8 @@ body {
     text-align: center;
     color: var(--accent-primary);
     font-weight: 600;
-    margin: 10px 0;
-    padding: 10px;
+    margin: 8px 0;
+    padding: 8px;
     background: rgba(76, 175, 80, 0.1);
     border-radius: var(--radius-small);
 }
@@ -1697,11 +1887,11 @@ body {
     from {
         opacity: 0;
         max-height: 0;
-        transform: translateY(-10px);
+        transform: translateY(-8px);
     }
     to {
         opacity: 1;
-        max-height: 100px;
+        max-height: 80px;
         transform: translateY(0);
     }
 }
@@ -1810,7 +2000,7 @@ body {
     }
     
     .player-reasons {
-        font-size: 0.9em;
+        font-size: 0.85em;
     }
     
     #votingModal .modal-content {
@@ -1821,7 +2011,7 @@ body {
     
     .voting-columns {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 15px;
         max-height: 60vh;
     }
     
@@ -1830,11 +2020,11 @@ body {
     }
     
     .player-vote-item {
-        padding: 15px;
+        padding: 12px;
     }
     
     .player-vote-name {
-        font-size: 1.1em;
+        font-size: 0.95em;
     }
     
     .connection-status {
@@ -1842,6 +2032,15 @@ body {
         right: 10px;
         font-size: 12px;
         padding: 8px 12px;
+    }
+    
+    .voting-submit-section {
+        flex-direction: column;
+    }
+    
+    .voting-submit-btn, .voting-cancel-btn {
+        width: 100%;
+        max-width: 200px;
     }
 }
 
