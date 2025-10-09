@@ -419,35 +419,36 @@
     </div>
 
     <!-- Модальное окно голосования -->
-    <div id="votingModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🎭 Голосование за лучшего игрока</h2>
-                <button class="close-modal" id="closeVotingModal">×</button>
+<div id="votingModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🎭 Голосование за лучшего игрока</h2>
+            <button class="close-modal" id="closeVotingModal">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="votingMatchInfo" class="match-info"></div>
+            
+            <div class="voting-columns">
+                <div class="voting-column" id="team1Voting">
+                    <!-- Игроки команды 1 -->
+                </div>
+                <div class="voting-column" id="team2Voting">
+                    <!-- Игроки команды 2 -->
+                </div>
             </div>
-            <div class="modal-body">
-                <div id="votingMatchInfo" class="match-info"></div>
-                
-                <div class="voting-columns">
-                    <div class="voting-column" id="team1Voting">
-                        <!-- Игроки команды 1 -->
-                    </div>
-                    <div class="voting-column" id="team2Voting">
-                        <!-- Игроки команды 2 -->
-                    </div>
-                </div>
-                
-                <div class="voting-instructions">
-                    <p>💡 <strong>Как голосовать:</strong> Нажмите на игрока чтобы выбрать/отменить выбор. Можно выбрать нескольких игроков из разных команд. При наведении на никнейм показывается MMR.</p>
-                </div>
-                
-                <div class="voting-submit-section">
-                    <button id="submitVote" class="voting-submit-btn">✅ Отправить голос</button>
-                    <button id="cancelVote" class="cancel-btn" style="margin-left: 10px;">❌ Отмена</button>
-                </div>
+            
+            <div class="voting-instructions">
+                <p>💡 <strong>Как голосовать:</strong> Нажмите на игрока чтобы выбрать/отменить выбор. Можно выбрать нескольких игроков из разных команд. При наведении на никнейм показывается MMR.</p>
+            </div>
+            
+            <!-- ДОБАВЛЕНА СЕКЦИЯ С КНОПКОЙ ОТПРАВКИ -->
+            <div class="voting-submit-section">
+                <button id="submitVote" class="voting-submit-btn">✅ Отправить голос</button>
+                <button id="cancelVote" class="cancel-btn" style="margin-left: 10px;">❌ Отмена</button>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Модальное окно редактирования голосования -->
     <div id="editVoteModal" class="modal hidden">
