@@ -673,14 +673,28 @@ class MatchManager {
         const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
         const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
         
+        // Определяем класс стиля в зависимости от этапа турнира
+        let matchClass = 'match-card';
+        if (match.stage === 'grand_final') {
+            matchClass += ' grand-final';
+        } else if (match.stage === 'third_place') {
+            matchClass += ' third-place';
+        } else {
+            matchClass += ' group-stage';
+        }
+        
+        if (isCompleted) {
+            matchClass += ' completed';
+        }
+        
         if (!team1Exists || !team2Exists) {
             return `
-                <div class="match-card deleted" data-match-id="${matchId}">
+                <div class="${matchClass} deleted" data-match-id="${matchId}">
                     <div class="match-time">${match.time || 'Время не указано'}</div>
                     <div class="match-teams">
-                        <div class="team-name deleted">${team1Exists ? match.team1Name : 'Команда удалена'}</div>
+                        <div class="team-name large deleted">${team1Exists ? match.team1Name : 'Команда удалена'}</div>
                         <div class="vs">vs</div>
-                        <div class="team-name deleted">${team2Exists ? match.team2Name : 'Команда удалена'}</div>
+                        <div class="team-name large deleted">${team2Exists ? match.team2Name : 'Команда удалена'}</div>
                     </div>
                     <div class="match-stage">${this.getStageName(match.stage)}</div>
                     <div class="match-format">${this.getFormatName(match.format)}</div>
@@ -695,14 +709,14 @@ class MatchManager {
         const winnerIcon = winner ? '🏆' : '';
         
         return `
-            <div class="match-card ${isCompleted ? 'completed' : ''}" data-match-id="${matchId}">
+            <div class="${matchClass}" data-match-id="${matchId}">
                 <div class="match-time">${match.time || 'Время не указано'}</div>
                 <div class="match-teams">
-                    <div class="team-name ${team1Class}">
+                    <div class="team-name large ${team1Class}">
                         ${match.team1Name} ${winner === 'team1' ? winnerIcon : ''}
                     </div>
                     <div class="vs">vs</div>
-                    <div class="team-name ${team2Class}">
+                    <div class="team-name large ${team2Class}">
                         ${match.team2Name} ${winner === 'team2' ? winnerIcon : ''}
                     </div>
                 </div>
@@ -784,7 +798,7 @@ class MatchManager {
     }
 }
 
-// === ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПРОГРЕСС-БАРА ===
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПРОГРЕСС-БАРА СО СЧЕТОМ ПОСЕРЕДИНЕ ===
 function createEnhancedProgressBar(match) {
     const requiredWins = matchManager.getRequiredWins(match.format);
     const score1 = parseInt(match.score1) || 0;
@@ -804,12 +818,11 @@ function createEnhancedProgressBar(match) {
                 <div class="progress-bar-track">
                     <div class="progress-team progress-team-1 ${team1Class}" 
                          style="width: ${team1Percentage}%">
-                        ${score1 > 0 ? `<span class="progress-team-score">${score1}</span>` : ''}
                     </div>
                     <div class="progress-team progress-team-2 ${team2Class}" 
                          style="width: ${team2Percentage}%">
-                        ${score2 > 0 ? `<span class="progress-team-score">${score2}</span>` : ''}
                     </div>
+                    <div class="progress-score-center">${score1} : ${score2}</div>
                     ${totalGames > 0 ? `<div class="progress-divider" style="left: ${team1Percentage}%"></div>` : ''}
                 </div>
             </div>
@@ -996,9 +1009,9 @@ function showVotingModal(matchId) {
     matchInfo.className = 'match-info compact';
     matchInfo.innerHTML = `
         <div class="match-teams">
-            <div class="team-name">${match.team1Name}</div>
+            <div class="team-name large">${match.team1Name}</div>
             <div class="vs">vs</div>
-            <div class="team-name">${match.team2Name}</div>
+            <div class="team-name large">${match.team2Name}</div>
         </div>
         <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
         <div class="match-stage">${matchManager.getStageName(match.stage)} • ${matchManager.getFormatName(match.format)}</div>
@@ -1200,9 +1213,9 @@ function showEditVoteModal(matchId) {
     const matchInfo = document.getElementById('editVoteInfo');
     matchInfo.innerHTML = `
         <div class="match-teams">
-            <div class="team-name">${match.team1Name}</div>
+            <div class="team-name large">${match.team1Name}</div>
             <div class="vs">vs</div>
-            <div class="team-name">${match.team2Name}</div>
+            <div class="team-name large">${match.team2Name}</div>
         </div>
         <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
         <div class="total-votes">Всего голосов: ${existingVotes.length}</div>
@@ -1256,7 +1269,7 @@ window.editVote = function(matchId) {
     }
 };
 
-// === ФУНКЦИЯ ДЛЯ ОБНОВЛЕННОГО ОТОБРАЖЕНИЯ ПРИЗА ЗРИТЕЛЬСКИХ СИМПАТИЙ ===
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПРИЗА ЗРИТЕЛЬСКИХ СИМПАТИЙ С ОБЩИМИ МЕСТАМИ ===
 async function updateAudienceAwardsDisplay() {
     const container = document.getElementById('audienceAwardsContent');
     if (!container) return;
@@ -1283,7 +1296,7 @@ async function updateAudienceAwardsDisplay() {
                         ...player,
                         votes: 0,
                         reasons: [],
-                        matches: new Set() // Используем Set для уникальных матчей
+                        matches: new Set()
                     };
                 }
                 
@@ -1294,15 +1307,63 @@ async function updateAudienceAwardsDisplay() {
                         matchInfo: matchInfo
                     });
                 }
-                // Добавляем информацию о матче
                 playerVotes[playerKey].matches.add(JSON.stringify(matchInfo));
             });
         });
         
-        // Сортируем по количеству голосов
-        const topPlayers = Object.values(playerVotes)
-            .sort((a, b) => b.votes - a.votes)
-            .slice(0, 10); // Топ-10 игроков
+        // Сортируем по количеству голосов и группируем по местам
+        const sortedPlayers = Object.values(playerVotes)
+            .sort((a, b) => b.votes - a.votes);
+        
+        // Группируем игроков по количеству голосов для определения мест
+        const groupedPlayers = [];
+        let currentVotes = -1;
+        let currentGroup = [];
+        let currentPlace = 1;
+        
+        sortedPlayers.forEach((player, index) => {
+            if (player.votes !== currentVotes) {
+                if (currentGroup.length > 0) {
+                    groupedPlayers.push({
+                        place: currentPlace,
+                        players: currentGroup,
+                        votes: currentVotes
+                    });
+                    currentPlace += currentGroup.length;
+                }
+                currentVotes = player.votes;
+                currentGroup = [player];
+            } else {
+                currentGroup.push(player);
+            }
+        });
+        
+        // Добавляем последнюю группу
+        if (currentGroup.length > 0) {
+            groupedPlayers.push({
+                place: currentPlace,
+                players: currentGroup,
+                votes: currentVotes
+            });
+        }
+        
+        // Берем топ-10 мест (не игроков)
+        const topPlayers = [];
+        let placeCounter = 1;
+        
+        for (const group of groupedPlayers) {
+            for (const player of group.players) {
+                if (topPlayers.length < 10) {
+                    topPlayers.push({
+                        ...player,
+                        place: group.place,
+                        displayPlace: group.players.length > 1 ? `${group.place}-${group.place + group.players.length - 1}` : group.place.toString()
+                    });
+                }
+            }
+            placeCounter += group.players.length;
+            if (topPlayers.length >= 10) break;
+        }
         
         container.innerHTML = `
             <div class="award-match-card">
@@ -1312,11 +1373,10 @@ async function updateAudienceAwardsDisplay() {
                 </div>
                 <div class="award-players">
                     ${topPlayers.map((player, index) => {
-                        const isTopThree = index < 3;
-                        const isHonorable = index >= 3 && index < 6;
+                        const isTopThree = player.place <= 3;
+                        const isHonorable = player.place > 3 && player.place <= 6;
                         const cardClass = isTopThree ? 'top-player' : (isHonorable ? 'honorable-player' : 'regular-player');
                         
-                        // Преобразуем Set обратно в массив
                         const matchesArray = Array.from(player.matches).map(matchStr => JSON.parse(matchStr));
                         
                         return `
@@ -1325,7 +1385,8 @@ async function updateAudienceAwardsDisplay() {
                                 <div class="player-award-role">${player.playerRole}</div>
                                 <div class="player-award-team">${player.teamName}</div>
                                 <div class="player-award-votes">❤️ ${player.votes} голосов</div>
-                                ${isTopThree ? `<div class="player-award-badge">🏅 Топ ${index + 1}</div>` : ''}
+                                <div class="player-award-place">Место: ${player.displayPlace}</div>
+                                ${isTopThree ? `<div class="player-award-badge">🏅 Топ ${player.place}</div>` : ''}
                                 ${isHonorable ? `<div class="player-honorable-badge">⭐ Выдающийся</div>` : ''}
                                 ${player.reasons && player.reasons.length > 0 ? `
                                     <div class="player-reasons">
@@ -1402,9 +1463,9 @@ function showEditMatchTimeModal(matchId) {
     // Создаем поле для редактирования времени
     matchInfo.innerHTML = `
         <div class="match-teams">
-            <div class="team-name">${match.team1Name}</div>
+            <div class="team-name large">${match.team1Name}</div>
             <div class="vs">vs</div>
-            <div class="team-name">${match.team2Name}</div>
+            <div class="team-name large">${match.team2Name}</div>
         </div>
         <div class="form-group">
             <label>Время матча:</label>
