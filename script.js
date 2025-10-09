@@ -417,41 +417,17 @@ class MatchManager {
         return null;
     }
 
-    // === УЛУЧШЕННАЯ ФУНКЦИЯ ДЛЯ ТУРНИРНОЙ ТАБЛИЦЫ ===
- updateGroupStageTable() {
-    const container = document.getElementById('groupStageContainer');
-    if (!container) {
-        console.error('❌ groupStageContainer не найден');
-        return;
+    updateGroupStageTable() {
+        const container = document.getElementById('groupStageContainer');
+        if (!container) return;
+
+        const groupMatches = Object.values(this.matches).filter(match => 
+            match.stage === 'group'
+        );
+
+        const standings = this.calculateStandings(groupMatches);
+        container.innerHTML = this.createGroupStageTable(standings);
     }
-
-    console.log('🔍 Начинаем обновление таблицы группового этапа...');
-    
-    const groupMatches = Object.values(this.matches).filter(match => 
-        match.stage === 'group'
-    );
-
-    console.log('📊 Найдено групповых матчей:', groupMatches.length);
-    console.log('📋 Все матчи:', this.matches);
-    
-    const standings = this.calculateStandings(groupMatches);
-    console.log('🏆 Рассчитанная таблица:', standings);
-    
-    const tableHTML = this.createGroupStageTable(standings);
-    console.log('📝 Сгенерированный HTML:', tableHTML);
-    
-    container.innerHTML = tableHTML;
-    console.log('✅ Таблица обновлена');
-
-    // ДИАГНОСТИКА: Проверим, какие классы применяются
-    setTimeout(() => {
-        const rows = container.querySelectorAll('tr');
-        console.log('📊 Найдено строк в таблице:', rows.length);
-        rows.forEach((row, index) => {
-            console.log(`Строка ${index}: классы =`, row.className);
-        });
-    }, 100);
-}
 
     calculateStandings(matches) {
         const standings = {};
@@ -527,55 +503,63 @@ class MatchManager {
     }
 
     createGroupStageTable(standings) {
-    if (standings.length === 0) {
-        return '<div class="no-data">Нет данных о матчах группового этапа</div>';
+        if (standings.length === 0) {
+            return '<div class="no-data">Нет данных о матчах группового этапа</div>';
+        }
+
+        const points = standings.map(team => team.points);
+        const minPoints = Math.min(...points);
+        const maxPoints = Math.max(...points);
+
+        return `
+            <div class="standings-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Команда</th>
+                            <th>И</th>
+                            <th>В</th>
+                            <th>П</th>
+                            <th>О</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${standings.map((team, index) => {
+                            let backgroundColor = '#ff4444';
+                            
+                            if (maxPoints !== minPoints) {
+                                const position = (team.points - minPoints) / (maxPoints - minPoints);
+                                if (position === 0) {
+                                    backgroundColor = '#ff4444';
+                                } else if (position === 1) {
+                                    backgroundColor = '#4CAF50';
+                                } else {
+                                    const r = Math.round(255 * (1 - position) + 255 * position);
+                                    const g = Math.round(68 * (1 - position) + 175 * position);
+                                    const b = Math.round(68 * (1 - position) + 80 * position);
+                                    backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                                }
+                            } else {
+                                backgroundColor = '#FF9800';
+                            }
+                            
+                            return `
+                                <tr style="background: ${backgroundColor}20; border-left: 4px solid ${backgroundColor}">
+                                    <td>${index + 1}</td>
+                                    <td><strong>${team.teamName}</strong></td>
+                                    <td>${team.played}</td>
+                                    <td>${team.wins}</td>
+                                    <td>${team.losses}</td>
+                                    <td><strong>${team.points}</strong></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
     }
-
-    // Сортируем команды по очкам
-    const sortedStandings = [...standings].sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.wins !== a.wins) return b.wins - a.wins;
-        return a.losses - b.losses;
-    });
-
-    return `
-        <div class="standings-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Команда</th>
-                        <th>И</th>
-                        <th>В</th>
-                        <th>П</th>
-                        <th>О</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sortedStandings.map((team, index) => {
-                        let rowClass = 'middle-row';
-                        if (index === 0) {
-                            rowClass = 'leader-row';
-                        } else if (index === sortedStandings.length - 1) {
-                            rowClass = 'bottom-row';
-                        }
-                        
-                        return `
-                            <tr class="${rowClass}">
-                                <td>${index + 1}</td>
-                                <td class="team-name-cell"><strong>${team.teamName}</strong></td>
-                                <td>${team.played}</td>
-                                <td>${team.wins}</td>
-                                <td>${team.losses}</td>
-                                <td><strong>${team.points}</strong></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
 
     updatePlayoffMatches() {
         this.updateThirdPlaceMatch();
@@ -688,7 +672,6 @@ class MatchManager {
         ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
     }
 
-    // === ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПРОГРЕСС-БАРА В РАСПИСАНИИ ===
     createScheduleMatchCard(match, isCompleted = false, matchId = '') {
         const showScore = match.score1 !== undefined && match.score2 !== undefined;
         const teams = teamsManager ? teamsManager.getAllTeams() : {};
@@ -716,13 +699,7 @@ class MatchManager {
         }
         
         const currentFormat = match.format || 'bo1';
-        const score1 = parseInt(match.score1) || 0;
-        const score2 = parseInt(match.score2) || 0;
-        
-        // Расчет процентов для прогресс-бара
-        const totalGames = score1 + score2;
-        const team1Percent = totalGames > 0 ? (score1 / totalGames) * 100 : 50;
-        const team2Percent = totalGames > 0 ? (score2 / totalGames) * 100 : 50;
+        const requiredWins = this.getRequiredWins(currentFormat);
         
         // Добавляем иконку победителя
         const winnerIcon = winner ? '🏆' : '';
@@ -740,18 +717,13 @@ class MatchManager {
                     </div>
                 </div>
                 ${showScore ? `
-                    <div class="match-score">${score1} : ${score2}</div>
-                    <div class="match-progress-new">
-                        <div class="progress-track">
-                            <div class="progress-team team1-progress" style="width: ${team1Percent}%">
-                                <div class="progress-fill"></div>
-                                <div class="progress-label">${match.team1Name}</div>
-                            </div>
-                            <div class="progress-team team2-progress" style="width: ${team2Percent}%">
-                                <div class="progress-fill"></div>
-                                <div class="progress-label">${match.team2Name}</div>
-                            </div>
+                    <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+                    <div class="match-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill team1-progress" style="width: ${((match.score1 || 0) / requiredWins) * 100}%"></div>
+                            <div class="progress-fill team2-progress" style="width: ${((match.score2 || 0) / requiredWins) * 100}%"></div>
                         </div>
+                        <div class="progress-text">До победы: ${requiredWins} побед</div>
                     </div>
                 ` : ''}
                 <div class="match-stage">${this.getStageName(match.stage)}</div>
@@ -1294,7 +1266,7 @@ async function updateAudienceAwardsDisplay() {
                         ...player,
                         votes: 0,
                         reasons: [],
-                        matches: new Set()
+                        matches: new Set() // Используем Set для уникальных матчей
                     };
                 }
                 
@@ -1313,7 +1285,7 @@ async function updateAudienceAwardsDisplay() {
         // Сортируем по количеству голосов
         const topPlayers = Object.values(playerVotes)
             .sort((a, b) => b.votes - a.votes)
-            .slice(0, 10);
+            .slice(0, 10); // Топ-10 игроков
         
         container.innerHTML = `
             <div class="award-match-card">
@@ -1605,7 +1577,6 @@ function hideAllSections() {
     });
 }
 
-// === ОБНОВЛЕННАЯ ФУНКЦИЯ СОЗДАНИЯ КАРТОЧКИ КОМАНДЫ ===
 function createTeamCard(teamId, team) {
     const card = document.createElement('div');
     card.className = 'team-visiting-card';
@@ -2231,7 +2202,7 @@ function setupEventListeners() {
     }
     
     document.addEventListener('click', (event) => {
-        if (event.target.classList.contains('.modal')) {
+        if (event.target.classList.contains('modal')) {
             event.target.classList.add('hidden');
         }
         
@@ -2276,18 +2247,4 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM загружен, запуск приложения...');
     createAnimatedBackground();
     initializeApp();
-    // === ДИАГНОСТИЧЕСКАЯ ФУНКЦИЯ ===
-function debugTable() {
-    console.log('=== ДИАГНОСТИКА ТАБЛИЦЫ ===');
-    console.log('MatchManager:', matchManager);
-    console.log('Matches:', matchManager.matches);
-    console.log('TeamsManager:', teamsManager);
-    console.log('Teams:', teamsManager.getAllTeams());
-    
-    matchManager.updateGroupStageTable();
-    
-    const container = document.getElementById('groupStageContainer');
-    console.log('Container:', container);
-    console.log('Container HTML:', container.innerHTML);
-}
 });
