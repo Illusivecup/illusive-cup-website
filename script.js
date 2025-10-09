@@ -969,6 +969,7 @@ function showVotingModal(matchId) {
     
     window.currentVotingMatchId = matchId;
     
+    // Обновляем информацию о матче
     const matchInfo = document.getElementById('votingMatchInfo');
     matchInfo.innerHTML = `
         <div class="match-teams">
@@ -981,13 +982,16 @@ function showVotingModal(matchId) {
         ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
     `;
     
+    // Обновляем колонки с игроками
     const team1Column = document.getElementById('team1Voting');
+    const team2Column = document.getElementById('team2Voting');
+    
     team1Column.innerHTML = `
         <h3>${match.team1Name}</h3>
         ${team1.players.map((player, index) => `
             <div class="player-vote-item" data-team="team1" data-player-index="${index}">
                 <div class="player-mmr">MMR: ${player.mmr || 0}</div>
-                <div class="player-vote-name">${player.name}</div>
+                <div class="player-vote-name" data-mmr="${player.mmr || 0}">${player.name}</div>
                 <div class="player-vote-role">${player.role}</div>
                 <div class="reason-input-container hidden">
                     <textarea class="reason-input" placeholder="Почему вы выбрали этого игрока? (необязательно)" rows="3"></textarea>
@@ -996,13 +1000,12 @@ function showVotingModal(matchId) {
         `).join('')}
     `;
     
-    const team2Column = document.getElementById('team2Voting');
     team2Column.innerHTML = `
         <h3>${match.team2Name}</h3>
         ${team2.players.map((player, index) => `
             <div class="player-vote-item" data-team="team2" data-player-index="${index}">
                 <div class="player-mmr">MMR: ${player.mmr || 0}</div>
-                <div class="player-vote-name">${player.name}</div>
+                <div class="player-vote-name" data-mmr="${player.mmr || 0}">${player.name}</div>
                 <div class="player-vote-role">${player.role}</div>
                 <div class="reason-input-container hidden">
                     <textarea class="reason-input" placeholder="Почему вы выбрали этого игрока? (необязательно)" rows="3"></textarea>
@@ -1011,11 +1014,30 @@ function showVotingModal(matchId) {
         `).join('')}
     `;
     
+    // Функциональность показа MMR при наведении на никнейм
+    document.querySelectorAll('.player-vote-name').forEach(playerName => {
+        playerName.addEventListener('mouseenter', function() {
+            const mmr = this.getAttribute('data-mmr');
+            const originalText = this.textContent;
+            
+            // Сохраняем оригинальный текст и показываем MMR
+            this.setAttribute('data-original-text', originalText);
+            this.textContent = `MMR: ${mmr}`;
+        });
+        
+        playerName.addEventListener('mouseleave', function() {
+            const originalText = this.getAttribute('data-original-text');
+            if (originalText) {
+                this.textContent = originalText;
+            }
+        });
+    });
+    
+    // Обработчики для выбора игроков
     document.querySelectorAll('.player-vote-item').forEach(item => {
         item.addEventListener('click', function(e) {
             if (e.target.classList.contains('reason-input')) return;
             
-            e.stopPropagation();
             const wasSelected = this.classList.contains('selected');
             
             if (!wasSelected) {
@@ -1029,30 +1051,35 @@ function showVotingModal(matchId) {
             }
         });
         
+        // Обработчики для тач-устройств
         let tapTimer;
         
         item.addEventListener('touchstart', function(e) {
             e.stopPropagation();
             tapTimer = setTimeout(() => {
-                this.classList.add('touch-active');
-            }, 300);
+                // Длинное нажатие - показываем MMR
+                const playerName = this.querySelector('.player-vote-name');
+                if (playerName) {
+                    const mmr = playerName.getAttribute('data-mmr');
+                    const originalText = playerName.textContent;
+                    playerName.setAttribute('data-original-text', originalText);
+                    playerName.textContent = `MMR: ${mmr}`;
+                }
+            }, 500);
         });
         
         item.addEventListener('touchend', function(e) {
             e.stopPropagation();
             clearTimeout(tapTimer);
-            setTimeout(() => {
-                this.classList.remove('touch-active');
-            }, 1000);
         });
         
         item.addEventListener('touchmove', function(e) {
             e.stopPropagation();
             clearTimeout(tapTimer);
-            this.classList.remove('touch-active');
         });
     });
     
+    // Показываем модальное окно
     document.getElementById('votingModal').classList.remove('hidden');
 }
 
@@ -1085,6 +1112,11 @@ async function submitVote() {
     });
     
     try {
+        // Блокируем кнопку на время отправки
+        const submitBtn = document.getElementById('submitVote');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ Отправка...';
+        
         await votingSystem.submitVote(matchId, votes);
         closeVotingModal();
         alert('✅ Ваш голос успешно отправлен!');
@@ -1093,6 +1125,11 @@ async function submitVote() {
     } catch (error) {
         console.error('❌ Ошибка отправки голоса:', error);
         alert('❌ Ошибка отправки голоса');
+        
+        // Разблокируем кнопку при ошибке
+        const submitBtn = document.getElementById('submitVote');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✅ Отправить голос';
     }
 }
 
@@ -1100,12 +1137,24 @@ function closeVotingModal() {
     document.getElementById('votingModal').classList.add('hidden');
     window.currentVotingMatchId = null;
     
+    // Сбрасываем все состояния
     document.querySelectorAll('.player-vote-item').forEach(item => {
         item.classList.remove('selected');
-        item.classList.remove('touch-active');
+        
+        const playerName = item.querySelector('.player-vote-name');
+        const originalText = playerName.getAttribute('data-original-text');
+        if (originalText) {
+            playerName.textContent = originalText;
+        }
+        
         item.querySelector('.reason-input-container').classList.add('hidden');
         item.querySelector('.reason-input').value = '';
     });
+    
+    // Сбрасываем кнопку отправки
+    const submitBtn = document.getElementById('submitVote');
+    submitBtn.disabled = false;
+    submitBtn.textContent = '✅ Отправить голос';
 }
 
 function showEditVoteModal(matchId) {
@@ -1257,7 +1306,7 @@ async function updateAudienceAwardsDisplay() {
     }
 }
 
-// === ОСТАЛЬНЫЕ ФУНКЦИИ (сокращенно для экономии места) ===
+// === ОСТАЛЬНЫЕ ФУНКЦИИ (оригинальные, без изменений) ===
 const appState = {
     currentEditingTeamId: null,
     currentDisplayedTeamId: null,
