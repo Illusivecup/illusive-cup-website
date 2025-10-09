@@ -2707,4 +2707,64 @@ body {
     .navigation-grid {
         grid-template-columns: 1fr;
     }
+
+    /* === ВРЕМЕННЫЙ ДИАГНОСТИЧЕСКИЙ CSS === */
+/* Упрощенные стили для диагностики */
+.standings-table {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+}
+
+.standings-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.standings-table th {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.2));
+    padding: 18px 15px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--accent-primary);
+}
+
+.standings-table td {
+    padding: 16px 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ПРОСТЫЕ СТИЛИ БЕЗ АНИМАЦИЙ */
+.leader-row {
+    background: rgba(76, 175, 80, 0.2) !important;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.middle-row {
+    background: rgba(255, 152, 0, 0.2) !important;
+    border-left: 4px solid var(--accent-warning);
+}
+
+.bottom-row {
+    background: rgba(244, 67, 54, 0.2) !important;
+    border-left: 4px solid var(--accent-danger);
+}
+
+/* Отключаем все анимации */
+.leader-row, .middle-row, .bottom-row {
+    animation: none !important;
+}
+
+.leader-row::before, .middle-row::before, .bottom-row::before {
+    display: none !important;
+}
+
+.team-name-cell {
+    font-weight: 700;
+    text-align: left !important;
+    padding-left: 20px !important;
+
 }
