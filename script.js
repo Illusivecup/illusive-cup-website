@@ -527,60 +527,55 @@ class MatchManager {
     }
 
     createGroupStageTable(standings) {
-        if (standings.length === 0) {
-            return '<div class="no-data">Нет данных о матчах группового этапа</div>';
-        }
-
-        // Сортируем команды по очкам
-        const sortedStandings = [...standings].sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.wins !== a.wins) return b.wins - a.wins;
-            return a.losses - b.losses;
-        });
-
-        // Улучшенная логика распределения классов
-        const getRowClass = (index, total) => {
-            if (total <= 1) return 'middle-row';
-            if (index === 0) return 'leader-row';
-            if (index === total - 1) return 'bottom-row';
-            return 'middle-row';
-        };
-
-        return `
-            <div class="standings-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Команда</th>
-                            <th>И</th>
-                            <th>В</th>
-                            <th>П</th>
-                            <th>О</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sortedStandings.map((team, index) => {
-                            const rowClass = getRowClass(index, sortedStandings.length);
-                            
-                            return `
-                                <tr class="${rowClass}">
-                                    <td>${index + 1}</td>
-                                    <td class="team-name-cell">
-                                        <strong>${team.teamName}</strong>
-                                    </td>
-                                    <td>${team.played}</td>
-                                    <td>${team.wins}</td>
-                                    <td>${team.losses}</td>
-                                    <td><strong>${team.points}</strong></td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+    if (standings.length === 0) {
+        return '<div class="no-data">Нет данных о матчах группового этапа</div>';
     }
+
+    // Сортируем команды по очкам
+    const sortedStandings = [...standings].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return a.losses - b.losses;
+    });
+
+    return `
+        <div class="standings-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Команда</th>
+                        <th>И</th>
+                        <th>В</th>
+                        <th>П</th>
+                        <th>О</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sortedStandings.map((team, index) => {
+                        let rowClass = 'middle-row';
+                        if (index === 0) {
+                            rowClass = 'leader-row';
+                        } else if (index === sortedStandings.length - 1) {
+                            rowClass = 'bottom-row';
+                        }
+                        
+                        return `
+                            <tr class="${rowClass}">
+                                <td>${index + 1}</td>
+                                <td class="team-name-cell"><strong>${team.teamName}</strong></td>
+                                <td>${team.played}</td>
+                                <td>${team.wins}</td>
+                                <td>${team.losses}</td>
+                                <td><strong>${team.points}</strong></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
 
     updatePlayoffMatches() {
         this.updateThirdPlaceMatch();
