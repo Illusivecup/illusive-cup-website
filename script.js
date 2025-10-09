@@ -2266,4 +2266,18 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM загружен, запуск приложения...');
     createAnimatedBackground();
     initializeApp();
+    // === ДИАГНОСТИЧЕСКАЯ ФУНКЦИЯ ===
+function debugTable() {
+    console.log('=== ДИАГНОСТИКА ТАБЛИЦЫ ===');
+    console.log('MatchManager:', matchManager);
+    console.log('Matches:', matchManager.matches);
+    console.log('TeamsManager:', teamsManager);
+    console.log('Teams:', teamsManager.getAllTeams());
+    
+    matchManager.updateGroupStageTable();
+    
+    const container = document.getElementById('groupStageContainer');
+    console.log('Container:', container);
+    console.log('Container HTML:', container.innerHTML);
+}
 });
