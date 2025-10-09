@@ -418,25 +418,40 @@ class MatchManager {
     }
 
     // === УЛУЧШЕННАЯ ФУНКЦИЯ ДЛЯ ТУРНИРНОЙ ТАБЛИЦЫ ===
-    updateGroupStageTable() {
-        const container = document.getElementById('groupStageContainer');
-        if (!container) {
-            console.error('❌ groupStageContainer не найден');
-            return;
-        }
-
-        const groupMatches = Object.values(this.matches).filter(match => 
-            match.stage === 'group'
-        );
-
-        console.log('📊 Групповые матчи:', groupMatches);
-        
-        const standings = this.calculateStandings(groupMatches);
-        console.log('🏆 Турнирная таблица:', standings);
-        
-        container.innerHTML = this.createGroupStageTable(standings);
-        console.log('✅ Таблица группового этапа обновлена');
+ updateGroupStageTable() {
+    const container = document.getElementById('groupStageContainer');
+    if (!container) {
+        console.error('❌ groupStageContainer не найден');
+        return;
     }
+
+    console.log('🔍 Начинаем обновление таблицы группового этапа...');
+    
+    const groupMatches = Object.values(this.matches).filter(match => 
+        match.stage === 'group'
+    );
+
+    console.log('📊 Найдено групповых матчей:', groupMatches.length);
+    console.log('📋 Все матчи:', this.matches);
+    
+    const standings = this.calculateStandings(groupMatches);
+    console.log('🏆 Рассчитанная таблица:', standings);
+    
+    const tableHTML = this.createGroupStageTable(standings);
+    console.log('📝 Сгенерированный HTML:', tableHTML);
+    
+    container.innerHTML = tableHTML;
+    console.log('✅ Таблица обновлена');
+
+    // ДИАГНОСТИКА: Проверим, какие классы применяются
+    setTimeout(() => {
+        const rows = container.querySelectorAll('tr');
+        console.log('📊 Найдено строк в таблице:', rows.length);
+        rows.forEach((row, index) => {
+            console.log(`Строка ${index}: классы =`, row.className);
+        });
+    }, 100);
+}
 
     calculateStandings(matches) {
         const standings = {};
