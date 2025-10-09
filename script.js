@@ -931,7 +931,6 @@ class VotingSystem {
     }
 }
 
-// === ФУНКЦИИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ ===
 function populateVoteMatchSelect() {
     const select = document.getElementById('voteMatchSelect');
     if (!select || !matchManager) return;
@@ -951,6 +950,13 @@ function populateVoteMatchSelect() {
             option.textContent = `${match.team1Name} vs ${match.team2Name} - ${match.time || 'Время не указано'} - ${match.score1 || 0}:${match.score2 || 0}`;
             select.appendChild(option);
         }
+    });
+    
+    // ДОБАВЬТЕ ЭТУ ПРОВЕРКУ ДЛЯ ОТЛАДКИ
+    console.log('🔍 Элементы для голосования:', {
+        select: select,
+        optionsCount: select.options.length,
+        matchesCount: Object.keys(matches).length
     });
 }
 
