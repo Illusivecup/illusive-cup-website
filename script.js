@@ -955,8 +955,13 @@ function populateVoteMatchSelect() {
 }
 
 function showVotingModal(matchId) {
+    console.log("🎯 Opening voting modal for match:", matchId);
+    
     const match = matchManager.getMatch(matchId);
-    if (!match) return;
+    if (!match) {
+        console.error("❌ Match not found:", matchId);
+        return;
+    }
     
     const teams = teamsManager.getAllTeams();
     const team1 = teams[match.team1Id];
@@ -969,8 +974,14 @@ function showVotingModal(matchId) {
     
     window.currentVotingMatchId = matchId;
     
+    // ИСПРАВЛЕНИЕ: используем правильный ID элемента
+    const matchInfo = document.getElementById('votingWatchInfo');
+    if (!matchInfo) {
+        console.error("❌ Element votingWatchInfo not found");
+        return;
+    }
+    
     // Обновляем информацию о матче
-    const matchInfo = document.getElementById('votingMatchInfo');
     matchInfo.innerHTML = `
         <div class="match-teams">
             <div class="team-name">${match.team1Name}</div>
@@ -985,6 +996,11 @@ function showVotingModal(matchId) {
     // Обновляем колонки с игроками
     const team1Column = document.getElementById('team1Voting');
     const team2Column = document.getElementById('team2Voting');
+    
+    if (!team1Column || !team2Column) {
+        console.error("❌ Voting columns not found");
+        return;
+    }
     
     team1Column.innerHTML = `
         <h3>${match.team1Name}</h3>
@@ -1014,6 +1030,20 @@ function showVotingModal(matchId) {
         `).join('')}
     `;
     
+    // Добавляем обработчики событий для игроков
+    setupVotingEventListeners();
+    
+    // Показываем модальное окно
+    const votingModal = document.getElementById('votingModal');
+    if (votingModal) {
+        votingModal.classList.remove('hidden');
+    } else {
+        console.error("❌ Voting modal not found");
+    }
+}
+
+// Новая функция для настройки обработчиков событий голосования
+function setupVotingEventListeners() {
     // Функциональность показа MMR при наведении на никнейм
     document.querySelectorAll('.player-vote-name').forEach(playerName => {
         playerName.addEventListener('mouseenter', function() {
@@ -1078,9 +1108,6 @@ function showVotingModal(matchId) {
             clearTimeout(tapTimer);
         });
     });
-    
-    // Показываем модальное окно
-    document.getElementById('votingModal').classList.remove('hidden');
 }
 
 async function submitVote() {
