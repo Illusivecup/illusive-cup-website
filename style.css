@@ -1241,23 +1241,107 @@ body {
 }
 
 /* === ИСПРАВЛЕНИЕ ДЛЯ ТАБЛИЦЫ ГРУППОВОГО ЭТАПА === */
+/* === ИСПРАВЛЕНИЕ ДЛЯ ТАБЛИЦЫ ГРУППОВОГО ЭТАПА === */
 .standings-table {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-medium);
     padding: 0;
     border: 1px solid var(--border-light);
     overflow: hidden;
-    position: relative; /* Добавляем для корректного позиционирования */
+    position: relative;
 }
 
 .standings-table table {
     width: 100%;
     border-collapse: collapse;
     margin: 0;
-    position: relative; /* Важно для ограничения анимаций */
-    z-index: 1; /* Поднимаем таблицу над анимациями */
+    position: relative;
+    z-index: 2;
 }
 
+/* Исправляем стили для средних строк */
+.middle-row {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05)) !important;
+    border-left: 4px solid var(--accent-warning);
+    position: relative;
+    isolation: isolate; /* Новое свойство для изоляции контекста */
+}
+
+.middle-row::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(255, 152, 0, 0.05), transparent);
+    animation: middleShine 3s infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Упрощенная анимация */
+@keyframes middleShine {
+    0% { 
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.3;
+    }
+    100% { 
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Гарантируем, что контент ячеек будет поверх анимации */
+.middle-row td {
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+}
+
+/* Остальные стили остаются без изменений */
+.leader-row {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1)) !important;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.bottom-row {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05)) !important;
+    border-left: 4px solid var(--accent-danger);
+}
+
+.standings-table td {
+    padding: 16px 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+}
+
+.standings-table th {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.2));
+    padding: 18px 15px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em;
+    border-bottom: 2px solid var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 2;
+}
+
+.team-name-cell {
+    font-weight: 700;
+    text-align: left !important;
+    padding-left: 20px !important;
+}
 /* Исправляем стили для средних строк */
 .middle-row {
     background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05)) !important;
