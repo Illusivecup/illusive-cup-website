@@ -156,11 +156,11 @@ body {
     margin-top: 10px;
 }
 
-/* === НАВИГАЦИЯ === */
+/* === ОБНОВЛЕННАЯ НАВИГАЦИЯ === */
 .navigation-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
     margin-bottom: 40px;
 }
 
@@ -175,13 +175,13 @@ body {
 
 .nav-btn {
     width: 100%;
-    padding: 20px 15px;
-    background: rgba(255, 255, 255, 0.08);
+    padding: 18px 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
     border: 1px solid var(--border-light);
-    border-radius: var(--radius-medium);
+    border-radius: 16px;
     color: var(--text-primary);
     font-family: 'Exo 2', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -191,39 +191,121 @@ body {
     gap: 8px;
     backdrop-filter: blur(10px);
     text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.nav-btn:hover::before {
+    left: 100%;
 }
 
 .nav-btn:hover,
 .nav-btn:focus {
-    background: rgba(255, 255, 255, 0.15);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
     transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(76, 175, 80, 0.3);
     outline: none;
 }
 
-/* Компактная кнопка управления */
-.compact-admin-btn {
-    padding: 15px 12px !important;
-    font-size: 14px !important;
-    background: linear-gradient(135deg, #6b7280, #4b5563) !important;
-    border: 1px solid rgba(107, 114, 128, 0.3) !important;
-    opacity: 0.9;
+/* Специфичные стили для разных кнопок */
+.teams-btn {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+    border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-.compact-admin-btn:hover {
-    background: linear-gradient(135deg, #4b5563, #6b7280) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 5px 15px rgba(107, 114, 128, 0.3) !important;
+.teams-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+    box-shadow: 
+        0 8px 25px rgba(255, 215, 0, 0.2),
+        0 0 0 1px rgba(255, 215, 0, 0.4);
+}
+
+.schedule-btn {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(33, 150, 243, 0.05));
+    border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.schedule-btn:hover {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.1));
+    box-shadow: 
+        0 8px 25px rgba(33, 150, 243, 0.2),
+        0 0 0 1px rgba(33, 150, 243, 0.4);
+}
+
+.group-stage-btn {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.group-stage-btn:hover {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    box-shadow: 
+        0 8px 25px rgba(76, 175, 80, 0.2),
+        0 0 0 1px rgba(76, 175, 80, 0.4);
+}
+
+.playoff-btn {
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.15), rgba(156, 39, 176, 0.05));
+    border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+.playoff-btn:hover {
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(156, 39, 176, 0.1));
+    box-shadow: 
+        0 8px 25px rgba(156, 39, 176, 0.2),
+        0 0 0 1px rgba(156, 39, 176, 0.4);
+}
+
+.audience-award-btn {
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(233, 30, 99, 0.05));
+    border: 1px solid rgba(233, 30, 99, 0.3);
+}
+
+.audience-award-btn:hover {
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(233, 30, 99, 0.1));
+    box-shadow: 
+        0 8px 25px rgba(233, 30, 99, 0.2),
+        0 0 0 1px rgba(233, 30, 99, 0.4);
+}
+
+/* Менее заметная кнопка управления */
+.subtle-admin-btn {
+    background: linear-gradient(135deg, rgba(120, 120, 120, 0.1), rgba(100, 100, 100, 0.05));
+    border: 1px solid rgba(120, 120, 120, 0.2);
+    opacity: 0.8;
+}
+
+.subtle-admin-btn:hover {
+    background: linear-gradient(135deg, rgba(120, 120, 120, 0.15), rgba(100, 100, 100, 0.08));
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(120, 120, 120, 0.2),
+        0 0 0 1px rgba(120, 120, 120, 0.3);
     opacity: 1;
 }
 
 .btn-icon {
-    font-size: 24px;
+    font-size: 22px;
+    margin-bottom: 4px;
 }
 
 .dropdown-arrow {
-    font-size: 12px;
-    margin-top: 5px;
+    font-size: 10px;
+    margin-top: 4px;
+    opacity: 0.7;
     transition: transform var(--transition-fast);
 }
 
@@ -232,18 +314,14 @@ body {
 }
 
 /* ВЫПАДАЮЩИЙ СПИСОК */
-.dropdown {
-    position: relative;
-}
-
 .dropdown-content {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
-    background: rgba(26, 36, 63, 0.95);
+    background: rgba(26, 36, 63, 0.98);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border-medium);
     border-radius: var(--radius-small);
     margin-top: 5px;
     z-index: 1000;
@@ -272,12 +350,13 @@ body {
 .dropdown-content a {
     display: block;
     padding: 12px 15px;
-    color: var(--text-primary);
+    color: var(--text-tertiary);
     text-decoration: none;
     border-bottom: 1px solid var(--border-light);
     transition: all var(--transition-normal);
     cursor: pointer;
     font-size: 0.95em;
+    font-weight: 500;
 }
 
 .dropdown-content a:hover,
@@ -285,6 +364,7 @@ body {
     background: rgba(76, 175, 80, 0.2);
     padding-left: 20px;
     outline: none;
+    color: var(--text-primary);
 }
 
 .dropdown-content a:last-child {
@@ -947,7 +1027,7 @@ body {
 
 .progress-track {
     display: flex;
-    height: 60px;
+    height: 80px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     overflow: hidden;
@@ -959,7 +1039,7 @@ body {
     position: relative;
     transition: all 0.5s ease;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
 }
 
@@ -990,20 +1070,99 @@ body {
 
 .progress-label {
     position: absolute;
-    top: 5px;
+    top: 50%;
     left: 0;
     right: 0;
     text-align: center;
-    font-size: 0.75em;
-    font-weight: 600;
+    font-size: 1em;
+    font-weight: 700;
     color: var(--text-primary);
     z-index: 2;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+    transform: translateY(-50%);
+    padding: 0 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Анимация заполнения прогресс-бара */
 .match-card.completed .progress-fill {
     height: 100%;
+}
+
+/* Увеличиваем названия команд в карточках матчей */
+.match-teams {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.team-name {
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
+    font-size: 1.2em;
+    padding: 8px 5px;
+    transition: all var(--transition-normal);
+}
+
+.team-name.winner {
+    color: var(--accent-success);
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    position: relative;
+    font-size: 1.3em;
+}
+
+.team-name.winner::after {
+    content: "🏆";
+    margin-left: 8px;
+    font-size: 0.9em;
+}
+
+.match-card.completed .team-name.winner {
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+    from {
+        text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+    }
+    to {
+        text-shadow: 0 0 15px rgba(76, 175, 80, 0.8), 0 0 20px rgba(76, 175, 80, 0.6);
+    }
+}
+
+.team-name.loser {
+    color: var(--accent-danger);
+    opacity: 0.8;
+    font-size: 1.1em;
+}
+
+.team-name.deleted {
+    color: var(--accent-danger);
+    text-decoration: line-through;
+    font-size: 1.1em;
+}
+
+.vs {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+    font-weight: 600;
+    min-width: 40px;
+}
+
+.match-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8em;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-primary);
+    margin: 15px 0;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
 }
 
 /* Расписание в две колонки */
@@ -1057,70 +1216,6 @@ body {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin-bottom: 10px;
-}
-
-.match-teams {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 10px;
-}
-
-.team-name {
-    font-weight: 500;
-    flex: 1;
-    text-align: center;
-}
-
-.team-name.winner {
-    color: var(--accent-success);
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-    position: relative;
-}
-
-.team-name.winner::after {
-    content: "🏆";
-    margin-left: 5px;
-    font-size: 0.9em;
-}
-
-.match-card.completed .team-name.winner {
-    animation: pulseGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes pulseGlow {
-    from {
-        text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
-    }
-    to {
-        text-shadow: 0 0 15px rgba(76, 175, 80, 0.8), 0 0 20px rgba(76, 175, 80, 0.6);
-    }
-}
-
-.team-name.loser {
-    color: var(--accent-danger);
-    opacity: 0.7;
-}
-
-.team-name.deleted {
-    color: var(--accent-danger);
-    text-decoration: line-through;
-}
-
-.vs {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.match-score {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    text-align: center;
-    color: var(--accent-primary);
-    margin: 10px 0;
 }
 
 .match-stage {
@@ -2208,13 +2303,9 @@ body {
 }
 
 /* Адаптивность */
-@media (max-width: 768px) {
-    .container {
-        padding: 10px;
-    }
-    
+@media (max-width: 968px) {
     .navigation-grid {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 10px;
     }
     
@@ -2223,13 +2314,66 @@ body {
         font-size: 14px;
     }
     
-    .admin-nav-item {
-        grid-column: span 2;
+    .btn-icon {
+        font-size: 20px;
     }
     
-    .compact-admin-btn {
-        padding: 12px 10px !important;
-        font-size: 13px !important;
+    .schedule-columns {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .playoff-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .voting-columns {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .award-players {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .navigation-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .nav-btn {
+        padding: 14px 8px;
+        font-size: 13px;
+        border-radius: 12px;
+    }
+    
+    .btn-icon {
+        font-size: 18px;
+    }
+    
+    /* Скрываем длинные названия на мобильных */
+    .teams-btn span:not(.btn-icon):not(.dropdown-arrow),
+    .audience-award-btn span:not(.btn-icon) {
+        display: none;
+    }
+    
+    .teams-btn::after {
+        content: "Команды";
+    }
+    
+    .audience-award-btn::after {
+        content: "Симпатии";
+    }
+    
+    .admin-nav-item {
+        grid-column: span 2;
     }
     
     .team-card-content {
@@ -2258,21 +2402,6 @@ body {
         grid-template-columns: 1fr;
     }
     
-    .schedule-columns {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .playoff-sections {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .voting-columns {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
     .award-players {
         grid-template-columns: 1fr;
     }
@@ -2289,11 +2418,38 @@ body {
     }
     
     .progress-track {
-        height: 50px;
+        height: 70px;
     }
     
     .progress-label {
-        font-size: 0.7em;
+        font-size: 0.9em;
+        padding: 0 3px;
+    }
+    
+    .team-name {
+        font-size: 1.1em;
+    }
+    
+    .team-name.winner {
+        font-size: 1.2em;
+    }
+    
+    .team-name.loser {
+        font-size: 1em;
+    }
+    
+    .vs {
+        font-size: 1em;
+        min-width: 30px;
+    }
+    
+    .match-score {
+        font-size: 1.6em;
+    }
+    
+    .match-teams {
+        gap: 10px;
+        margin-bottom: 12px;
     }
     
     .standings-table th,
@@ -2373,23 +2529,8 @@ body {
     }
 }
 
-@media (max-width: 968px) {
-    .schedule-columns {
+@media (max-width: 480px) {
+    .navigation-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .playoff-sections {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .voting-columns {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .award-players {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     }
 }

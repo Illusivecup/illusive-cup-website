@@ -515,9 +515,6 @@ class MatchManager {
             return a.losses - b.losses;
         });
 
-        const maxPoints = Math.max(...sortedStandings.map(team => team.points));
-        const minPoints = Math.min(...sortedStandings.map(team => team.points));
-
         return `
             <div class="standings-table">
                 <table>
@@ -537,10 +534,6 @@ class MatchManager {
                             if (index === 0) {
                                 rowClass = 'leader-row';
                             } else if (index === sortedStandings.length - 1) {
-                                rowClass = 'bottom-row';
-                            } else if (team.points === maxPoints && team.points > minPoints) {
-                                rowClass = 'leader-row';
-                            } else if (team.points === minPoints && team.points < maxPoints) {
                                 rowClass = 'bottom-row';
                             }
                             
@@ -1278,7 +1271,7 @@ async function updateAudienceAwardsDisplay() {
                         ...player,
                         votes: 0,
                         reasons: [],
-                        matches: new Set() // Используем Set для уникальных матчей
+                        matches: new Set()
                     };
                 }
                 
@@ -1297,7 +1290,7 @@ async function updateAudienceAwardsDisplay() {
         // Сортируем по количеству голосов
         const topPlayers = Object.values(playerVotes)
             .sort((a, b) => b.votes - a.votes)
-            .slice(0, 10); // Топ-10 игроков
+            .slice(0, 10);
         
         container.innerHTML = `
             <div class="award-match-card">
@@ -2215,7 +2208,7 @@ function setupEventListeners() {
     }
     
     document.addEventListener('click', (event) => {
-        if (event.target.classList.contains('modal')) {
+        if (event.target.classList.contains('.modal')) {
             event.target.classList.add('hidden');
         }
         
