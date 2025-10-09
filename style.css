@@ -1240,19 +1240,109 @@ body {
     color: var(--text-secondary);
 }
 
-/* === ОБНОВЛЕННАЯ ТУРНИРНАЯ ТАБЛИЦА === */
+/* === ИСПРАВЛЕНИЕ ДЛЯ ТАБЛИЦЫ ГРУППОВОГО ЭТАПА === */
 .standings-table {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-medium);
     padding: 0;
     border: 1px solid var(--border-light);
     overflow: hidden;
+    position: relative; /* Добавляем для корректного позиционирования */
 }
 
 .standings-table table {
     width: 100%;
     border-collapse: collapse;
     margin: 0;
+    position: relative; /* Важно для ограничения анимаций */
+    z-index: 1; /* Поднимаем таблицу над анимациями */
+}
+
+/* Исправляем стили для средних строк */
+.middle-row {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05)) !important;
+    border-left: 4px solid var(--accent-warning);
+    position: relative;
+    overflow: hidden; /* Ограничиваем область видимости анимации */
+}
+
+.middle-row::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 152, 0, 0.05), transparent);
+    transform: rotate(45deg);
+    animation: middleShine 3s infinite;
+    z-index: 0; /* Помещаем анимацию под контент */
+    pointer-events: none; /* Чтобы не мешала взаимодействию */
+}
+
+/* Гарантируем, что контент ячеек будет поверх анимации */
+.middle-row td {
+    position: relative;
+    z-index: 1;
+    background: transparent !important; /* Убираем любой фоновый цвет */
+}
+
+/* Улучшаем анимацию для средних строк */
+@keyframes middleShine {
+    0% { 
+        transform: translateX(-100%) rotate(45deg);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.3;
+    }
+    100% { 
+        transform: translateX(100%) rotate(45deg);
+        opacity: 0;
+    }
+}
+
+/* Также улучшаем стили для лидера и аутсайдера */
+.leader-row {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1)) !important;
+    animation: leaderGlow 2s ease-in-out infinite alternate;
+    border-left: 4px solid var(--accent-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.bottom-row {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05)) !important;
+    border-left: 4px solid var(--accent-danger);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Гарантируем, что все ячейки таблицы имеют правильное позиционирование */
+.standings-table td {
+    padding: 16px 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    background: transparent;
+}
+
+.standings-table th {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.2));
+    padding: 18px 15px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em;
+    border-bottom: 2px solid var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 2; /* Заголовки поверх всего */
 }
 
 .standings-table th {
