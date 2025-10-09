@@ -701,16 +701,19 @@ class MatchManager {
         const currentFormat = match.format || 'bo1';
         const requiredWins = this.getRequiredWins(currentFormat);
         
+        // Добавляем иконку победителя
+        const winnerIcon = winner ? '🏆' : '';
+        
         return `
             <div class="match-card ${isCompleted ? 'completed' : ''}" data-match-id="${matchId}">
                 <div class="match-time">${match.time || 'Время не указано'}</div>
                 <div class="match-teams">
                     <div class="team-name ${team1Class}">
-                        ${match.team1Name}
+                        ${match.team1Name} ${winner === 'team1' ? winnerIcon : ''}
                     </div>
                     <div class="vs">vs</div>
                     <div class="team-name ${team2Class}">
-                        ${match.team2Name}
+                        ${match.team2Name} ${winner === 'team2' ? winnerIcon : ''}
                     </div>
                 </div>
                 ${showScore ? `
@@ -890,7 +893,9 @@ class VotingSystem {
                 team1Name: match.team1Name,
                 team2Name: match.team2Name,
                 score: `${match.score1 || 0}:${match.score2 || 0}`,
-                time: match.time || new Date().toLocaleString('ru-RU')
+                time: match.time || new Date().toLocaleString('ru-RU'),
+                stage: match.stage || 'group',
+                format: match.format || 'bo1'
             },
             selectedPlayers: selectedPlayers,
             timestamp: Date.now()
@@ -979,7 +984,7 @@ function showVotingModal(matchId) {
             <div class="team-name">${match.team2Name}</div>
         </div>
         <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
-        <div class="match-stage">${matchManager.getStageName(match.stage)}</div>
+        <div class="match-stage">${matchManager.getStageName(match.stage)} • ${matchManager.getFormatName(match.format)}</div>
     `;
     
     // Компактные колонки с игроками
@@ -1234,6 +1239,7 @@ window.editVote = function(matchId) {
     }
 };
 
+// === ФУНКЦИЯ ДЛЯ ОБНОВЛЕННОГО ОТОБРАЖЕНИЯ ПРИЗА ЗРИТЕЛЬСКИХ СИМПАТИЙ ===
 async function updateAudienceAwardsDisplay() {
     const container = document.getElementById('audienceAwardsContent');
     if (!container) return;
@@ -1251,6 +1257,7 @@ async function updateAudienceAwardsDisplay() {
         const playerVotes = {};
         
         Object.values(votes).forEach(vote => {
+            const matchInfo = vote.matchInfo;
             vote.selectedPlayers.forEach(player => {
                 const playerKey = `${player.teamName}_${player.playerName}`;
                 
@@ -1258,14 +1265,20 @@ async function updateAudienceAwardsDisplay() {
                     playerVotes[playerKey] = {
                         ...player,
                         votes: 0,
-                        reasons: []
+                        reasons: [],
+                        matches: new Set() // Используем Set для уникальных матчей
                     };
                 }
                 
                 playerVotes[playerKey].votes++;
                 if (player.reason) {
-                    playerVotes[playerKey].reasons.push(player.reason);
+                    playerVotes[playerKey].reasons.push({
+                        reason: player.reason,
+                        matchInfo: matchInfo
+                    });
                 }
+                // Добавляем информацию о матче
+                playerVotes[playerKey].matches.add(JSON.stringify(matchInfo));
             });
         });
         
@@ -1281,24 +1294,62 @@ async function updateAudienceAwardsDisplay() {
                     <div class="award-match-time">Обновлено: ${new Date().toLocaleString('ru-RU')}</div>
                 </div>
                 <div class="award-players">
-                    ${topPlayers.map((player, index) => `
-                        <div class="award-player-card ${index < 3 ? 'top-player' : ''}">
-                            <div class="player-award-name">${player.playerName}</div>
-                            <div class="player-award-role">${player.playerRole}</div>
-                            <div class="player-award-team">${player.teamName}</div>
-                            <div class="player-award-votes">❤️ ${player.votes} голосов</div>
-                            ${index < 3 ? `<div class="player-award-badge">🏅 Топ ${index + 1}</div>` : ''}
-                            ${player.reasons && player.reasons.length > 0 ? `
-                                <div class="player-reasons">
-                                    <strong>Причины выбора:</strong>
-                                    <ul>
-                                        ${player.reasons.slice(0, 3).map(reason => reason ? `<li>${reason}</li>` : '').join('')}
-                                        ${player.reasons.length > 3 ? `<li>...и еще ${player.reasons.length - 3} причин</li>` : ''}
-                                    </ul>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
+                    ${topPlayers.map((player, index) => {
+                        const isTopThree = index < 3;
+                        const isHonorable = index >= 3 && index < 6;
+                        const cardClass = isTopThree ? 'top-player' : (isHonorable ? 'honorable-player' : 'regular-player');
+                        
+                        // Преобразуем Set обратно в массив
+                        const matchesArray = Array.from(player.matches).map(matchStr => JSON.parse(matchStr));
+                        
+                        return `
+                            <div class="award-player-card ${cardClass}">
+                                <div class="player-award-name">${player.playerName}</div>
+                                <div class="player-award-role">${player.playerRole}</div>
+                                <div class="player-award-team">${player.teamName}</div>
+                                <div class="player-award-votes">❤️ ${player.votes} голосов</div>
+                                ${isTopThree ? `<div class="player-award-badge">🏅 Топ ${index + 1}</div>` : ''}
+                                ${isHonorable ? `<div class="player-honorable-badge">⭐ Выдающийся</div>` : ''}
+                                ${player.reasons && player.reasons.length > 0 ? `
+                                    <div class="player-reasons">
+                                        <strong>Причины выбора:</strong>
+                                        <ul>
+                                            ${player.reasons.slice(0, 3).map(reasonData => 
+                                                reasonData.reason ? `
+                                                    <li>
+                                                        <div class="reason-text">${reasonData.reason}</div>
+                                                        <div class="reason-match-info">
+                                                            📅 ${reasonData.matchInfo.team1Name} vs ${reasonData.matchInfo.team2Name} 
+                                                            ${reasonData.matchInfo.time ? `• ${reasonData.matchInfo.time}` : ''}
+                                                            ${reasonData.matchInfo.score ? `• ${reasonData.matchInfo.score}` : ''}
+                                                            ${reasonData.matchInfo.stage ? `• ${matchManager.getStageName(reasonData.matchInfo.stage)}` : ''}
+                                                            ${reasonData.matchInfo.format ? `• ${matchManager.getFormatName(reasonData.matchInfo.format)}` : ''}
+                                                        </div>
+                                                    </li>
+                                                ` : ''
+                                            ).join('')}
+                                            ${player.reasons.length > 3 ? `<li>...и еще ${player.reasons.length - 3} причин</li>` : ''}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                                ${matchesArray.length > 0 ? `
+                                    <div class="player-matches">
+                                        <strong>Отличился в матчах:</strong>
+                                        <div class="matches-list">
+                                            ${matchesArray.slice(0, 2).map(match => `
+                                                <div class="match-info-small">
+                                                    ${match.team1Name} vs ${match.team2Name}
+                                                    ${match.time ? `• ${match.time}` : ''}
+                                                    ${match.score ? `• ${match.score}` : ''}
+                                                </div>
+                                            `).join('')}
+                                            ${matchesArray.length > 2 ? `<div class="more-matches">...и еще ${matchesArray.length - 2} матчей</div>` : ''}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;
@@ -1309,7 +1360,144 @@ async function updateAudienceAwardsDisplay() {
     }
 }
 
-// === ОСТАЛЬНЫЕ ФУНКЦИИ (оригинальные, без изменений) ===
+// === ФУНКЦИИ ДЛЯ РЕДАКТИРОВАНИЯ ВРЕМЕНИ МАТЧА ===
+function showEditMatchTimeModal(matchId) {
+    const modal = document.getElementById('editMatchResultModal');
+    const matchInfo = document.getElementById('editMatchInfo');
+    const score1Input = document.getElementById('editMatchScore1');
+    const score2Input = document.getElementById('editMatchScore2');
+    const formatSelect = document.getElementById('editMatchFormat');
+    
+    if (!modal || !matchInfo || !score1Input || !score2Input || !matchManager) return;
+    
+    const match = matchManager.getMatch(matchId);
+    if (!match) return;
+    
+    const teams = teamsManager ? teamsManager.getAllTeams() : {};
+    const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
+    const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+    
+    if (!team1Exists || !team2Exists) {
+        alert('❌ Нельзя редактировать матч с удаленными командами');
+        return;
+    }
+    
+    // Создаем поле для редактирования времени
+    matchInfo.innerHTML = `
+        <div class="match-teams">
+            <div class="team-name">${match.team1Name}</div>
+            <div class="vs">vs</div>
+            <div class="team-name">${match.team2Name}</div>
+        </div>
+        <div class="form-group">
+            <label>Время матча:</label>
+            <input type="datetime-local" id="editMatchTime" class="form-input" value="${getDateTimeForInput(match.timestamp)}">
+        </div>
+        <div class="match-stage">${matchManager.getStageName(match.stage)}</div>
+    `;
+    
+    score1Input.value = match.score1 || 0;
+    score2Input.value = match.score2 || 0;
+    
+    if (formatSelect) {
+        formatSelect.innerHTML = `
+            <option value="bo1" ${match.format === 'bo1' ? 'selected' : ''}>Bo1 (1 победа)</option>
+            <option value="bo3" ${match.format === 'bo3' ? 'selected' : ''}>Bo3 (2 победы)</option>
+            <option value="bo5" ${match.format === 'bo5' ? 'selected' : ''}>Bo5 (3 победы)</option>
+        `;
+    }
+    
+    appState.currentEditingMatchId = matchId;
+    modal.classList.remove('hidden');
+}
+
+// Функция для преобразования времени в формат datetime-local
+function getDateTimeForInput(timestamp) {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// Обновленная функция сохранения результата матча с временем
+async function saveMatchResultWithTime() {
+    const matchId = appState.currentEditingMatchId;
+    const score1Input = document.getElementById('editMatchScore1');
+    const score2Input = document.getElementById('editMatchScore2');
+    const formatSelect = document.getElementById('editMatchFormat');
+    const timeInput = document.getElementById('editMatchTime');
+    
+    if (!matchId || !score1Input || !score2Input || !matchManager) return;
+    
+    const score1 = parseInt(score1Input.value);
+    const score2 = parseInt(score2Input.value);
+    const format = formatSelect ? formatSelect.value : 'bo1';
+    const timeValue = timeInput ? timeInput.value : '';
+    
+    if (isNaN(score1) || isNaN(score2)) {
+        alert('❌ Введите корректные значения счета');
+        return;
+    }
+    
+    if (score1 < 0 || score2 < 0) {
+        alert('❌ Счет не может быть отрицательным');
+        return;
+    }
+    
+    const requiredWins = matchManager.getRequiredWins(format);
+    if (score1 > requiredWins || score2 > requiredWins) {
+        alert(`❌ Счет не может превышать ${requiredWins} для формата ${matchManager.getFormatName(format)}`);
+        return;
+    }
+    
+    if ((score1 >= requiredWins && score2 >= requiredWins) || (score1 === requiredWins && score2 === requiredWins)) {
+        alert(`❌ Только одна команда может иметь ${requiredWins} побед в формате ${matchManager.getFormatName(format)}`);
+        return;
+    }
+    
+    try {
+        const updateData = {
+            score1: parseInt(score1),
+            score2: parseInt(score2),
+            format: format,
+            updatedAt: Date.now()
+        };
+        
+        // Обновляем время если оно было изменено
+        if (timeValue) {
+            const newTimestamp = new Date(timeValue).getTime();
+            const newTime = new Date(timeValue).toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            updateData.timestamp = newTimestamp;
+            updateData.time = newTime;
+        }
+        
+        await matchManager.database.ref(`matches/${matchId}`).update(updateData);
+        closeEditMatchResultModal();
+        alert('✅ Результат матча и время сохранены!');
+        
+        if (matchManager.updateMatchUI) {
+            matchManager.updateMatchUI();
+        }
+    } catch (error) {
+        console.error('❌ Ошибка сохранения результата:', error);
+        alert('❌ Ошибка сохранения результата');
+    }
+}
+
+// === ОСТАЛЬНЫЕ ФУНКЦИИ (оригинальные, с обновлениями) ===
 const appState = {
     currentEditingTeamId: null,
     currentDisplayedTeamId: null,
@@ -1766,10 +1954,11 @@ function closeAddMatchModal() {
     }
 }
 
+// Обновленная функция настройки редактирования матчей
 function setupMatchEditing() {
     document.addEventListener('click', (e) => {
         const matchCard = e.target.closest('.match-card');
-        if (matchCard && securityManager && securityManager.isAuthenticated) {
+        if (matchCard) {
             const matchId = matchCard.getAttribute('data-match-id');
             if (matchId) {
                 const match = matchManager.getMatch(matchId);
@@ -1778,117 +1967,21 @@ function setupMatchEditing() {
                 const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
                 
                 if (!team1Exists || !team2Exists) {
-                    if (confirm('🗑️ Этот матч содержит удаленные команды. Хотите удалить этот матч?')) {
+                    if (securityManager && securityManager.isAuthenticated && confirm('🗑️ Этот матч содержит удаленные команды. Хотите удалить этот матч?')) {
                         matchManager.deleteMatch(matchId);
                     }
                 } else {
-                    showEditMatchResultModal(matchId);
+                    if (securityManager && securityManager.isAuthenticated) {
+                        // Для авторизованных пользователей показываем полное редактирование с временем
+                        showEditMatchTimeModal(matchId);
+                    } else {
+                        // Для обычных пользователей можно показать информацию о матче
+                        console.log('Просмотр матча:', matchId);
+                    }
                 }
             }
         }
     });
-}
-
-function showEditMatchResultModal(matchId) {
-    const modal = document.getElementById('editMatchResultModal');
-    const matchInfo = document.getElementById('editMatchInfo');
-    const score1Input = document.getElementById('editMatchScore1');
-    const score2Input = document.getElementById('editMatchScore2');
-    const formatSelect = document.getElementById('editMatchFormat');
-    const deleteMatchBtn = document.getElementById('deleteMatchBtn');
-    
-    if (!modal || !matchInfo || !score1Input || !score2Input || !matchManager) return;
-    
-    const match = matchManager.getMatch(matchId);
-    if (!match) return;
-    
-    const teams = teamsManager ? teamsManager.getAllTeams() : {};
-    const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
-    const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
-    
-    if (!team1Exists || !team2Exists) {
-        alert('❌ Нельзя редактировать матч с удаленными командами');
-        return;
-    }
-    
-    matchInfo.innerHTML = `
-        <div class="match-teams">
-            <div class="team-name">${match.team1Name}</div>
-            <div class="vs">vs</div>
-            <div class="team-name">${match.team2Name}</div>
-        </div>
-        <div class="match-stage">${matchManager.getStageName(match.stage)}</div>
-        ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
-    `;
-    
-    score1Input.value = match.score1 || 0;
-    score2Input.value = match.score2 || 0;
-    
-    if (formatSelect) {
-        formatSelect.innerHTML = `
-            <option value="bo1" ${match.format === 'bo1' ? 'selected' : ''}>Bo1 (1 победа)</option>
-            <option value="bo3" ${match.format === 'bo3' ? 'selected' : ''}>Bo3 (2 победы)</option>
-            <option value="bo5" ${match.format === 'bo5' ? 'selected' : ''}>Bo5 (3 победы)</option>
-        `;
-    }
-    
-    if (deleteMatchBtn) {
-        deleteMatchBtn.onclick = () => {
-            if (matchManager) {
-                matchManager.deleteMatch(matchId);
-            }
-        };
-    }
-    
-    appState.currentEditingMatchId = matchId;
-    modal.classList.remove('hidden');
-}
-
-async function saveMatchResult() {
-    const matchId = appState.currentEditingMatchId;
-    const score1Input = document.getElementById('editMatchScore1');
-    const score2Input = document.getElementById('editMatchScore2');
-    const formatSelect = document.getElementById('editMatchFormat');
-    
-    if (!matchId || !score1Input || !score2Input || !matchManager) return;
-    
-    const score1 = parseInt(score1Input.value);
-    const score2 = parseInt(score2Input.value);
-    const format = formatSelect ? formatSelect.value : 'bo1';
-    
-    if (isNaN(score1) || isNaN(score2)) {
-        alert('❌ Введите корректные значения счета');
-        return;
-    }
-    
-    if (score1 < 0 || score2 < 0) {
-        alert('❌ Счет не может быть отрицательным');
-        return;
-    }
-    
-    const requiredWins = matchManager.getRequiredWins(format);
-    if (score1 > requiredWins || score2 > requiredWins) {
-        alert(`❌ Счет не может превышать ${requiredWins} для формата ${matchManager.getFormatName(format)}`);
-        return;
-    }
-    
-    if ((score1 >= requiredWins && score2 >= requiredWins) || (score1 === requiredWins && score2 === requiredWins)) {
-        alert(`❌ Только одна команда может иметь ${requiredWins} побед в формате ${matchManager.getFormatName(format)}`);
-        return;
-    }
-    
-    try {
-        await matchManager.setMatchResult(matchId, score1, score2, format);
-        closeEditMatchResultModal();
-        alert('✅ Результат матча сохранен!');
-        
-        if (matchManager.updateMatchUI) {
-            matchManager.updateMatchUI();
-        }
-    } catch (error) {
-        console.error('❌ Ошибка сохранения результата:', error);
-        alert('❌ Ошибка сохранения результата');
-    }
 }
 
 function closeEditMatchResultModal() {
@@ -2056,7 +2149,7 @@ function setupEventListeners() {
     const closeEditMatchResultModal = document.getElementById('closeEditMatchResultModal');
     
     if (saveMatchResultBtn) {
-        saveMatchResultBtn.addEventListener('click', saveMatchResult);
+        saveMatchResultBtn.addEventListener('click', saveMatchResultWithTime);
     }
     
     if (cancelEditMatchResultBtn) {
