@@ -417,17 +417,25 @@ class MatchManager {
         return null;
     }
 
-    // === ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ТУРНИРНОЙ ТАБЛИЦЫ ===
+    // === УЛУЧШЕННАЯ ФУНКЦИЯ ДЛЯ ТУРНИРНОЙ ТАБЛИЦЫ ===
     updateGroupStageTable() {
         const container = document.getElementById('groupStageContainer');
-        if (!container) return;
+        if (!container) {
+            console.error('❌ groupStageContainer не найден');
+            return;
+        }
 
         const groupMatches = Object.values(this.matches).filter(match => 
             match.stage === 'group'
         );
 
+        console.log('📊 Групповые матчи:', groupMatches);
+        
         const standings = this.calculateStandings(groupMatches);
+        console.log('🏆 Турнирная таблица:', standings);
+        
         container.innerHTML = this.createGroupStageTable(standings);
+        console.log('✅ Таблица группового этапа обновлена');
     }
 
     calculateStandings(matches) {
@@ -515,6 +523,14 @@ class MatchManager {
             return a.losses - b.losses;
         });
 
+        // Улучшенная логика распределения классов
+        const getRowClass = (index, total) => {
+            if (total <= 1) return 'middle-row';
+            if (index === 0) return 'leader-row';
+            if (index === total - 1) return 'bottom-row';
+            return 'middle-row';
+        };
+
         return `
             <div class="standings-table">
                 <table>
@@ -530,17 +546,14 @@ class MatchManager {
                     </thead>
                     <tbody>
                         ${sortedStandings.map((team, index) => {
-                            let rowClass = 'middle-row';
-                            if (index === 0) {
-                                rowClass = 'leader-row';
-                            } else if (index === sortedStandings.length - 1) {
-                                rowClass = 'bottom-row';
-                            }
+                            const rowClass = getRowClass(index, sortedStandings.length);
                             
                             return `
                                 <tr class="${rowClass}">
                                     <td>${index + 1}</td>
-                                    <td class="team-name-cell"><strong>${team.teamName}</strong></td>
+                                    <td class="team-name-cell">
+                                        <strong>${team.teamName}</strong>
+                                    </td>
                                     <td>${team.played}</td>
                                     <td>${team.wins}</td>
                                     <td>${team.losses}</td>
