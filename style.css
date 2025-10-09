@@ -168,6 +168,11 @@ body {
     position: relative;
 }
 
+/* Стили для кнопки управления */
+.admin-nav-item {
+    grid-column: span 1;
+}
+
 .nav-btn {
     width: 100%;
     padding: 20px 15px;
@@ -194,6 +199,22 @@ body {
     transform: translateY(-3px);
     box-shadow: var(--shadow-medium);
     outline: none;
+}
+
+/* Компактная кнопка управления */
+.compact-admin-btn {
+    padding: 15px 12px !important;
+    font-size: 14px !important;
+    background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+    border: 1px solid rgba(107, 114, 128, 0.3) !important;
+    opacity: 0.9;
+}
+
+.compact-admin-btn:hover {
+    background: linear-gradient(135deg, #4b5563, #6b7280) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(107, 114, 128, 0.3) !important;
+    opacity: 1;
 }
 
 .btn-icon {
@@ -322,7 +343,7 @@ body {
     margin: 0;
 }
 
-/* === КАРТОЧКИ КОМАНД === */
+/* === ОБНОВЛЕННЫЕ КАРТОЧКИ КОМАНД (на 10% меньше) === */
 .team-visiting-card {
     background: rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-large);
@@ -332,17 +353,19 @@ body {
     transition: all var(--transition-normal);
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-medium);
+    transform: scale(0.9);
+    transform-origin: center top;
 }
 
 .team-visiting-card:hover {
-    transform: translateY(-5px);
+    transform: scale(0.92);
     box-shadow: var(--shadow-heavy);
     border-color: rgba(76, 175, 80, 0.3);
 }
 
 .card-header {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(33, 150, 243, 0.2));
-    padding: 30px;
+    padding: 25px;
     position: relative;
     overflow: hidden;
 }
@@ -365,22 +388,22 @@ body {
 
 .team-name-bublas {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(1.5rem, 5vw, 2.8em);
+    font-size: clamp(1.8rem, 6vw, 3em);
     font-weight: 900;
     background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary), #CDDC39);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
 }
 
 .team-subtitle {
     color: var(--text-secondary);
-    font-size: 1.3em;
+    font-size: 1.4em;
     font-style: italic;
     position: relative;
     z-index: 1;
@@ -388,40 +411,40 @@ body {
 }
 
 .team-card-content {
-    padding: 30px;
+    padding: 25px;
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 30px;
+    gap: 25px;
 }
 
 .players-section-bublas {
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-medium);
-    padding: 25px;
+    padding: 20px;
     border: 1px solid var(--border-light);
 }
 
 .section-title-bublas {
     font-family: 'Exo 2', sans-serif;
-    font-size: 1.5em;
+    font-size: 1.6em;
     font-weight: 700;
     color: var(--accent-primary);
     margin-bottom: 20px;
     text-align: center;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
 }
 
 .player-grid-bublas {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
 }
 
 .player-card-bublas {
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-small);
-    padding: 20px;
+    padding: 18px;
     border: 1px solid var(--border-light);
     transition: all var(--transition-normal);
     text-align: center;
@@ -434,17 +457,17 @@ body {
 }
 
 .player-role-bublas {
-    font-size: 1.1em;
+    font-size: 1.2em;
     color: var(--accent-secondary);
     margin-bottom: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .player-name-bublas {
     font-family: 'Exo 2', sans-serif;
-    font-size: 1.3em;
+    font-size: 1.4em;
     font-weight: 700;
     color: var(--text-primary);
     cursor: pointer;
@@ -460,19 +483,19 @@ body {
 .stats-section-bublas {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 20px;
 }
 
 .mmr-display-bublas {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(139, 195, 74, 0.15));
     border-radius: var(--radius-medium);
-    padding: 25px;
+    padding: 20px;
     text-align: center;
     border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .mmr-label-bublas {
-    font-size: 1.1em;
+    font-size: 1.2em;
     color: var(--text-secondary);
     margin-bottom: 12px;
     font-weight: 600;
@@ -480,7 +503,7 @@ body {
 
 .mmr-value-bublas {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2.5em;
+    font-size: 2.8em;
     font-weight: 900;
     color: var(--accent-primary);
     text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
@@ -489,13 +512,13 @@ body {
 .tournament-section-bublas {
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-medium);
-    padding: 25px;
+    padding: 20px;
     text-align: center;
     border: 1px solid var(--border-light);
 }
 
 .tournament-text-bublas {
-    font-size: 1.1em;
+    font-size: 1.2em;
     color: var(--text-secondary);
     margin-bottom: 12px;
     font-weight: 600;
@@ -503,7 +526,7 @@ body {
 
 .tournament-badge-bublas {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.4em;
+    font-size: 1.5em;
     font-weight: 900;
     color: #FFD700;
     text-transform: uppercase;
@@ -513,10 +536,10 @@ body {
 
 .team-footer-bublas {
     background: rgba(255, 255, 255, 0.02);
-    padding: 20px 30px;
+    padding: 18px 25px;
     text-align: center;
     color: var(--text-secondary);
-    font-size: 1em;
+    font-size: 1.1em;
     border-top: 1px solid var(--border-light);
     font-weight: 500;
 }
@@ -917,6 +940,72 @@ body {
     color: var(--text-primary);
 }
 
+/* === ОБНОВЛЕННЫЙ ПРОГРЕСС-БАР ДЛЯ РАСПИСАНИЯ === */
+.match-progress-new {
+    margin: 15px 0 10px 0;
+}
+
+.progress-track {
+    display: flex;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-light);
+}
+
+.progress-team {
+    position: relative;
+    transition: all 0.5s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.team1-progress {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+}
+
+.team2-progress {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+}
+
+.progress-fill {
+    width: 100%;
+    height: 0%;
+    transition: height 1s ease;
+    border-radius: 0 0 6px 6px;
+}
+
+.team1-progress .progress-fill {
+    background: linear-gradient(to top, var(--accent-primary), #45a049);
+    box-shadow: 0 -2px 10px rgba(76, 175, 80, 0.4);
+}
+
+.team2-progress .progress-fill {
+    background: linear-gradient(to top, #2196F3, #1976D2);
+    box-shadow: 0 -2px 10px rgba(33, 150, 243, 0.4);
+}
+
+.progress-label {
+    position: absolute;
+    top: 5px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--text-primary);
+    z-index: 2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Анимация заполнения прогресс-бара */
+.match-card.completed .progress-fill {
+    height: 100%;
+}
+
 /* Расписание в две колонки */
 .schedule-columns {
     display: grid;
@@ -1034,39 +1123,6 @@ body {
     margin: 10px 0;
 }
 
-.match-progress {
-    margin: 10px 0;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    display: flex;
-}
-
-.progress-fill {
-    height: 100%;
-    transition: width 0.3s ease;
-}
-
-.team1-progress {
-    background: linear-gradient(90deg, var(--accent-primary), #45a049);
-}
-
-.team2-progress {
-    background: linear-gradient(90deg, #2196F3, #1976D2);
-}
-
-.progress-text {
-    font-size: 0.8em;
-    color: var(--text-secondary);
-    text-align: center;
-    margin-top: 5px;
-}
-
 .match-stage {
     font-size: 0.8em;
     color: var(--text-secondary);
@@ -1087,6 +1143,159 @@ body {
     margin-top: 8px;
     text-align: center;
     color: var(--text-secondary);
+}
+
+/* === ОБНОВЛЕННАЯ ТУРНИРНАЯ ТАБЛИЦА === */
+.standings-table {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 0;
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+}
+
+.standings-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.standings-table th {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.2));
+    padding: 18px 15px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em;
+    border-bottom: 2px solid var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.standings-table td {
+    padding: 16px 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Стили для лидера таблицы */
+.leader-row {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1)) !important;
+    animation: leaderGlow 2s ease-in-out infinite alternate;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.leader-row td:first-child {
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.leader-row .team-name-cell {
+    font-weight: 900 !important;
+    color: var(--accent-primary) !important;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    position: relative;
+}
+
+.leader-row .team-name-cell::after {
+    content: "👑";
+    margin-left: 8px;
+    font-size: 0.9em;
+}
+
+@keyframes leaderGlow {
+    from {
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+    }
+    to {
+        box-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+    }
+}
+
+/* Стили для аутсайдера */
+.bottom-row {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05)) !important;
+    border-left: 4px solid var(--accent-danger);
+}
+
+.bottom-row .team-name-cell {
+    color: var(--accent-danger) !important;
+    font-weight: 600;
+}
+
+.bottom-row td:first-child {
+    color: var(--accent-danger);
+    font-weight: 700;
+}
+
+/* Стили для средних команд */
+.middle-row {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05)) !important;
+    border-left: 4px solid var(--accent-warning);
+    position: relative;
+    overflow: hidden;
+}
+
+.middle-row::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 152, 0, 0.05), transparent);
+    transform: rotate(45deg);
+    animation: middleShine 3s infinite;
+}
+
+@keyframes middleShine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.middle-row .team-name-cell {
+    color: var(--accent-warning) !important;
+    font-weight: 600;
+}
+
+.middle-row td:first-child {
+    color: var(--accent-warning);
+    font-weight: 600;
+}
+
+.team-name-cell {
+    font-weight: 700;
+    text-align: left !important;
+    padding-left: 20px !important;
+}
+
+.standings-table tr:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    transform: scale(1.01);
+}
+
+.standings-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Стили для состояния "нет данных" */
+.no-data, .no-match {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px 20px;
+    font-style: italic;
+}
+
+.match-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 /* Стили для плей-офф */
@@ -1192,58 +1401,6 @@ body {
 .winner-subtitle {
     color: var(--text-secondary);
     font-size: 1.1em;
-}
-
-/* Стили для таблицы группового этапа */
-.standings-table {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-medium);
-    padding: 20px;
-    border: 1px solid var(--border-light);
-    overflow-x: auto;
-}
-
-.standings-table table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.standings-table th {
-    background: rgba(76, 175, 80, 0.2);
-    padding: 15px 10px;
-    text-align: left;
-    font-weight: 600;
-    color: var(--accent-primary);
-    border-bottom: 2px solid var(--accent-primary);
-}
-
-.standings-table td {
-    padding: 12px 10px;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.standings-table tr:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.standings-table tr:last-child td {
-    border-bottom: none;
-}
-
-/* Стили для состояния "нет данных" */
-.no-data, .no-match {
-    text-align: center;
-    color: var(--text-secondary);
-    padding: 40px 20px;
-    font-style: italic;
-}
-
-.match-info {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-small);
-    padding: 15px;
-    margin-bottom: 20px;
-    text-align: center;
 }
 
 /* === УЛУЧШЕННЫЕ СТИЛИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ === */
@@ -2050,19 +2207,6 @@ body {
     }
 }
 
-/* Стили для кнопки админки */
-.admin-btn {
-    background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
-    border: 1px solid rgba(255, 107, 53, 0.3) !important;
-}
-
-.admin-btn:hover {
-    background: linear-gradient(135deg, #f7931e, #ff6b35) !important;
-    border-color: rgba(255, 107, 53, 0.5) !important;
-    transform: translateY(-3px) !important;
-    box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3) !important;
-}
-
 /* Адаптивность */
 @media (max-width: 768px) {
     .container {
@@ -2077,6 +2221,15 @@ body {
     .nav-btn {
         padding: 15px 10px;
         font-size: 14px;
+    }
+    
+    .admin-nav-item {
+        grid-column: span 2;
+    }
+    
+    .compact-admin-btn {
+        padding: 12px 10px !important;
+        font-size: 13px !important;
     }
     
     .team-card-content {
@@ -2135,9 +2288,22 @@ body {
         text-align: center;
     }
     
-    .admin-btn {
-        font-size: 14px !important;
-        padding: 15px 10px !important;
+    .progress-track {
+        height: 50px;
+    }
+    
+    .progress-label {
+        font-size: 0.7em;
+    }
+    
+    .standings-table th,
+    .standings-table td {
+        padding: 12px 8px;
+        font-size: 0.9em;
+    }
+    
+    .team-name-cell {
+        padding-left: 10px !important;
     }
     
     .reason-input {

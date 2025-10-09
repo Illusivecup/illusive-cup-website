@@ -417,6 +417,7 @@ class MatchManager {
         return null;
     }
 
+    // === ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ТУРНИРНОЙ ТАБЛИЦЫ ===
     updateGroupStageTable() {
         const container = document.getElementById('groupStageContainer');
         if (!container) return;
@@ -507,9 +508,15 @@ class MatchManager {
             return '<div class="no-data">Нет данных о матчах группового этапа</div>';
         }
 
-        const points = standings.map(team => team.points);
-        const minPoints = Math.min(...points);
-        const maxPoints = Math.max(...points);
+        // Сортируем команды по очкам
+        const sortedStandings = [...standings].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.wins !== a.wins) return b.wins - a.wins;
+            return a.losses - b.losses;
+        });
+
+        const maxPoints = Math.max(...sortedStandings.map(team => team.points));
+        const minPoints = Math.min(...sortedStandings.map(team => team.points));
 
         return `
             <div class="standings-table">
@@ -525,29 +532,22 @@ class MatchManager {
                         </tr>
                     </thead>
                     <tbody>
-                        ${standings.map((team, index) => {
-                            let backgroundColor = '#ff4444';
-                            
-                            if (maxPoints !== minPoints) {
-                                const position = (team.points - minPoints) / (maxPoints - minPoints);
-                                if (position === 0) {
-                                    backgroundColor = '#ff4444';
-                                } else if (position === 1) {
-                                    backgroundColor = '#4CAF50';
-                                } else {
-                                    const r = Math.round(255 * (1 - position) + 255 * position);
-                                    const g = Math.round(68 * (1 - position) + 175 * position);
-                                    const b = Math.round(68 * (1 - position) + 80 * position);
-                                    backgroundColor = `rgb(${r}, ${g}, ${b})`;
-                                }
-                            } else {
-                                backgroundColor = '#FF9800';
+                        ${sortedStandings.map((team, index) => {
+                            let rowClass = 'middle-row';
+                            if (index === 0) {
+                                rowClass = 'leader-row';
+                            } else if (index === sortedStandings.length - 1) {
+                                rowClass = 'bottom-row';
+                            } else if (team.points === maxPoints && team.points > minPoints) {
+                                rowClass = 'leader-row';
+                            } else if (team.points === minPoints && team.points < maxPoints) {
+                                rowClass = 'bottom-row';
                             }
                             
                             return `
-                                <tr style="background: ${backgroundColor}20; border-left: 4px solid ${backgroundColor}">
+                                <tr class="${rowClass}">
                                     <td>${index + 1}</td>
-                                    <td><strong>${team.teamName}</strong></td>
+                                    <td class="team-name-cell"><strong>${team.teamName}</strong></td>
                                     <td>${team.played}</td>
                                     <td>${team.wins}</td>
                                     <td>${team.losses}</td>
@@ -672,6 +672,7 @@ class MatchManager {
         ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
     }
 
+    // === ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПРОГРЕСС-БАРА В РАСПИСАНИИ ===
     createScheduleMatchCard(match, isCompleted = false, matchId = '') {
         const showScore = match.score1 !== undefined && match.score2 !== undefined;
         const teams = teamsManager ? teamsManager.getAllTeams() : {};
@@ -699,7 +700,13 @@ class MatchManager {
         }
         
         const currentFormat = match.format || 'bo1';
-        const requiredWins = this.getRequiredWins(currentFormat);
+        const score1 = parseInt(match.score1) || 0;
+        const score2 = parseInt(match.score2) || 0;
+        
+        // Расчет процентов для прогресс-бара
+        const totalGames = score1 + score2;
+        const team1Percent = totalGames > 0 ? (score1 / totalGames) * 100 : 50;
+        const team2Percent = totalGames > 0 ? (score2 / totalGames) * 100 : 50;
         
         // Добавляем иконку победителя
         const winnerIcon = winner ? '🏆' : '';
@@ -717,13 +724,18 @@ class MatchManager {
                     </div>
                 </div>
                 ${showScore ? `
-                    <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
-                    <div class="match-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill team1-progress" style="width: ${((match.score1 || 0) / requiredWins) * 100}%"></div>
-                            <div class="progress-fill team2-progress" style="width: ${((match.score2 || 0) / requiredWins) * 100}%"></div>
+                    <div class="match-score">${score1} : ${score2}</div>
+                    <div class="match-progress-new">
+                        <div class="progress-track">
+                            <div class="progress-team team1-progress" style="width: ${team1Percent}%">
+                                <div class="progress-fill"></div>
+                                <div class="progress-label">${match.team1Name}</div>
+                            </div>
+                            <div class="progress-team team2-progress" style="width: ${team2Percent}%">
+                                <div class="progress-fill"></div>
+                                <div class="progress-label">${match.team2Name}</div>
+                            </div>
                         </div>
-                        <div class="progress-text">До победы: ${requiredWins} побед</div>
                     </div>
                 ` : ''}
                 <div class="match-stage">${this.getStageName(match.stage)}</div>
@@ -1577,6 +1589,7 @@ function hideAllSections() {
     });
 }
 
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ СОЗДАНИЯ КАРТОЧКИ КОМАНДЫ ===
 function createTeamCard(teamId, team) {
     const card = document.createElement('div');
     card.className = 'team-visiting-card';
