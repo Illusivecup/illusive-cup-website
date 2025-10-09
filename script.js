@@ -931,6 +931,7 @@ class VotingSystem {
     }
 }
 
+// === ФУНКЦИИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ ===
 function populateVoteMatchSelect() {
     const select = document.getElementById('voteMatchSelect');
     if (!select || !matchManager) return;
@@ -951,24 +952,11 @@ function populateVoteMatchSelect() {
             select.appendChild(option);
         }
     });
-    
-    // ДОБАВЬТЕ ЭТУ ПРОВЕРКУ ДЛЯ ОТЛАДКИ
-    console.log('🔍 Элементы для голосования:', {
-        select: select,
-        optionsCount: select.options.length,
-        matchesCount: Object.keys(matches).length
-    });
 }
 
 function showVotingModal(matchId) {
-    console.log("🎯 Opening voting modal for match:", matchId);
-    
     const match = matchManager.getMatch(matchId);
-    if (!match) {
-        console.error("❌ Match not found:", matchId);
-        alert('❌ Матч не найден');
-        return;
-    }
+    if (!match) return;
     
     const teams = teamsManager.getAllTeams();
     const team1 = teams[match.team1Id];
@@ -981,31 +969,8 @@ function showVotingModal(matchId) {
     
     window.currentVotingMatchId = matchId;
     
-    // ИСПРАВЛЕНИЕ: используем правильный ID элемента
-    const matchInfo = document.getElementById('votingMatchInfo'); // ИЗМЕНИТЕ ID НА ПРАВИЛЬНЫЙ
-    if (!matchInfo) {
-        console.error("❌ Element votingMatchInfo not found, trying alternatives...");
-        // Попробуем найти элемент по другим возможным ID
-        const alternativeIds = ['votingWatchInfo', 'voteMatchInfo', 'matchInfo'];
-        let foundElement = null;
-        
-        for (const id of alternativeIds) {
-            foundElement = document.getElementById(id);
-            if (foundElement) {
-                console.log(`✅ Found element with ID: ${id}`);
-                break;
-            }
-        }
-        
-        if (!foundElement) {
-            console.error("❌ No match info element found with any ID");
-            alert('❌ Ошибка загрузки интерфейса голосования');
-            return;
-        }
-        matchInfo = foundElement;
-    }
-    
     // Обновляем информацию о матче
+    const matchInfo = document.getElementById('votingMatchInfo');
     matchInfo.innerHTML = `
         <div class="match-teams">
             <div class="team-name">${match.team1Name}</div>
@@ -1020,15 +985,6 @@ function showVotingModal(matchId) {
     // Обновляем колонки с игроками
     const team1Column = document.getElementById('team1Voting');
     const team2Column = document.getElementById('team2Voting');
-    
-    if (!team1Column || !team2Column) {
-        console.error("❌ Voting columns not found:", {
-            team1Column: team1Column,
-            team2Column: team2Column
-        });
-        alert('❌ Ошибка загрузки интерфейса голосования');
-        return;
-    }
     
     team1Column.innerHTML = `
         <h3>${match.team1Name}</h3>
@@ -1058,92 +1014,6 @@ function showVotingModal(matchId) {
         `).join('')}
     `;
     
-    // Добавляем обработчики событий для игроков
-    setupVotingEventListeners();
-    
-    // Показываем модальное окно
-    const votingModal = document.getElementById('votingModal');
-    if (votingModal) {
-        votingModal.classList.remove('hidden');
-        console.log('✅ Voting modal shown successfully');
-    } else {
-        console.error("❌ Voting modal not found");
-        alert('❌ Ошибка открытия окна голосования');
-    }
-}
-    
-    window.currentVotingMatchId = matchId;
-    
-    // ИСПРАВЛЕНИЕ: используем правильный ID элемента
-    const matchInfo = document.getElementById('votingWatchInfo');
-    if (!matchInfo) {
-        console.error("❌ Element votingWatchInfo not found");
-        return;
-    }
-    
-    // Обновляем информацию о матче
-    matchInfo.innerHTML = `
-        <div class="match-teams">
-            <div class="team-name">${match.team1Name}</div>
-            <div class="vs">vs</div>
-            <div class="team-name">${match.team2Name}</div>
-        </div>
-        <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
-        <div class="match-stage">${matchManager.getStageName(match.stage)}</div>
-        ${match.time ? `<div class="match-time">${match.time}</div>` : ''}
-    `;
-    
-    // Обновляем колонки с игроками
-    const team1Column = document.getElementById('team1Voting');
-    const team2Column = document.getElementById('team2Voting');
-    
-    if (!team1Column || !team2Column) {
-        console.error("❌ Voting columns not found");
-        return;
-    }
-    
-    team1Column.innerHTML = `
-        <h3>${match.team1Name}</h3>
-        ${team1.players.map((player, index) => `
-            <div class="player-vote-item" data-team="team1" data-player-index="${index}">
-                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
-                <div class="player-vote-name" data-mmr="${player.mmr || 0}">${player.name}</div>
-                <div class="player-vote-role">${player.role}</div>
-                <div class="reason-input-container hidden">
-                    <textarea class="reason-input" placeholder="Почему вы выбрали этого игрока? (необязательно)" rows="3"></textarea>
-                </div>
-            </div>
-        `).join('')}
-    `;
-    
-    team2Column.innerHTML = `
-        <h3>${match.team2Name}</h3>
-        ${team2.players.map((player, index) => `
-            <div class="player-vote-item" data-team="team2" data-player-index="${index}">
-                <div class="player-mmr">MMR: ${player.mmr || 0}</div>
-                <div class="player-vote-name" data-mmr="${player.mmr || 0}">${player.name}</div>
-                <div class="player-vote-role">${player.role}</div>
-                <div class="reason-input-container hidden">
-                    <textarea class="reason-input" placeholder="Почему вы выбрали этого игрока? (необязательно)" rows="3"></textarea>
-                </div>
-            </div>
-        `).join('')}
-    `;
-    
-    // Добавляем обработчики событий для игроков
-    setupVotingEventListeners();
-    
-    // Показываем модальное окно
-    const votingModal = document.getElementById('votingModal');
-    if (votingModal) {
-        votingModal.classList.remove('hidden');
-    } else {
-        console.error("❌ Voting modal not found");
-    }
-}
-
-// Новая функция для настройки обработчиков событий голосования
-function setupVotingEventListeners() {
     // Функциональность показа MMR при наведении на никнейм
     document.querySelectorAll('.player-vote-name').forEach(playerName => {
         playerName.addEventListener('mouseenter', function() {
@@ -1208,6 +1078,9 @@ function setupVotingEventListeners() {
             clearTimeout(tapTimer);
         });
     });
+    
+    // Показываем модальное окно
+    document.getElementById('votingModal').classList.remove('hidden');
 }
 
 async function submitVote() {
