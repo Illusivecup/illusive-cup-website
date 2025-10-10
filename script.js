@@ -556,29 +556,43 @@ class DoubleEliminationSystem {
         container.innerHTML = this.createBracketHTML();
     }
 
-    createBracketHTML() {
-        return `
-            <div class="double-elimination-bracket">
-                <div class="bracket-section">
-                    <h3>🏆 Сетка победителей</h3>
+   createBracketHTML() {
+    if (!this.bracket) {
+        return '<div class="no-data">Сетка турнира не сгенерирована</div>';
+    }
+
+    return `
+        <div class="double-elimination-bracket">
+            <!-- Сетка победителей -->
+            <div class="bracket-section">
+                <div class="bracket-section-header">
+                    <h3>🏆 Верхняя сетка</h3>
+                </div>
+                <div class="bracket-rounds-container">
                     ${this.bracket.winnersBracket.map(round => this.createRoundHTML(round, 'winners')).join('')}
                 </div>
-                
-                <div class="bracket-section">
-                    <h3>⚡ Сетка проигравших</h3>
+            </div>
+            
+            <!-- Сетка проигравших -->
+            <div class="bracket-section">
+                <div class="bracket-section-header">
+                    <h3>⚡ Нижняя сетка</h3>
+                </div>
+                <div class="bracket-rounds-container losers-rounds-container">
                     ${this.bracket.losersBracket.map(round => this.createRoundHTML(round, 'losers')).join('')}
                 </div>
-                
-                <div class="bracket-section final-section">
-                    <h3>🎯 Финальные матчи</h3>
-                    <div class="final-matches">
-                        ${this.createGrandFinalHTML()}
-                        ${this.createThirdPlaceHTML()}
-                    </div>
+            </div>
+            
+            <!-- Финальные матчи -->
+            <div class="bracket-section final-section">
+                <div class="final-rounds-container">
+                    ${this.createThirdPlaceHTML()}
+                    ${this.createGrandFinalHTML()}
                 </div>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
 
     createRoundHTML(round, bracketType) {
         return `
