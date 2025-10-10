@@ -2984,4 +2984,383 @@ body {
     .award-players {
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     }
+
+    /* === ОБНОВЛЕННАЯ СЕТКА ДВОЙНОГО ВЫБЫВАНИЯ === */
+.double-elimination-bracket {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 20px 0;
+    margin: 20px 0;
+}
+
+.bracket-section {
+    min-width: 300px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    position: relative;
+}
+
+.bracket-section::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -10px;
+    width: 20px;
+    height: 2px;
+    background: var(--accent-primary);
+    z-index: 1;
+}
+
+.bracket-section::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -10px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid var(--accent-primary);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    transform: translateY(-50%);
+    z-index: 2;
+}
+
+.bracket-section:last-child::before,
+.bracket-section:last-child::after {
+    display: none;
+}
+
+.bracket-section h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--accent-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2em;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-light);
+}
+
+/* Специфичные цвета для разных сеток */
+.bracket-section:nth-child(1) h3 { /* Winners Bracket */
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+.bracket-section:nth-child(2) h3 { /* Losers Bracket */
+    color: var(--accent-orange);
+    border-bottom-color: var(--accent-orange);
+}
+
+.bracket-section:nth-child(3) h3 { /* Final Section */
+    color: var(--accent-gold);
+    border-bottom-color: var(--accent-gold);
+}
+
+.bracket-round {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.bracket-round:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -15px;
+    width: 15px;
+    height: 2px;
+    background: var(--accent-primary);
+    z-index: 1;
+}
+
+.bracket-round h4 {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-size: 0.9em;
+    text-align: center;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.round-matches {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bracket-match {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-small);
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.bracket-match::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    transition: left 0.5s ease;
+}
+
+.bracket-match:hover::before {
+    left: 100%;
+}
+
+.bracket-match:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(3px);
+    border-color: var(--accent-primary);
+}
+
+.match-teams {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.team-slot {
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.85em;
+    transition: all var(--transition-normal);
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.team-slot:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-medium);
+}
+
+.team-slot.winner {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--accent-success);
+    font-weight: 600;
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.team-slot.winner::after {
+    content: '🏆';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8em;
+}
+
+.match-score {
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    color: var(--accent-primary);
+    font-size: 0.9em;
+    margin: 5px 0;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-left: 50%;
+    transform: translateX(-50%);
+}
+
+.match-status {
+    text-align: center;
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 3px 6px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Стили для финальной секции */
+.final-section {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(76, 175, 80, 0.1));
+    border: 2px solid var(--accent-gold);
+    min-width: 350px;
+}
+
+.final-section::before,
+.final-section::after {
+    display: none;
+}
+
+.final-matches {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.final-match {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-medium);
+    padding: 20px;
+    border: 2px solid var(--border-light);
+    text-align: center;
+}
+
+.final-match.grand-final {
+    border-color: var(--accent-gold);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 255, 255, 0.05));
+    position: relative;
+    overflow: hidden;
+}
+
+.final-match.grand-final::before {
+    content: '🏆';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5em;
+    opacity: 0.3;
+}
+
+.final-match.third-place {
+    border-color: var(--accent-bronze);
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(255, 255, 255, 0.05));
+}
+
+.final-match h4 {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em;
+}
+
+.final-match .match-teams {
+    gap: 10px;
+}
+
+.final-match .team-slot {
+    padding: 12px 15px;
+    font-size: 0.9em;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .double-elimination-bracket {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .bracket-section {
+        min-width: auto;
+    }
+    
+    .bracket-section::before,
+    .bracket-section::after {
+        display: none;
+    }
+    
+    .bracket-round:not(:last-child)::after {
+        display: none;
+    }
+    
+    .final-section {
+        min-width: auto;
+    }
+    
+    .bracket-section h3 {
+        font-size: 1.1em;
+    }
+    
+    .bracket-match {
+        padding: 10px;
+    }
+    
+    .team-slot {
+        padding: 6px 8px;
+        font-size: 0.8em;
+    }
+    
+    .final-match {
+        padding: 15px;
+    }
+}
+
+/* Стили для состояний матчей */
+.bracket-match[data-status="completed"] {
+    border-left: 3px solid var(--accent-success);
+}
+
+.bracket-match[data-status="upcoming"] {
+    border-left: 3px solid var(--accent-warning);
+}
+
+.bracket-match[data-status="in_progress"] {
+    border-left: 3px solid var(--accent-primary);
+    animation: pulseBorder 2s ease-in-out infinite;
+}
+
+@keyframes pulseBorder {
+    0%, 100% {
+        border-left-color: var(--accent-primary);
+    }
+    50% {
+        border-left-color: var(--accent-secondary);
+    }
+}
+
+/* Стили для подключений между матчами */
+.bracket-connector {
+    position: absolute;
+    background: var(--accent-primary);
+    z-index: 1;
+}
+
+.connector-horizontal {
+    height: 2px;
+    width: 20px;
+}
+
+.connector-vertical {
+    width: 2px;
+    height: 40px;
+}
+
+/* Стили для пустых слотов */
+.team-slot:empty::before {
+    content: 'TBD';
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Улучшенные стили для победителей */
+.team-slot.winner {
+    position: relative;
+    overflow: hidden;
+}
+
+.team-slot.winner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shine 2s ease-in-out infinite;
+}
+
+@keyframes shine {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
 }
