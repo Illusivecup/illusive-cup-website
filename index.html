@@ -215,9 +215,7 @@
                         <p>Турнирная сетка</p>
                     </div>
                     <div class="playoff-grid-container">
-                        <div class="no-data">
-                            Функционал сетки плей-офф в разработке
-                        </div>
+                        <!-- Сетка плей-офф будет загружаться динамически -->
                     </div>
                 </div>
             </div>
@@ -286,9 +284,7 @@
                 <div class="form-group">
                     <label>Этап турнира:</label>
                     <select id="newMatchStage" class="form-input">
-                        <option value="group">Групповой этап</option>
-                        <option value="third_place">Матч за 3 место</option>
-                        <option value="grand_final">Гранд финал</option>
+                        <!-- Опции будут заполняться динамически в зависимости от формата -->
                     </select>
                 </div>
                 <div class="form-group">
@@ -332,6 +328,12 @@
                         <option value="bo5">Bo5 (3 победы)</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>Этап турнира:</label>
+                    <select id="editMatchStage" class="form-input">
+                        <!-- Опции будут заполняться динамически в зависимости от формата -->
+                    </select>
+                </div>
                 <div class="form-actions">
                     <button id="saveMatchResultBtn" class="save-btn">💾 Сохранить результат</button>
                     <button id="deleteMatchBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить матч</button>
@@ -351,7 +353,8 @@
             
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="teamsTab">Команды</button>
-                <button class="tab-btn" data-tab="scheduleTab">Расписание</button>
+                <button class="tab-btn group-format-item" data-tab="scheduleTab">Расписание</button>
+                <button class="tab-btn no-group-format-item hidden" data-tab="rpofTab">РПОФ</button>
                 <button class="tab-btn group-format-item" data-tab="groupStageTab">Групповой этап</button>
                 <button class="tab-btn" data-tab="audienceAwardTab">Редактирование ПриЗ</button>
                 <button class="tab-btn" data-tab="settingsTab">Настройки</button>
@@ -382,6 +385,28 @@
                     </div>
                     <div class="schedule-edit-list" id="scheduleEditList">
                         <!-- Расписание будет загружаться динамически -->
+                    </div>
+                </div>
+
+                <!-- Вкладка РПОФ (Редактирование Плей-ОФФ) -->
+                <div id="rpofTab" class="tab-pane">
+                    <h3>🎯 Редактирование Плей-ОФФ (РПОФ)</h3>
+                    
+                    <div class="schedule-settings-header">
+                        <h4>Матчи плей-офф</h4>
+                        <button id="addRPOFMatchBtn" class="add-btn">➕ Добавить матч плей-офф</button>
+                    </div>
+                    
+                    <div class="rpoff-edit-list" id="rpoffEditList">
+                        <!-- Матчи плей-офф будут загружаться динамически -->
+                    </div>
+                    
+                    <div class="format-info">
+                        <p><strong>Доступные этапы плей-офф:</strong></p>
+                        <p>• Четвертьфинал - первые матчи плей-офф</p>
+                        <p>• Полуфинал - матчи за выход в финал</p>
+                        <p>• Нижняя сетка - матчи за выход в гранд-финал</p>
+                        <p>• Гранд финал - финальный матч турнира</p>
                     </div>
                 </div>
 

@@ -1257,6 +1257,25 @@ body {
     box-shadow: 0 0 20px rgba(205, 127, 50, 0.2);
 }
 
+/* Стили для этапов плей-офф */
+.match-card.playoff-stage {
+    border-left-color: var(--accent-blue);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+.match-card.playoff-stage:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(255, 255, 255, 0.08));
+}
+
+.match-card.lower-bracket {
+    border-left-color: var(--accent-orange);
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+.match-card.lower-bracket:hover {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(255, 255, 255, 0.08));
+}
+
 .match-card.completed {
     opacity: 0.9;
 }
@@ -1648,6 +1667,133 @@ body {
     padding: 15px;
     margin-bottom: 20px;
     text-align: center;
+}
+
+/* === СТИЛИ ДЛЯ РАЗДЕЛА РПОФ === */
+#rpofTab .schedule-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+#rpofTab .format-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    padding: 15px;
+    margin-top: 20px;
+    border-left: 4px solid var(--accent-purple);
+}
+
+#rpofTab .format-info p {
+    margin: 5px 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+/* Стили для сетки плей-офф */
+.playoff-stage-section {
+    margin-bottom: 30px;
+}
+
+.playoff-stage-section h3 {
+    color: var(--accent-primary);
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent-primary);
+}
+
+.playoff-stage-matches {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.playoff-grid-match {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.playoff-grid-match:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-light);
+}
+
+.playoff-grid-teams {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.playoff-grid-team {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    padding: 8px;
+    border-radius: var(--radius-small);
+    transition: all var(--transition-normal);
+}
+
+.playoff-grid-team.winner {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--accent-success);
+}
+
+.playoff-grid-team.loser {
+    opacity: 0.7;
+    color: var(--accent-danger);
+}
+
+.playoff-grid-vs {
+    margin: 0 15px;
+    text-align: center;
+}
+
+.playoff-grid-score {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    color: var(--accent-primary);
+    font-size: 1.1em;
+}
+
+.playoff-grid-vs-text {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.playoff-grid-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.playoff-grid-status {
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.playoff-grid-status.completed {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--accent-success);
+}
+
+.playoff-grid-status.upcoming {
+    background: rgba(255, 152, 0, 0.2);
+    color: var(--accent-warning);
 }
 
 /* === УЛУЧШЕННЫЕ СТИЛИ ДЛЯ СИСТЕМЫ ГОЛОСОВАНИЯ === */
@@ -2465,11 +2611,7 @@ body {
     border-radius: var(--radius-medium);
     padding: 40px;
     border: 1px solid var(--border-light);
-    text-align: center;
     min-height: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Анимация появления поля ввода причины */
@@ -2649,6 +2791,19 @@ body {
     .progress-score-center {
         font-size: 0.8em;
         padding: 3px 8px;
+    }
+    
+    .playoff-stage-matches {
+        grid-template-columns: 1fr;
+    }
+    
+    .playoff-grid-teams {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .playoff-grid-vs {
+        margin: 5px 0;
     }
 }
 
