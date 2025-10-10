@@ -54,7 +54,16 @@ class DoubleEliminationSystem {
     }
 
     async generateBracket(teams, bestOf = 1) {
+        // Проверяем, что есть достаточно команд
+        if (!teams || Object.keys(teams).length < 2) {
+            console.error('❌ Недостаточно команд для создания сетки');
+            alert('❌ Необходимо как минимум 2 команды для создания сетки');
+            return null;
+        }
+
         const seededTeams = this.seedTeams(teams);
+        console.log('🎯 Команды для сетки:', seededTeams);
+
         const bracket = {
             winnersBracket: this.generateWinnersBracket(seededTeams, bestOf),
             losersBracket: this.generateLosersBracket(seededTeams.length, bestOf),
@@ -64,22 +73,81 @@ class DoubleEliminationSystem {
             generatedAt: Date.now()
         };
 
-        // Сохраняем в базу
-        await this.database.ref('doubleEliminationBracket').set(bracket);
-        this.bracket = bracket;
+        // Валидация bracket перед сохранением
+        const validationResult = this.validateBracket(bracket);
+        if (!validationResult.isValid) {
+            console.error('❌ Ошибка валидации сетки:', validationResult.errors);
+            alert('❌ Ошибка создания сетки: ' + validationResult.errors.join(', '));
+            return null;
+        }
+
+        try {
+            // Сохраняем в базу
+            await this.database.ref('doubleEliminationBracket').set(bracket);
+            this.bracket = bracket;
+            
+            // Создаем матчи в базе данных
+            await this.createBracketMatchesInDB(bracket);
+            
+            console.log('✅ Сетка успешно создана и сохранена');
+            return bracket;
+        } catch (error) {
+            console.error('❌ Ошибка сохранения сетки:', error);
+            alert('❌ Ошибка сохранения сетки: ' + error.message);
+            return null;
+        }
+    }
+
+    validateBracket(bracket) {
+        const errors = [];
         
-        // Создаем матчи в базе данных
-        await this.createBracketMatchesInDB(bracket);
+        if (!bracket) {
+            errors.push('Сетка не определена');
+            return { isValid: false, errors };
+        }
         
-        return bracket;
+        if (!bracket.winnersBracket || !Array.isArray(bracket.winnersBracket)) {
+            errors.push('Сетка победителей не определена или не является массивом');
+        }
+        
+        if (!bracket.losersBracket || !Array.isArray(bracket.losersBracket)) {
+            errors.push('Сетка проигравших не определена или не является массивом');
+        }
+        
+        // Проверяем матчи на наличие undefined значений
+        if (bracket.winnersBracket) {
+            bracket.winnersBracket.forEach((round, roundIndex) => {
+                if (round.matches) {
+                    round.matches.forEach((match, matchIndex) => {
+                        if (match.team1Id === undefined) {
+                            match.team1Id = null;
+                        }
+                        if (match.team2Id === undefined) {
+                            match.team2Id = null;
+                        }
+                    });
+                }
+            });
+        }
+        
+        return {
+            isValid: errors.length === 0,
+            errors: errors
+        };
     }
 
     seedTeams(teams) {
+        if (!teams || typeof teams !== 'object') {
+            console.error('❌ Некорректные данные команд:', teams);
+            return [];
+        }
+        
         return Object.entries(teams)
+            .filter(([id, team]) => team && team.name && id) // Фильтруем только валидные команды
             .sort(([,a], [,b]) => (b.mmr || 0) - (a.mmr || 0))
             .map(([id, team], index) => ({
-                id: id,
-                name: team.name,
+                id: id || `team_${index}`,
+                name: team.name || `Команда ${index + 1}`,
                 seed: index + 1,
                 mmr: team.mmr || 0
             }));
@@ -89,6 +157,12 @@ class DoubleEliminationSystem {
         const rounds = [];
         let currentTeams = [...teams];
         let roundNumber = 1;
+
+        // Добавляем проверку на минимальное количество команд
+        if (currentTeams.length < 2) {
+            console.error('❌ Недостаточно команд для создания сетки:', currentTeams.length);
+            return rounds;
+        }
 
         while (currentTeams.length > 1) {
             const round = {
@@ -103,12 +177,18 @@ class DoubleEliminationSystem {
                 const team1 = currentTeams[i];
                 const team2 = currentTeams[i + 1];
                 
+                // Проверяем, что team1 существует
+                if (!team1) {
+                    console.error('❌ Team1 is undefined at index:', i);
+                    continue;
+                }
+
                 const match = {
-                    id: `winners_round_${roundNumber}_match_${i/2 + 1}`,
-                    team1Id: team1?.id,
-                    team2Id: team2?.id,
-                    team1Name: team1?.name,
-                    team2Name: team2?.name,
+                    id: `winners_round_${roundNumber}_match_${Math.floor(i/2) + 1}`,
+                    team1Id: team1.id || null,
+                    team2Id: team2 ? (team2.id || null) : null,
+                    team1Name: team1.name || `Команда ${i+1}`,
+                    team2Name: team2 ? (team2.name || `Команда ${i+2}`) : null,
                     winnerId: null,
                     loserId: null,
                     score1: 0,
@@ -123,6 +203,13 @@ class DoubleEliminationSystem {
                     createdAt: Date.now()
                 };
 
+                // Убедимся, что нет undefined значений
+                Object.keys(match).forEach(key => {
+                    if (match[key] === undefined) {
+                        match[key] = null;
+                    }
+                });
+
                 if (team1 && team2) {
                     nextRoundTeams.push(null); // Заполнитель для победителя
                 } else if (team1) {
@@ -135,12 +222,14 @@ class DoubleEliminationSystem {
             }
 
             // Устанавливаем связи для следующего раунда
-            if (roundNumber > 1) {
+            if (roundNumber > 1 && rounds.length > 0) {
                 this.setNextRoundConnections(rounds[rounds.length - 1], round);
             }
 
             rounds.push(round);
-            currentTeams = nextRoundTeams;
+            
+            // Фильтруем null значения для следующего раунда
+            currentTeams = nextRoundTeams.filter(team => team !== null);
             roundNumber++;
         }
 
@@ -181,6 +270,14 @@ class DoubleEliminationSystem {
                     bracketName: this.getRoundName(roundNumber, 'losers'),
                     createdAt: Date.now()
                 };
+                
+                // Убедимся, что нет undefined значений
+                Object.keys(match).forEach(key => {
+                    if (match[key] === undefined) {
+                        match[key] = null;
+                    }
+                });
+                
                 round.matches.push(match);
             }
             
@@ -230,21 +327,45 @@ class DoubleEliminationSystem {
         const allMatches = [];
         
         // Собираем все матчи из сетки
-        bracket.winnersBracket.forEach(round => {
-            round.matches.forEach(match => {
-                allMatches.push(match);
+        if (bracket.winnersBracket) {
+            bracket.winnersBracket.forEach(round => {
+                if (round.matches) {
+                    round.matches.forEach(match => {
+                        // Очищаем undefined значения
+                        Object.keys(match).forEach(key => {
+                            if (match[key] === undefined) {
+                                match[key] = null;
+                            }
+                        });
+                        allMatches.push(match);
+                    });
+                }
             });
-        });
+        }
 
-        bracket.losersBracket.forEach(round => {
-            round.matches.forEach(match => {
-                allMatches.push(match);
+        if (bracket.losersBracket) {
+            bracket.losersBracket.forEach(round => {
+                if (round.matches) {
+                    round.matches.forEach(match => {
+                        // Очищаем undefined значения
+                        Object.keys(match).forEach(key => {
+                            if (match[key] === undefined) {
+                                match[key] = null;
+                            }
+                        });
+                        allMatches.push(match);
+                    });
+                }
             });
-        });
+        }
 
         // Сохраняем в базу
         for (const match of allMatches) {
-            await this.database.ref(`noGroupMatches/${match.id}`).set(match);
+            try {
+                await this.database.ref(`noGroupMatches/${match.id}`).set(match);
+            } catch (error) {
+                console.error(`❌ Ошибка сохранения матча ${match.id}:`, error);
+            }
         }
 
         console.log('✅ Создано матчей в сетке:', allMatches.length);
@@ -3184,7 +3305,7 @@ function setupEventListeners() {
         });
     }
     
-    // Обработчики для системы двойного выбывания
+    // ОБНОВЛЕННЫЕ ОБРАБОТЧИКИ ДЛЯ СИСТЕМЫ ДВОЙНОГО ВЫБЫВАНИЯ
     const generateBracketBtn = document.getElementById('generateBracketBtn');
     const resetBracketBtn = document.getElementById('resetBracketBtn');
     
@@ -3198,17 +3319,36 @@ function setupEventListeners() {
             const bestOf = parseInt(document.getElementById('bracketBestOf').value) || 1;
             const teams = teamsManager.getAllTeams();
             
-            if (Object.keys(teams).length < 2) {
-                alert('❌ Недостаточно команд для создания сетки');
+            console.log('🔍 Доступные команды для сетки:', teams);
+            
+            // Детальная проверка команд
+            const validTeams = Object.entries(teams).filter(([id, team]) => {
+                const isValid = team && team.name && id;
+                if (!isValid) {
+                    console.warn('❌ Невалидная команда:', id, team);
+                }
+                return isValid;
+            });
+            
+            console.log('✅ Валидные команды:', validTeams.length);
+            
+            if (validTeams.length < 2) {
+                alert('❌ Недостаточно валидных команд для создания сетки. Необходимо как минимум 2 команды с названиями.');
                 return;
             }
 
             try {
-                await matchManager.doubleElimination.generateBracket(teams, bestOf);
-                alert('✅ Сетка двойного выбывания успешно создана!');
+                console.log('🚀 Начинаем создание сетки...');
+                const bracket = await matchManager.doubleElimination.generateBracket(teams, bestOf);
+                if (bracket) {
+                    alert('✅ Сетка двойного выбывания успешно создана!');
+                    console.log('🎉 Сетка создана:', bracket);
+                } else {
+                    alert('❌ Не удалось создать сетку');
+                }
             } catch (error) {
-                console.error('❌ Ошибка создания сетки:', error);
-                alert('❌ Ошибка создания сетки');
+                console.error('❌ Критическая ошибка создания сетки:', error);
+                alert('❌ Ошибка создания сетки: ' + error.message);
             }
         });
     }
