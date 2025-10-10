@@ -671,17 +671,44 @@ class DoubleEliminationSystem {
     `;
 }
 
-    createThirdPlaceHTML() {
+ createThirdPlaceHTML() {
+    const thirdPlace = this.bracket.thirdPlaceMatch;
+    
+    if (thirdPlace) {
+        const isCompleted = thirdPlace.status === 'completed';
+        const team1Class = thirdPlace.winnerId === thirdPlace.team1Id ? 'winner' : '';
+        const team2Class = thirdPlace.winnerId === thirdPlace.team2Id ? 'winner' : '';
+        
         return `
             <div class="final-match third-place">
                 <h4>🥉 Матч за 3 место</h4>
                 <div class="match-teams">
-                    <div class="team-slot">Финалист сетки проигравших</div>
-                    <div class="team-slot">Проигравший в полуфинале</div>
+                    <div class="team-slot ${team1Class}">
+                        ${thirdPlace.team1Name || 'TBD'}
+                    </div>
+                    <div class="team-slot ${team2Class}">
+                        ${thirdPlace.team2Name || 'TBD'}
+                    </div>
                 </div>
+                ${isCompleted ? `
+                    <div class="match-score">${thirdPlace.score1 || 0} : ${thirdPlace.score2 || 0}</div>
+                ` : ''}
+                <div class="match-status">${this.getStatusText(thirdPlace.status)}</div>
             </div>
         `;
     }
+    
+    return `
+        <div class="final-match third-place">
+            <h4>🥉 Матч за 3 место</h4>
+            <div class="match-teams">
+                <div class="team-slot">Проигравший в полуфинале</div>
+                <div class="team-slot">Финалист нижней сетки</div>
+            </div>
+            <div class="match-status">⏳ Ожидается</div>
+        </div>
+    `;
+}
 
     getStatusText(status) {
         const statusMap = {
