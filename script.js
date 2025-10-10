@@ -632,17 +632,44 @@ class DoubleEliminationSystem {
     `;
 }
 
-    createGrandFinalHTML() {
+ createGrandFinalHTML() {
+    const grandFinal = this.bracket.grandFinal;
+    
+    if (grandFinal) {
+        const isCompleted = grandFinal.status === 'completed';
+        const team1Class = grandFinal.winnerId === grandFinal.team1Id ? 'winner' : '';
+        const team2Class = grandFinal.winnerId === grandFinal.team2Id ? 'winner' : '';
+        
         return `
             <div class="final-match grand-final">
                 <h4>🏆 Гранд-финал</h4>
                 <div class="match-teams">
-                    <div class="team-slot">Победитель сетки победителей</div>
-                    <div class="team-slot">Победитель сетки проигравших</div>
+                    <div class="team-slot ${team1Class}">
+                        ${grandFinal.team1Name || 'Победитель верхней сетки'}
+                    </div>
+                    <div class="team-slot ${team2Class}">
+                        ${grandFinal.team2Name || 'Победитель нижней сетки'}
+                    </div>
                 </div>
+                ${isCompleted ? `
+                    <div class="match-score">${grandFinal.score1 || 0} : ${grandFinal.score2 || 0}</div>
+                ` : ''}
+                <div class="match-status">${this.getStatusText(grandFinal.status)}</div>
             </div>
         `;
     }
+    
+    return `
+        <div class="final-match grand-final">
+            <h4>🏆 Гранд-финал</h4>
+            <div class="match-teams">
+                <div class="team-slot">Победитель верхней сетки</div>
+                <div class="team-slot">Победитель нижней сетки</div>
+            </div>
+            <div class="match-status">⏳ Ожидается</div>
+        </div>
+    `;
+}
 
     createThirdPlaceHTML() {
         return `
