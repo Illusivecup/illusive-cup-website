@@ -2440,6 +2440,38 @@ body {
     border-radius: var(--radius-small);
 }
 
+/* Стили для настроек турнира */
+.format-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-small);
+    padding: 15px;
+    margin-top: 15px;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.format-info p {
+    margin: 8px 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.format-info strong {
+    color: var(--accent-primary);
+}
+
+/* Контейнер для сетки плей-офф */
+.playoff-grid-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-medium);
+    padding: 40px;
+    border: 1px solid var(--border-light);
+    text-align: center;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Анимация появления поля ввода причины */
 @keyframes slideDown {
     from {

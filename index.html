@@ -44,7 +44,7 @@
                 </div>
 
                 <!-- Кнопка Расписание матчей -->
-                <div class="nav-item">
+                <div class="nav-item group-format-item">
                     <button class="nav-btn schedule-btn" id="scheduleBtn">
                         <span class="btn-icon">⏰</span>
                         Расписание матчей
@@ -52,7 +52,7 @@
                 </div>
 
                 <!-- Кнопка Групповой этап -->
-                <div class="nav-item">
+                <div class="nav-item group-format-item">
                     <button class="nav-btn group-stage-btn" id="groupStageBtn">
                         <span class="btn-icon">📈</span>
                         Групповой этап
@@ -60,10 +60,25 @@
                 </div>
 
                 <!-- Кнопка Плей-офф -->
-                <div class="nav-item">
+                <div class="nav-item group-format-item">
                     <button class="nav-btn playoff-btn" id="playoffBtn">
                         <span class="btn-icon">📊</span>
                         Плей-офф
+                    </button>
+                </div>
+
+                <!-- Кнопки для формата "Без группы" -->
+                <div class="nav-item no-group-format-item hidden">
+                    <button class="nav-btn schedule-btn" id="scheduleNoGroupBtn">
+                        <span class="btn-icon">⏰</span>
+                        Расписание
+                    </button>
+                </div>
+
+                <div class="nav-item no-group-format-item hidden">
+                    <button class="nav-btn playoff-btn" id="playoffGridBtn">
+                        <span class="btn-icon">📊</span>
+                        Сетка Плей-офф
                     </button>
                 </div>
 
@@ -165,6 +180,43 @@
                     <div class="audience-awards-container">
                         <div id="audienceAwardsContent">
                             <!-- Данные приза зрительских симпатий -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Расписание для формата без группы -->
+                <div id="scheduleNoGroupContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Расписание</h2>
+                        <p>Все матчи турнира</p>
+                    </div>
+                    <div class="schedule-container">
+                        <div class="schedule-columns">
+                            <div class="schedule-column">
+                                <h3>🟢 Запланированные</h3>
+                                <div class="schedule-list" id="upcomingMatchesNoGroup">
+                                    <!-- Запланированные матчи -->
+                                </div>
+                            </div>
+                            <div class="schedule-column">
+                                <h3>🔴 Проведённые</h3>
+                                <div class="schedule-list" id="completedMatchesNoGroup">
+                                    <!-- Завершенные матчи -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Сетка плей-офф для формата без группы -->
+                <div id="playoffGridContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Сетка Плей-офф</h2>
+                        <p>Турнирная сетка</p>
+                    </div>
+                    <div class="playoff-grid-container">
+                        <div class="no-data">
+                            Функционал сетки плей-офф в разработке
                         </div>
                     </div>
                 </div>
@@ -300,8 +352,9 @@
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="teamsTab">Команды</button>
                 <button class="tab-btn" data-tab="scheduleTab">Расписание</button>
-                <button class="tab-btn" data-tab="groupStageTab">Групповой этап</button>
+                <button class="tab-btn group-format-item" data-tab="groupStageTab">Групповой этап</button>
                 <button class="tab-btn" data-tab="audienceAwardTab">Редактирование ПриЗ</button>
+                <button class="tab-btn" data-tab="settingsTab">Настройки</button>
                 <button class="tab-btn" data-tab="accessTab">Доступы</button>
             </div>
             
@@ -363,6 +416,25 @@
                         <div id="voteResultsContent">
                             <!-- Результаты будут отображаться здесь -->
                         </div>
+                    </div>
+                </div>
+
+                <!-- Вкладка настроек турнира -->
+                <div id="settingsTab" class="tab-pane">
+                    <h3>⚙️ Настройки турнира</h3>
+                    
+                    <div class="form-group">
+                        <label>Формат турнира:</label>
+                        <select id="tournamentFormat" class="form-input">
+                            <option value="with_groups">С группой</option>
+                            <option value="without_groups">Без группы</option>
+                        </select>
+                        <button id="saveTournamentFormat" class="save-btn">💾 Сохранить</button>
+                    </div>
+                    
+                    <div class="format-info">
+                        <p><strong>Формат "С группой":</strong> Групповой этап + Плей-офф</p>
+                        <p><strong>Формат "Без группы":</strong> Прямой Плей-офф</p>
                     </div>
                 </div>
 

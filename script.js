@@ -15,6 +15,96 @@ let teamsManager;
 let securityManager;
 let matchManager;
 let votingSystem;
+let tournamentFormatManager;
+
+// === МЕНЕДЖЕР ФОРМАТА ТУРНИРА ===
+class TournamentFormatManager {
+    constructor(database) {
+        this.database = database;
+        this.currentFormat = 'with_groups'; // По умолчанию "с группой"
+    }
+
+    async initialize() {
+        await this.loadTournamentFormat();
+        await this.setupFormatListeners();
+        this.applyFormat();
+    }
+
+    async loadTournamentFormat() {
+        try {
+            const snapshot = await this.database.ref('tournamentFormat').once('value');
+            if (snapshot.exists()) {
+                this.currentFormat = snapshot.val();
+                console.log('📋 Загружен формат турнира:', this.currentFormat);
+            }
+        } catch (error) {
+            console.error('❌ Ошибка загрузки формата турнира:', error);
+        }
+    }
+
+    async setupFormatListeners() {
+        this.database.ref('tournamentFormat').on('value', (snapshot) => {
+            if (snapshot.exists()) {
+                this.currentFormat = snapshot.val();
+                console.log('📋 Обновлен формат турнира:', this.currentFormat);
+                this.applyFormat();
+            }
+        });
+    }
+
+    applyFormat() {
+        const isGroupFormat = this.currentFormat === 'with_groups';
+        
+        // Управление отображением элементов навигации
+        document.querySelectorAll('.group-format-item').forEach(item => {
+            item.classList.toggle('hidden', !isGroupFormat);
+        });
+        
+        document.querySelectorAll('.no-group-format-item').forEach(item => {
+            item.classList.toggle('hidden', isGroupFormat);
+        });
+
+        // Управление отображением вкладок в админ-панели
+        const groupStageTab = document.querySelector('[data-tab="groupStageTab"]');
+        if (groupStageTab) {
+            groupStageTab.classList.toggle('hidden', !isGroupFormat);
+        }
+
+        // Обновление UI если нужно
+        this.updateUI();
+
+        console.log('🎯 Применен формат:', isGroupFormat ? 'С группой' : 'Без группы');
+    }
+
+    updateUI() {
+        // Обновляем выпадающий список в настройках
+        const formatSelect = document.getElementById('tournamentFormat');
+        if (formatSelect) {
+            formatSelect.value = this.currentFormat;
+        }
+    }
+
+    async setTournamentFormat(format) {
+        try {
+            await this.database.ref('tournamentFormat').set(format);
+            this.currentFormat = format;
+            this.applyFormat();
+            console.log('✅ Формат турнира сохранен:', format);
+            return true;
+        } catch (error) {
+            console.error('❌ Ошибка сохранения формата турнира:', error);
+            return false;
+        }
+    }
+
+    getCurrentFormat() {
+        return this.currentFormat;
+    }
+
+    isGroupFormat() {
+        return this.currentFormat === 'with_groups';
+    }
+}
 
 // === СИСТЕМА БЕЗОПАСНОСТИ ===
 class SecurityManager {
@@ -363,8 +453,39 @@ class MatchManager {
     }
 
     updateScheduleLists() {
+        // Обновляем оба варианта расписания
         this.updateUpcomingMatches();
         this.updateCompletedMatches();
+        
+        // Дублируем для формата без группы
+        this.updateUpcomingMatchesNoGroup();
+        this.updateCompletedMatchesNoGroup();
+    }
+
+    updateUpcomingMatchesNoGroup() {
+        const container = document.getElementById('upcomingMatchesNoGroup');
+        if (!container) return;
+
+        const upcoming = Object.entries(this.matches)
+            .filter(([matchId, match]) => !this.isMatchCompleted(match))
+            .sort(([, a], [, b]) => (a.timestamp || 0) - (b.timestamp || 0));
+
+        container.innerHTML = upcoming.map(([matchId, match]) => 
+            this.createEnhancedScheduleMatchCard(match, false, matchId)
+        ).join('') || '<div class="no-data">Нет запланированных матчей</div>';
+    }
+
+    updateCompletedMatchesNoGroup() {
+        const container = document.getElementById('completedMatchesNoGroup');
+        if (!container) return;
+
+        const completed = Object.entries(this.matches)
+            .filter(([matchId, match]) => this.isMatchCompleted(match))
+            .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        container.innerHTML = completed.map(([matchId, match]) => 
+            this.createEnhancedScheduleMatchCard(match, true, matchId)
+        ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
     }
 
     isMatchCompleted(match) {
@@ -2126,10 +2247,12 @@ async function initializeApp() {
         teamsManager = new TeamsManager(database);
         matchManager = new MatchManager(database);
         votingSystem = new VotingSystem(database);
+        tournamentFormatManager = new TournamentFormatManager(database); // НОВОЕ
         
         await teamsManager.initialize();
         await matchManager.initialize();
         await votingSystem.initialize();
+        await tournamentFormatManager.initialize(); // НОВОЕ
         
         setupEventListeners();
         setupDeleteTeamHandler();
@@ -2170,6 +2293,8 @@ function setupEventListeners() {
     const groupStageBtn = document.getElementById('groupStageBtn');
     const playoffBtn = document.getElementById('playoffBtn');
     const audienceAwardBtn = document.getElementById('audienceAwardBtn');
+    const scheduleNoGroupBtn = document.getElementById('scheduleNoGroupBtn');
+    const playoffGridBtn = document.getElementById('playoffGridBtn');
     
     if (teamsDropdownBtn) {
         teamsDropdownBtn.addEventListener('click', toggleDropdown);
@@ -2189,6 +2314,23 @@ function setupEventListeners() {
     
     if (audienceAwardBtn) {
         audienceAwardBtn.addEventListener('click', () => showSection('audienceAward'));
+    }
+    
+    // Обработчики для новых кнопок навигации
+    if (scheduleNoGroupBtn) {
+        scheduleNoGroupBtn.addEventListener('click', () => {
+            showSection('scheduleNoGroup');
+            // Можно использовать те же функции для обновления расписания
+            if (matchManager && matchManager.updateScheduleLists) {
+                matchManager.updateScheduleLists();
+            }
+        });
+    }
+
+    if (playoffGridBtn) {
+        playoffGridBtn.addEventListener('click', () => {
+            showSection('playoffGrid');
+        });
     }
     
     const closeEditTeamModalBtn = document.getElementById('closeEditTeamModal');
@@ -2305,6 +2447,23 @@ function setupEventListeners() {
     
     if (closeEditVoteBtn) {
         closeEditVoteBtn.addEventListener('click', closeEditVoteModal);
+    }
+    
+    // Обработчик для сохранения формата турнира
+    const saveTournamentFormatBtn = document.getElementById('saveTournamentFormat');
+    if (saveTournamentFormatBtn) {
+        saveTournamentFormatBtn.addEventListener('click', async () => {
+            const formatSelect = document.getElementById('tournamentFormat');
+            if (formatSelect && tournamentFormatManager) {
+                const newFormat = formatSelect.value;
+                const success = await tournamentFormatManager.setTournamentFormat(newFormat);
+                if (success) {
+                    alert('✅ Формат турнира сохранен!');
+                } else {
+                    alert('❌ Ошибка сохранения формата турнира');
+                }
+            }
+        });
     }
     
     document.addEventListener('click', (event) => {
