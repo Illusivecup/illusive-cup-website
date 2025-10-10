@@ -609,27 +609,28 @@ class DoubleEliminationSystem {
     `;
 }
 
-    createMatchHTML(match) {
-        const isCompleted = match.status === 'completed';
-        const winnerClass = isCompleted ? 'winner' : '';
-        
-        return `
-            <div class="bracket-match" data-match-id="${match.id}">
-                <div class="match-teams">
-                    <div class="team-slot ${match.team1Id && winnerClass === 'winner' && match.winnerId === match.team1Id ? 'winner' : ''}">
-                        ${match.team1Name || 'TBD'}
-                    </div>
-                    <div class="team-slot ${match.team2Id && winnerClass === 'winner' && match.winnerId === match.team2Id ? 'winner' : ''}">
-                        ${match.team2Name || 'TBD'}
-                    </div>
+ createMatchHTML(match) {
+    const isCompleted = match.status === 'completed';
+    const team1Class = match.winnerId === match.team1Id ? 'winner' : '';
+    const team2Class = match.winnerId === match.team2Id ? 'winner' : '';
+    
+    return `
+        <div class="bracket-match ${match.status}" data-match-id="${match.id}">
+            <div class="match-teams">
+                <div class="team-slot ${team1Class}">
+                    ${match.team1Name || 'TBD'}
                 </div>
-                ${isCompleted ? `
-                    <div class="match-score">${match.score1} : ${match.score2}</div>
-                ` : ''}
-                <div class="match-status">${this.getStatusText(match.status)}</div>
+                <div class="team-slot ${team2Class}">
+                    ${match.team2Name || 'TBD'}
+                </div>
             </div>
-        `;
-    }
+            ${isCompleted ? `
+                <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+            ` : ''}
+            <div class="match-status">${this.getStatusText(match.status)}</div>
+        </div>
+    `;
+}
 
     createGrandFinalHTML() {
         return `
