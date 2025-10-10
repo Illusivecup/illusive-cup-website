@@ -594,16 +594,20 @@ class DoubleEliminationSystem {
     `;
 }
 
-    createRoundHTML(round, bracketType) {
-        return `
-            <div class="bracket-round ${bracketType}-round">
-                <h4>${round.name}</h4>
-                <div class="round-matches">
-                    ${round.matches.map(match => this.createMatchHTML(match)).join('')}
-                </div>
-            </div>
-        `;
+   createRoundHTML(round, bracketType) {
+    if (!round.matches || round.matches.length === 0) {
+        return '';
     }
+
+    return `
+        <div class="bracket-round ${bracketType}-round">
+            <h4>${round.name}</h4>
+            <div class="round-matches">
+                ${round.matches.map(match => this.createMatchHTML(match)).join('')}
+            </div>
+        </div>
+    `;
+}
 
     createMatchHTML(match) {
         const isCompleted = match.status === 'completed';
