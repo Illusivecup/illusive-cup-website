@@ -556,29 +556,162 @@ class DoubleEliminationSystem {
         container.innerHTML = this.createBracketHTML();
     }
 
-    createBracketHTML() {
+   createBracketHTML() {
+    if (!this.bracket) {
+        return '<div class="no-data">Сетка турнира не сгенерирована</div>';
+    }
+
+    let html = `
+        <div class="double-elimination-bracket">
+            <div class="bracket-section">
+                <h3>🏆 Сетка победителей</h3>
+    `;
+
+    // Winners Bracket
+    if (this.bracket.winnersBracket && this.bracket.winnersBracket.length > 0) {
+        this.bracket.winnersBracket.forEach(round => {
+            html += this.createRoundHTML(round, 'winners');
+        });
+    }
+
+    html += `
+            </div>
+            <div class="bracket-section">
+                <h3>⚡ Сетка проигравших</h3>
+    `;
+
+    // Losers Bracket
+    if (this.bracket.losersBracket && this.bracket.losersBracket.length > 0) {
+        this.bracket.losersBracket.forEach(round => {
+            html += this.createRoundHTML(round, 'losers');
+        });
+    }
+
+    html += `
+            </div>
+            <div class="bracket-section final-section">
+                <h3>🎯 Финальные матчи</h3>
+                <div class="final-matches">
+                    ${this.createGrandFinalHTML()}
+                    ${this.createThirdPlaceHTML()}
+                </div>
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
+createRoundHTML(round, bracketType) {
+    if (!round.matches || round.matches.length === 0) {
+        return '';
+    }
+
+    return `
+        <div class="bracket-round">
+            <h4>${round.name}</h4>
+            <div class="round-matches">
+                ${round.matches.map(match => this.createMatchHTML(match)).join('')}
+            </div>
+        </div>
+    `;
+}
+
+createMatchHTML(match) {
+    const isCompleted = match.status === 'completed';
+    const winnerClass = isCompleted ? 'winner' : '';
+    
+    return `
+        <div class="bracket-match" data-match-id="${match.id}" data-status="${match.status}">
+            <div class="match-teams">
+                <div class="team-slot ${match.team1Id && winnerClass === 'winner' && match.winnerId === match.team1Id ? 'winner' : ''}">
+                    ${match.team1Name || 'TBD'}
+                </div>
+                <div class="team-slot ${match.team2Id && winnerClass === 'winner' && match.winnerId === match.team2Id ? 'winner' : ''}">
+                    ${match.team2Name || 'TBD'}
+                </div>
+            </div>
+            ${isCompleted ? `
+                <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
+            ` : ''}
+            <div class="match-status">${this.getStatusText(match.status)}</div>
+        </div>
+    `;
+}
+
+createGrandFinalHTML() {
+    const grandFinal = this.bracket.grandFinal;
+    if (grandFinal) {
+        const isCompleted = grandFinal.status === 'completed';
+        const winnerClass = isCompleted ? 'winner' : '';
+        
         return `
-            <div class="double-elimination-bracket">
-                <div class="bracket-section">
-                    <h3>🏆 Сетка победителей</h3>
-                    ${this.bracket.winnersBracket.map(round => this.createRoundHTML(round, 'winners')).join('')}
-                </div>
-                
-                <div class="bracket-section">
-                    <h3>⚡ Сетка проигравших</h3>
-                    ${this.bracket.losersBracket.map(round => this.createRoundHTML(round, 'losers')).join('')}
-                </div>
-                
-                <div class="bracket-section final-section">
-                    <h3>🎯 Финальные матчи</h3>
-                    <div class="final-matches">
-                        ${this.createGrandFinalHTML()}
-                        ${this.createThirdPlaceHTML()}
+            <div class="final-match grand-final">
+                <h4>🏆 Гранд-финал</h4>
+                <div class="match-teams">
+                    <div class="team-slot ${grandFinal.team1Id && winnerClass === 'winner' && grandFinal.winnerId === grandFinal.team1Id ? 'winner' : ''}">
+                        ${grandFinal.team1Name || 'Победитель сетки победителей'}
+                    </div>
+                    <div class="team-slot ${grandFinal.team2Id && winnerClass === 'winner' && grandFinal.winnerId === grandFinal.team2Id ? 'winner' : ''}">
+                        ${grandFinal.team2Name || 'Победитель сетки проигравших'}
                     </div>
                 </div>
+                ${isCompleted ? `
+                    <div class="match-score">${grandFinal.score1 || 0} : ${grandFinal.score2 || 0}</div>
+                ` : ''}
+                <div class="match-status">${this.getStatusText(grandFinal.status)}</div>
             </div>
         `;
     }
+    
+    return `
+        <div class="final-match grand-final">
+            <h4>🏆 Гранд-финал</h4>
+            <div class="match-teams">
+                <div class="team-slot">Победитель сетки победителей</div>
+                <div class="team-slot">Победитель сетки проигравших</div>
+            </div>
+            <div class="match-status">${this.getStatusText('upcoming')}</div>
+        </div>
+    `;
+}
+
+createThirdPlaceHTML() {
+    const thirdPlace = this.bracket.thirdPlaceMatch;
+    if (thirdPlace) {
+        const isCompleted = thirdPlace.status === 'completed';
+        const winnerClass = isCompleted ? 'winner' : '';
+        
+        return `
+            <div class="final-match third-place">
+                <h4>🥉 Матч за 3 место</h4>
+                <div class="match-teams">
+                    <div class="team-slot ${thirdPlace.team1Id && winnerClass === 'winner' && thirdPlace.winnerId === thirdPlace.team1Id ? 'winner' : ''}">
+                        ${thirdPlace.team1Name || 'Финалист сетки проигравших'}
+                    </div>
+                    <div class="team-slot ${thirdPlace.team2Id && winnerClass === 'winner' && thirdPlace.winnerId === thirdPlace.team2Id ? 'winner' : ''}">
+                        ${thirdPlace.team2Name || 'Проигравший в полуфинале'}
+                    </div>
+                </div>
+                ${isCompleted ? `
+                    <div class="match-score">${thirdPlace.score1 || 0} : ${thirdPlace.score2 || 0}</div>
+                ` : ''}
+                <div class="match-status">${this.getStatusText(thirdPlace.status)}</div>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="final-match third-place">
+            <h4>🥉 Матч за 3 место</h4>
+            <div class="match-teams">
+                <div class="team-slot">Финалист сетки проигравших</div>
+                <div class="team-slot">Проигравший в полуфинале</div>
+            </div>
+            <div class="match-status">${this.getStatusText('upcoming')}</div>
+        </div>
+    `;
+}
 
     createRoundHTML(round, bracketType) {
         return `
