@@ -17,725 +17,17 @@ let matchManager;
 let votingSystem;
 let tournamentFormatManager;
 
-// === СИСТЕМА ДВОЙНОГО ВЫБЫВАНИЯ ===
-class DoubleEliminationSystem {
-    constructor(database, teamsManager) {
-        this.database = database;
-        this.teamsManager = teamsManager;
-        this.bracket = null;
-        this.matches = {};
-    }
-
-    async initialize() {
-        await this.loadBracketData();
-        await this.setupBracketListeners();
-    }
-
-    async loadBracketData() {
-        try {
-            const snapshot = await this.database.ref('doubleEliminationBracket').once('value');
-            if (snapshot.exists()) {
-                this.bracket = snapshot.val();
-                console.log('📋 Загружена сетка двойного выбывания:', this.bracket);
-            }
-        } catch (error) {
-            console.error('❌ Ошибка загрузки сетки:', error);
-        }
-    }
-
-    async setupBracketListeners() {
-        this.database.ref('doubleEliminationBracket').on('value', (snapshot) => {
-            if (snapshot.exists()) {
-                this.bracket = snapshot.val();
-                console.log('📋 Обновлена сетка двойного выбывания');
-                this.updateBracketUI();
-            }
-        });
-    }
-
-    async generateBracket(teams, bestOf = 1) {
-        // Проверяем, что есть достаточно команд
-        if (!teams || Object.keys(teams).length < 2) {
-            console.error('❌ Недостаточно команд для создания сетки');
-            alert('❌ Необходимо как минимум 2 команды для создания сетки');
-            return null;
-        }
-
-        const seededTeams = this.seedTeams(teams);
-        console.log('🎯 Команды для сетки:', seededTeams);
-
-        const bracket = {
-            winnersBracket: this.generateWinnersBracket(seededTeams, bestOf),
-            losersBracket: this.generateLosersBracket(seededTeams.length, bestOf),
-            grandFinal: null,
-            thirdPlaceMatch: null,
-            bestOf: bestOf,
-            generatedAt: Date.now()
-        };
-
-        // Валидация bracket перед сохранением
-        const validationResult = this.validateBracket(bracket);
-        if (!validationResult.isValid) {
-            console.error('❌ Ошибка валидации сетки:', validationResult.errors);
-            alert('❌ Ошибка создания сетки: ' + validationResult.errors.join(', '));
-            return null;
-        }
-
-        try {
-            // Сохраняем в базу
-            await this.database.ref('doubleEliminationBracket').set(bracket);
-            this.bracket = bracket;
-            
-            // Создаем матчи в базе данных
-            await this.createBracketMatchesInDB(bracket);
-            
-            console.log('✅ Сетка успешно создана и сохранена');
-            return bracket;
-        } catch (error) {
-            console.error('❌ Ошибка сохранения сетки:', error);
-            alert('❌ Ошибка сохранения сетки: ' + error.message);
-            return null;
-        }
-    }
-
-    validateBracket(bracket) {
-        const errors = [];
-        
-        if (!bracket) {
-            errors.push('Сетка не определена');
-            return { isValid: false, errors };
-        }
-        
-        if (!bracket.winnersBracket || !Array.isArray(bracket.winnersBracket)) {
-            errors.push('Сетка победителей не определена или не является массивом');
-        }
-        
-        if (!bracket.losersBracket || !Array.isArray(bracket.losersBracket)) {
-            errors.push('Сетка проигравших не определена или не является массивом');
-        }
-        
-        // Проверяем матчи на наличие undefined значений
-        if (bracket.winnersBracket) {
-            bracket.winnersBracket.forEach((round, roundIndex) => {
-                if (round.matches) {
-                    round.matches.forEach((match, matchIndex) => {
-                        if (match.team1Id === undefined) {
-                            match.team1Id = null;
-                        }
-                        if (match.team2Id === undefined) {
-                            match.team2Id = null;
-                        }
-                    });
-                }
-            });
-        }
-        
-        return {
-            isValid: errors.length === 0,
-            errors: errors
-        };
-    }
-
-    seedTeams(teams) {
-        if (!teams || typeof teams !== 'object') {
-            console.error('❌ Некорректные данные команд:', teams);
-            return [];
-        }
-        
-        return Object.entries(teams)
-            .filter(([id, team]) => team && team.name && id) // Фильтруем только валидные команды
-            .sort(([,a], [,b]) => (b.mmr || 0) - (a.mmr || 0))
-            .map(([id, team], index) => ({
-                id: id || `team_${index}`,
-                name: team.name || `Команда ${index + 1}`,
-                seed: index + 1,
-                mmr: team.mmr || 0
-            }));
-    }
-
-    generateWinnersBracket(teams, bestOf) {
-        const rounds = [];
-        let currentTeams = [...teams];
-        let roundNumber = 1;
-
-        // Добавляем проверку на минимальное количество команд
-        if (currentTeams.length < 2) {
-            console.error('❌ Недостаточно команд для создания сетки:', currentTeams.length);
-            return rounds;
-        }
-
-        while (currentTeams.length > 1) {
-            const round = {
-                roundNumber: roundNumber,
-                name: this.getRoundName(roundNumber, 'winners'),
-                matches: []
-            };
-
-            const nextRoundTeams = [];
-            
-            for (let i = 0; i < currentTeams.length; i += 2) {
-                const team1 = currentTeams[i];
-                const team2 = currentTeams[i + 1];
-                
-                // Проверяем, что team1 существует
-                if (!team1) {
-                    console.error('❌ Team1 is undefined at index:', i);
-                    continue;
-                }
-
-                const match = {
-                    id: `winners_round_${roundNumber}_match_${Math.floor(i/2) + 1}`,
-                    team1Id: team1.id || null,
-                    team2Id: team2 ? (team2.id || null) : null,
-                    team1Name: team1.name || `Команда ${i+1}`,
-                    team2Name: team2 ? (team2.name || `Команда ${i+2}`) : null,
-                    winnerId: null,
-                    loserId: null,
-                    score1: 0,
-                    score2: 0,
-                    bestOf: bestOf,
-                    status: team1 && team2 ? 'upcoming' : (team1 ? 'team1_walkover' : 'team2_walkover'),
-                    nextMatchId: null,
-                    nextMatchSlot: null,
-                    stage: 'winners_bracket',
-                    bracketRound: roundNumber,
-                    bracketName: this.getRoundName(roundNumber, 'winners'),
-                    createdAt: Date.now()
-                };
-
-                // Убедимся, что нет undefined значений
-                Object.keys(match).forEach(key => {
-                    if (match[key] === undefined) {
-                        match[key] = null;
-                    }
-                });
-
-                if (team1 && team2) {
-                    nextRoundTeams.push(null); // Заполнитель для победителя
-                } else if (team1) {
-                    match.winnerId = team1.id;
-                    match.status = 'completed';
-                    nextRoundTeams.push(team1);
-                }
-
-                round.matches.push(match);
-            }
-
-            // Устанавливаем связи для следующего раунда
-            if (roundNumber > 1 && rounds.length > 0) {
-                this.setNextRoundConnections(rounds[rounds.length - 1], round);
-            }
-
-            rounds.push(round);
-            
-            // Фильтруем null значения для следующего раунда
-            currentTeams = nextRoundTeams.filter(team => team !== null);
-            roundNumber++;
-        }
-
-        return rounds;
-    }
-
-    generateLosersBracket(teamCount, bestOf) {
-        const rounds = [];
-        const totalRounds = Math.ceil(Math.log2(teamCount)) * 2 - 1;
-        
-        for (let roundNumber = 1; roundNumber <= totalRounds; roundNumber++) {
-            const round = {
-                roundNumber: roundNumber,
-                name: this.getRoundName(roundNumber, 'losers'),
-                matches: []
-            };
-
-            // Количество матчей уменьшается в каждом раунде
-            const matchCount = Math.max(1, Math.floor(teamCount / Math.pow(2, roundNumber)));
-            
-            for (let i = 1; i <= matchCount; i++) {
-                const match = {
-                    id: `losers_round_${roundNumber}_match_${i}`,
-                    team1Id: null,
-                    team2Id: null,
-                    team1Name: null,
-                    team2Name: null,
-                    winnerId: null,
-                    loserId: null,
-                    score1: 0,
-                    score2: 0,
-                    bestOf: bestOf,
-                    status: 'upcoming',
-                    nextMatchId: null,
-                    nextMatchSlot: null,
-                    stage: 'losers_bracket',
-                    bracketRound: roundNumber,
-                    bracketName: this.getRoundName(roundNumber, 'losers'),
-                    createdAt: Date.now()
-                };
-                
-                // Убедимся, что нет undefined значений
-                Object.keys(match).forEach(key => {
-                    if (match[key] === undefined) {
-                        match[key] = null;
-                    }
-                });
-                
-                round.matches.push(match);
-            }
-            
-            rounds.push(round);
-        }
-
-        // Устанавливаем связи между раундами
-        this.setLosersBracketConnections(rounds);
-        
-        return rounds;
-    }
-
-    setNextRoundConnections(prevRound, currentRound) {
-        prevRound.matches.forEach((match, index) => {
-            if (index < currentRound.matches.length) {
-                match.nextMatchId = currentRound.matches[index].id;
-                match.nextMatchSlot = 'team1';
-            }
-        });
-    }
-
-    setLosersBracketConnections(rounds) {
-        for (let i = 0; i < rounds.length - 1; i++) {
-            const currentRound = rounds[i];
-            const nextRound = rounds[i + 1];
-            
-            currentRound.matches.forEach((match, index) => {
-                if (index < nextRound.matches.length) {
-                    match.nextMatchId = nextRound.matches[index].id;
-                    match.nextMatchSlot = index % 2 === 0 ? 'team1' : 'team2';
-                }
-            });
-        }
-    }
-
-    getRoundName(roundNumber, bracketType) {
-        if (bracketType === 'winners') {
-            const names = ['Первый раунд', 'Второй раунд', 'Четвертьфинал', 'Полуфинал', 'Финал победителей'];
-            return names[roundNumber - 1] || `Раунд ${roundNumber}`;
-        } else {
-            const names = ['Первый раунд', 'Второй раунд', 'Третий раунд', 'Четвертьфинал', 'Полуфинал', 'Финал проигравших'];
-            return names[roundNumber - 1] || `Раунд ${roundNumber}`;
-        }
-    }
-
-    async createBracketMatchesInDB(bracket) {
-        const allMatches = [];
-        
-        // Собираем все матчи из сетки
-        if (bracket.winnersBracket) {
-            bracket.winnersBracket.forEach(round => {
-                if (round.matches) {
-                    round.matches.forEach(match => {
-                        // Очищаем undefined значения
-                        Object.keys(match).forEach(key => {
-                            if (match[key] === undefined) {
-                                match[key] = null;
-                            }
-                        });
-                        allMatches.push(match);
-                    });
-                }
-            });
-        }
-
-        if (bracket.losersBracket) {
-            bracket.losersBracket.forEach(round => {
-                if (round.matches) {
-                    round.matches.forEach(match => {
-                        // Очищаем undefined значения
-                        Object.keys(match).forEach(key => {
-                            if (match[key] === undefined) {
-                                match[key] = null;
-                            }
-                        });
-                        allMatches.push(match);
-                    });
-                }
-            });
-        }
-
-        // Сохраняем в базу
-        for (const match of allMatches) {
-            try {
-                await this.database.ref(`noGroupMatches/${match.id}`).set(match);
-            } catch (error) {
-                console.error(`❌ Ошибка сохранения матча ${match.id}:`, error);
-            }
-        }
-
-        console.log('✅ Создано матчей в сетке:', allMatches.length);
-    }
-
-    async setMatchResult(matchId, score1, score2) {
-        const match = await this.getMatch(matchId);
-        if (!match) return;
-
-        const winnerId = score1 > score2 ? match.team1Id : match.team2Id;
-        const loserId = score1 > score2 ? match.team2Id : match.team1Id;
-
-        // Обновляем матч
-        const updateData = {
-            score1: parseInt(score1),
-            score2: parseInt(score2),
-            winnerId: winnerId,
-            loserId: loserId,
-            status: 'completed',
-            updatedAt: Date.now()
-        };
-
-        await this.database.ref(`noGroupMatches/${matchId}`).update(updateData);
-
-        // Обрабатываем результат в сетке
-        await this.processMatchResult(matchId, winnerId, loserId);
-    }
-
-    async processMatchResult(matchId, winnerId, loserId) {
-        const match = await this.getMatch(matchId);
-        if (!match) return;
-
-        // Получаем данные команды
-        const teams = this.teamsManager.getAllTeams();
-        const winnerTeam = teams[winnerId];
-        const loserTeam = teams[loserId];
-
-        if (match.stage === 'winners_bracket') {
-            // Победитель переходит в следующий матч победителей
-            if (match.nextMatchId) {
-                await this.advanceTeamToNextMatch(winnerId, winnerTeam.name, match.nextMatchId, match.nextMatchSlot);
-            }
-
-            // Проигравший переходит в сетку проигравших
-            await this.advanceToLosersBracket(loserId, loserTeam.name, match.bracketRound);
-        } else if (match.stage === 'losers_bracket') {
-            // Победитель переходит в следующий матч проигравших
-            if (match.nextMatchId) {
-                await this.advanceTeamToNextMatch(winnerId, winnerTeam.name, match.nextMatchId, match.nextMatchSlot);
-            }
-
-            // Проигравший выбывает
-            console.log(`Команда ${loserTeam.name} выбыла из турнира`);
-        }
-
-        // Проверяем условия для гранд-финала
-        await this.checkGrandFinalConditions();
-    }
-
-    async advanceTeamToNextMatch(teamId, teamName, nextMatchId, slot) {
-        const nextMatch = await this.getMatch(nextMatchId);
-        if (!nextMatch) return;
-
-        const updateData = {};
-        if (slot === 'team1') {
-            updateData.team1Id = teamId;
-            updateData.team1Name = teamName;
-        } else {
-            updateData.team2Id = teamId;
-            updateData.team2Name = teamName;
-        }
-
-        // Если обе команды определены, меняем статус матча
-        if ((updateData.team1Id && nextMatch.team2Id) || (updateData.team2Id && nextMatch.team1Id)) {
-            updateData.status = 'upcoming';
-        }
-
-        await this.database.ref(`noGroupMatches/${nextMatchId}`).update(updateData);
-    }
-
-    async advanceToLosersBracket(teamId, teamName, winnersRound) {
-        // Определяем соответствующий раунд в сетке проигравших
-        const losersRound = this.calculateLosersRound(winnersRound);
-        const targetMatch = await this.findAvailableLosersMatch(losersRound);
-        
-        if (targetMatch) {
-            await this.advanceTeamToNextMatch(teamId, teamName, targetMatch.id, 'team1');
-        }
-    }
-
-    calculateLosersRound(winnersRound) {
-        // Проигравшие в 1 раунде победителей → 1 раунд проигравших
-        // Проигравшие в 2 раунде победителей → 2 раунд проигравших и т.д.
-        return winnersRound;
-    }
-
-    async findAvailableLosersMatch(roundNumber) {
-        const allMatches = await this.getAllMatches();
-        const losersMatches = Object.values(allMatches).filter(match => 
-            match.stage === 'losers_bracket' && 
-            match.bracketRound === roundNumber
-        );
-
-        // Ищем матч с пустым слотом
-        for (const match of losersMatches) {
-            if (!match.team1Id || !match.team2Id) {
-                return match;
-            }
-        }
-
-        return null;
-    }
-
-    async checkGrandFinalConditions() {
-        // Проверяем, готовы ли команды для гранд-финала
-        const winnersFinal = await this.getWinnersFinal();
-        const losersFinal = await this.getLosersFinal();
-
-        if (winnersFinal?.winnerId && losersFinal?.winnerId) {
-            await this.createGrandFinal(winnersFinal.winnerId, losersFinal.winnerId);
-        }
-    }
-
-    async getWinnersFinal() {
-        const allMatches = await this.getAllMatches();
-        return Object.values(allMatches).find(match => 
-            match.stage === 'winners_bracket' && 
-            match.bracketName === 'Финал победителей'
-        );
-    }
-
-    async getLosersFinal() {
-        const allMatches = await this.getAllMatches();
-        return Object.values(allMatches).find(match => 
-            match.stage === 'losers_bracket' && 
-            match.bracketName === 'Финал проигравших'
-        );
-    }
-
-    async createGrandFinal(winnersId, losersId) {
-        const teams = this.teamsManager.getAllTeams();
-        const winnersTeam = teams[winnersId];
-        const losersTeam = teams[losersId];
-
-        const grandFinal = {
-            id: 'grand_final',
-            team1Id: winnersId,
-            team2Id: losersId,
-            team1Name: winnersTeam.name,
-            team2Name: losersTeam.name,
-            stage: 'grand_final',
-            bracketName: 'Гранд-финал',
-            score1: 0,
-            score2: 0,
-            bestOf: this.bracket?.bestOf || 1,
-            status: 'upcoming',
-            createdAt: Date.now()
-        };
-
-        await this.database.ref('noGroupMatches/grand_final').set(grandFinal);
-        console.log('✅ Создан гранд-финал:', grandFinal);
-    }
-
-    async getMatch(matchId) {
-        const snapshot = await this.database.ref(`noGroupMatches/${matchId}`).once('value');
-        return snapshot.val();
-    }
-
-    async getAllMatches() {
-        const snapshot = await this.database.ref('noGroupMatches').once('value');
-        return snapshot.val() || {};
-    }
-
-    updateBracketUI() {
-        this.updatePlayoffGrid();
-        this.updateScheduleLists();
-    }
-
-    updatePlayoffGrid() {
-        const container = document.getElementById('playoffGridContent');
-        if (!container) return;
-
-        if (!this.bracket) {
-            container.innerHTML = '<div class="no-data">Сетка турнира не сгенерирована</div>';
-            return;
-        }
-
-        container.innerHTML = this.createBracketHTML();
-    }
-
-   createBracketHTML() {
-    if (!this.bracket) {
-        return '<div class="no-data">Сетка турнира не сгенерирована</div>';
-    }
-
-    return `
-        <div class="double-elimination-bracket">
-            <!-- Сетка победителей -->
-            <div class="bracket-section">
-                <div class="bracket-section-header">
-                    <h3>🏆 Верхняя сетка</h3>
-                </div>
-                <div class="bracket-rounds-container">
-                    ${this.bracket.winnersBracket.map(round => this.createRoundHTML(round, 'winners')).join('')}
-                </div>
-            </div>
-            
-            <!-- Сетка проигравших -->
-            <div class="bracket-section">
-                <div class="bracket-section-header">
-                    <h3>⚡ Нижняя сетка</h3>
-                </div>
-                <div class="bracket-rounds-container losers-rounds-container">
-                    ${this.bracket.losersBracket.map(round => this.createRoundHTML(round, 'losers')).join('')}
-                </div>
-            </div>
-            
-            <!-- Финальные матчи -->
-            <div class="bracket-section final-section">
-                <div class="final-rounds-container">
-                    ${this.createThirdPlaceHTML()}
-                    ${this.createGrandFinalHTML()}
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-   createRoundHTML(round, bracketType) {
-    if (!round.matches || round.matches.length === 0) {
-        return '';
-    }
-
-    return `
-        <div class="bracket-round ${bracketType}-round">
-            <h4>${round.name}</h4>
-            <div class="round-matches">
-                ${round.matches.map(match => this.createMatchHTML(match)).join('')}
-            </div>
-        </div>
-    `;
-}
-
- createMatchHTML(match) {
-    const isCompleted = match.status === 'completed';
-    const team1Class = match.winnerId === match.team1Id ? 'winner' : '';
-    const team2Class = match.winnerId === match.team2Id ? 'winner' : '';
-    
-    return `
-        <div class="bracket-match ${match.status}" data-match-id="${match.id}">
-            <div class="match-teams">
-                <div class="team-slot ${team1Class}">
-                    ${match.team1Name || 'TBD'}
-                </div>
-                <div class="team-slot ${team2Class}">
-                    ${match.team2Name || 'TBD'}
-                </div>
-            </div>
-            ${isCompleted ? `
-                <div class="match-score">${match.score1 || 0} : ${match.score2 || 0}</div>
-            ` : ''}
-            <div class="match-status">${this.getStatusText(match.status)}</div>
-        </div>
-    `;
-}
-
- createGrandFinalHTML() {
-    const grandFinal = this.bracket.grandFinal;
-    
-    if (grandFinal) {
-        const isCompleted = grandFinal.status === 'completed';
-        const team1Class = grandFinal.winnerId === grandFinal.team1Id ? 'winner' : '';
-        const team2Class = grandFinal.winnerId === grandFinal.team2Id ? 'winner' : '';
-        
-        return `
-            <div class="final-match grand-final">
-                <h4>🏆 Гранд-финал</h4>
-                <div class="match-teams">
-                    <div class="team-slot ${team1Class}">
-                        ${grandFinal.team1Name || 'Победитель верхней сетки'}
-                    </div>
-                    <div class="team-slot ${team2Class}">
-                        ${grandFinal.team2Name || 'Победитель нижней сетки'}
-                    </div>
-                </div>
-                ${isCompleted ? `
-                    <div class="match-score">${grandFinal.score1 || 0} : ${grandFinal.score2 || 0}</div>
-                ` : ''}
-                <div class="match-status">${this.getStatusText(grandFinal.status)}</div>
-            </div>
-        `;
-    }
-    
-    return `
-        <div class="final-match grand-final">
-            <h4>🏆 Гранд-финал</h4>
-            <div class="match-teams">
-                <div class="team-slot">Победитель верхней сетки</div>
-                <div class="team-slot">Победитель нижней сетки</div>
-            </div>
-            <div class="match-status">⏳ Ожидается</div>
-        </div>
-    `;
-}
-
- createThirdPlaceHTML() {
-    const thirdPlace = this.bracket.thirdPlaceMatch;
-    
-    if (thirdPlace) {
-        const isCompleted = thirdPlace.status === 'completed';
-        const team1Class = thirdPlace.winnerId === thirdPlace.team1Id ? 'winner' : '';
-        const team2Class = thirdPlace.winnerId === thirdPlace.team2Id ? 'winner' : '';
-        
-        return `
-            <div class="final-match third-place">
-                <h4>🥉 Матч за 3 место</h4>
-                <div class="match-teams">
-                    <div class="team-slot ${team1Class}">
-                        ${thirdPlace.team1Name || 'TBD'}
-                    </div>
-                    <div class="team-slot ${team2Class}">
-                        ${thirdPlace.team2Name || 'TBD'}
-                    </div>
-                </div>
-                ${isCompleted ? `
-                    <div class="match-score">${thirdPlace.score1 || 0} : ${thirdPlace.score2 || 0}</div>
-                ` : ''}
-                <div class="match-status">${this.getStatusText(thirdPlace.status)}</div>
-            </div>
-        `;
-    }
-    
-    return `
-        <div class="final-match third-place">
-            <h4>🥉 Матч за 3 место</h4>
-            <div class="match-teams">
-                <div class="team-slot">Проигравший в полуфинале</div>
-                <div class="team-slot">Финалист нижней сетки</div>
-            </div>
-            <div class="match-status">⏳ Ожидается</div>
-        </div>
-    `;
-}
-
-    getStatusText(status) {
-        const statusMap = {
-            'upcoming': '⏳ Ожидается',
-            'completed': '✅ Завершен',
-            'team1_walkover': '🚶‍♂️ Автопобеда',
-            'team2_walkover': '🚶‍♂️ Автопобеда',
-            'in_progress': '🎯 В процессе'
-        };
-        return statusMap[status] || status;
-    }
-
-    updateScheduleLists() {
-        // Обновление расписания будет обрабатываться MatchManager
-        if (matchManager && matchManager.updateNoGroupScheduleLists) {
-            matchManager.updateNoGroupScheduleLists();
-        }
-    }
-}
-
 // === МЕНЕДЖЕР ФОРМАТА ТУРНИРА (ПОЛНОСТЬЮ ОБНОВЛЕННЫЙ) ===
 class TournamentFormatManager {
     constructor(database) {
         this.database = database;
         this.currentFormat = 'with_groups';
         this.groupStages = ['group', 'third_place', 'grand_final'];
-        this.noGroupStages = ['quarter_final', 'semi_final', 'lower_bracket', 'grand_final'];
+        this.noGroupStages = [
+            'winners_round_1', 'winners_round_2', 'winners_round_3', 'winners_final',
+            'losers_round_1', 'losers_round_2', 'losers_round_3', 'losers_final',
+            'grand_final', 'third_place'
+        ];
     }
 
     async initialize() {
@@ -828,9 +120,16 @@ class TournamentFormatManager {
             `;
         } else {
             return `
-                <option value="winners_bracket">Сетка победителей</option>
-                <option value="losers_bracket">Сетка проигравших</option>
-                <option value="grand_final">Гранд финал</option>
+                <option value="winners_round_1">Winners Round 1</option>
+                <option value="winners_round_2">Winners Round 2</option>
+                <option value="winners_round_3">Winners Round 3</option>
+                <option value="winners_final">Winners Final</option>
+                <option value="losers_round_1">Losers Round 1</option>
+                <option value="losers_round_2">Losers Round 2</option>
+                <option value="losers_round_3">Losers Round 3</option>
+                <option value="losers_final">Losers Final</option>
+                <option value="grand_final">Grand Final</option>
+                <option value="third_place">Матч за 3 место</option>
             `;
         }
     }
@@ -871,11 +170,14 @@ class TournamentFormatManager {
             'group': 'Групповой этап',
             'third_place': 'Матч за 3 место',
             'grand_final': 'Гранд финал',
-            'quarter_final': 'Четвертьфинал',
-            'semi_final': 'Полуфинал',
-            'lower_bracket': 'Нижняя сетка',
-            'winners_bracket': 'Сетка победителей',
-            'losers_bracket': 'Сетка проигравших'
+            'winners_round_1': 'Winners Round 1',
+            'winners_round_2': 'Winners Round 2', 
+            'winners_round_3': 'Winners Round 3',
+            'winners_final': 'Winners Final',
+            'losers_round_1': 'Losers Round 1',
+            'losers_round_2': 'Losers Round 2',
+            'losers_round_3': 'Losers Round 3',
+            'losers_final': 'Losers Final'
         };
         return stages[stage] || stage;
     }
@@ -1199,21 +501,16 @@ class TeamsManager {
     }
 }
 
-// === ОБНОВЛЕННЫЙ МЕНЕДЖЕР МАТЧЕЙ С ДВОЙНЫМ ВЫБЫВАНИЕМ ===
+// === ОБНОВЛЕННЫЙ МЕНЕДЖЕР МАТЧЕЙ С DOUBLE ELIMINATION ===
 class MatchManager {
     constructor(database) {
         this.database = database;
         this.matches = {};
         this.noGroupMatches = {};
-        this.doubleElimination = null;
     }
 
     async initialize() {
         await this.setupMatchListeners();
-        
-        // Инициализируем систему двойного выбывания
-        this.doubleElimination = new DoubleEliminationSystem(this.database, teamsManager);
-        await this.doubleElimination.initialize();
     }
 
     async setupMatchListeners() {
@@ -1243,19 +540,9 @@ class MatchManager {
             this.updatePlayoffMatches();
             this.updateScheduleLists();
         } else {
-            this.updateDoubleEliminationUI();
             this.updateNoGroupScheduleLists();
+            this.updateDoubleEliminationBracket();
         }
-    }
-
-    updateDoubleEliminationUI() {
-        // Обновляем сетку двойного выбывания
-        if (this.doubleElimination) {
-            this.doubleElimination.updateBracketUI();
-        }
-        
-        // Обновляем расписание
-        this.updateNoGroupScheduleLists();
     }
 
     getCurrentMatches() {
@@ -1271,11 +558,11 @@ class MatchManager {
 
         const matches = this.noGroupMatches;
         const upcoming = Object.entries(matches)
-            .filter(([matchId, match]) => !this.isMatchCompleted(match) && match.status !== 'completed')
+            .filter(([matchId, match]) => !this.isMatchCompleted(match))
             .sort(([, a], [, b]) => (a.timestamp || 0) - (b.timestamp || 0));
 
         const completed = Object.entries(matches)
-            .filter(([matchId, match]) => this.isMatchCompleted(match) || match.status === 'completed')
+            .filter(([matchId, match]) => this.isMatchCompleted(match))
             .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
 
         upcomingContainer.innerHTML = upcoming.map(([matchId, match]) => 
@@ -1287,32 +574,52 @@ class MatchManager {
         ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
     }
 
-    updatePlayoffGrid() {
+    updateDoubleEliminationBracket() {
         const container = document.getElementById('playoffGridContent');
         if (!container) return;
 
         const matches = this.noGroupMatches;
-        const stages = {
-            'quarter_final': 'Четвертьфинал',
-            'semi_final': 'Полуфинал', 
-            'lower_bracket': 'Нижняя сетка',
-            'grand_final': 'Гранд финал'
+        
+        // Группируем матчи по этапам Double Elimination
+        const winnersBracket = {
+            'winners_round_1': 'Winners Round 1',
+            'winners_round_2': 'Winners Round 2',
+            'winners_round_3': 'Winners Round 3', 
+            'winners_final': 'Winners Final'
         };
 
-        let content = '';
-        
-        Object.entries(stages).forEach(([stageKey, stageName]) => {
+        const losersBracket = {
+            'losers_round_1': 'Losers Round 1',
+            'losers_round_2': 'Losers Round 2',
+            'losers_round_3': 'Losers Round 3',
+            'losers_final': 'Losers Final'
+        };
+
+        const finals = {
+            'grand_final': 'Grand Final',
+            'third_place': 'Match for 3rd Place'
+        };
+
+        let content = `
+            <div class="double-elimination-container">
+                <div class="brackets-section">
+                    <div class="winners-bracket">
+                        <h3>🏆 Winners Bracket</h3>
+        `;
+
+        // Winners Bracket
+        Object.entries(winnersBracket).forEach(([stageKey, stageName]) => {
             const stageMatches = Object.entries(matches)
                 .filter(([matchId, match]) => match.stage === stageKey)
                 .sort(([, a], [, b]) => (a.timestamp || 0) - (b.timestamp || 0));
 
             if (stageMatches.length > 0) {
                 content += `
-                    <div class="playoff-stage-section">
-                        <h3>${stageName}</h3>
-                        <div class="playoff-stage-matches">
+                    <div class="bracket-stage">
+                        <h4>${stageName}</h4>
+                        <div class="stage-matches">
                             ${stageMatches.map(([matchId, match]) => 
-                                this.createPlayoffGridMatchCard(match, matchId)
+                                this.createDoubleEliminationMatchCard(match, matchId, 'winners')
                             ).join('')}
                         </div>
                     </div>
@@ -1320,41 +627,190 @@ class MatchManager {
             }
         });
 
+        content += `
+                    </div>
+                    
+                    <div class="losers-bracket">
+                        <h3>💀 Losers Bracket</h3>
+        `;
+
+        // Losers Bracket
+        Object.entries(losersBracket).forEach(([stageKey, stageName]) => {
+            const stageMatches = Object.entries(matches)
+                .filter(([matchId, match]) => match.stage === stageKey)
+                .sort(([, a], [, b]) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            if (stageMatches.length > 0) {
+                content += `
+                    <div class="bracket-stage">
+                        <h4>${stageName}</h4>
+                        <div class="stage-matches">
+                            ${stageMatches.map(([matchId, match]) => 
+                                this.createDoubleEliminationMatchCard(match, matchId, 'losers')
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        content += `
+                    </div>
+                </div>
+                
+                <div class="finals-section">
+                    <h3>🎯 Finals</h3>
+        `;
+
+        // Finals
+        Object.entries(finals).forEach(([stageKey, stageName]) => {
+            const stageMatches = Object.entries(matches)
+                .filter(([matchId, match]) => match.stage === stageKey)
+                .sort(([, a], [, b]) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            if (stageMatches.length > 0) {
+                content += `
+                    <div class="final-stage">
+                        <h4>${stageName}</h4>
+                        <div class="stage-matches">
+                            ${stageMatches.map(([matchId, match]) => 
+                                this.createDoubleEliminationMatchCard(match, matchId, 'final')
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        content += `
+                </div>
+            </div>
+        `;
+
         container.innerHTML = content || '<div class="no-data">Нет данных о матчах плей-офф</div>';
     }
 
-    createPlayoffGridMatchCard(match, matchId) {
+    createDoubleEliminationMatchCard(match, matchId, bracketType) {
         const isCompleted = this.isMatchCompleted(match);
         const winner = this.getMatchWinner(match);
         const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
         const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
         
+        let bracketClass = '';
+        if (bracketType === 'winners') bracketClass = 'winners-match';
+        else if (bracketType === 'losers') bracketClass = 'losers-match';
+        else if (bracketType === 'final') bracketClass = 'final-match';
+        
         return `
-            <div class="playoff-grid-match" data-match-id="${matchId}">
-                <div class="playoff-grid-teams">
-                    <div class="playoff-grid-team ${team1Class}">
+            <div class="double-elimination-match ${bracketClass}" data-match-id="${matchId}">
+                <div class="match-teams">
+                    <div class="team-name ${team1Class}">
                         ${match.team1Name}
                     </div>
-                    <div class="playoff-grid-vs">
+                    <div class="vs">
                         ${isCompleted ? 
-                            `<div class="playoff-grid-score">${match.score1 || 0}:${match.score2 || 0}</div>` : 
-                            '<div class="playoff-grid-vs-text">VS</div>'
+                            `<div class="match-score">${match.score1 || 0}:${match.score2 || 0}</div>` : 
+                            '<div class="vs-text">VS</div>'
                         }
                     </div>
-                    <div class="playoff-grid-team ${team2Class}">
+                    <div class="team-name ${team2Class}">
                         ${match.team2Name}
                     </div>
                 </div>
-                <div class="playoff-grid-info">
-                    <span class="playoff-grid-time">${match.time || 'Время не указано'}</span>
-                    <span class="playoff-grid-format">${this.getFormatName(match.format)}</span>
+                <div class="match-info">
+                    <span class="match-time">${match.time || 'Время не указано'}</span>
+                    <span class="match-format">${this.getFormatName(match.format)}</span>
                 </div>
                 ${isCompleted ? 
-                    '<div class="playoff-grid-status completed">✅ Завершен</div>' : 
-                    '<div class="playoff-grid-status upcoming">⏳ Ожидается</div>'
+                    '<div class="match-status completed">✅ Завершен</div>' : 
+                    '<div class="match-status upcoming">⏳ Ожидается</div>'
                 }
             </div>
         `;
+    }
+
+    // Автоматическое создание Double Elimination сетки для 8 команд
+    async createDoubleEliminationBracket() {
+        const teams = teamsManager.getAllTeams();
+        const teamIds = Object.keys(teams);
+        
+        if (teamIds.length !== 8) {
+            alert('❌ Для создания Double Elimination сетки требуется 8 команд');
+            return;
+        }
+
+        // Удаляем существующие матчи без группы
+        try {
+            await this.database.ref('noGroupMatches').remove();
+            this.noGroupMatches = {};
+        } catch (error) {
+            console.error('❌ Ошибка очистки старых матчей:', error);
+        }
+
+        const bracketMatches = [
+            // Winners Round 1 (4 матча)
+            { stage: 'winners_round_1', team1: 0, team2: 1, format: 'bo3' },
+            { stage: 'winners_round_1', team1: 2, team2: 3, format: 'bo3' },
+            { stage: 'winners_round_1', team1: 4, team2: 5, format: 'bo3' },
+            { stage: 'winners_round_1', team1: 6, team2: 7, format: 'bo3' },
+            
+            // Winners Round 2 (2 матча)
+            { stage: 'winners_round_2', team1: 'winner_wr1_1', team2: 'winner_wr1_2', format: 'bo3' },
+            { stage: 'winners_round_2', team1: 'winner_wr1_3', team2: 'winner_wr1_4', format: 'bo3' },
+            
+            // Winners Round 3 (1 матч)
+            { stage: 'winners_round_3', team1: 'winner_wr2_1', team2: 'winner_wr2_2', format: 'bo3' },
+            
+            // Losers Round 1 (4 матча)
+            { stage: 'losers_round_1', team1: 'loser_wr1_1', team2: 'loser_wr1_2', format: 'bo3' },
+            { stage: 'losers_round_1', team1: 'loser_wr1_3', team2: 'loser_wr1_4', format: 'bo3' },
+            
+            // Losers Round 2 (2 матча)
+            { stage: 'losers_round_2', team1: 'loser_wr2_1', team2: 'winner_lr1_1', format: 'bo3' },
+            { stage: 'losers_round_2', team1: 'loser_wr2_2', team2: 'winner_lr1_2', format: 'bo3' },
+            
+            // Losers Round 3 (1 матч)
+            { stage: 'losers_round_3', team1: 'winner_lr2_1', team2: 'winner_lr2_2', format: 'bo3' },
+            
+            // Winners Final
+            { stage: 'winners_final', team1: 'winner_wr3_1', team2: 'winner_lr3_1', format: 'bo5' },
+            
+            // Losers Final
+            { stage: 'losers_final', team1: 'loser_wf_1', team2: 'winner_lr3_1', format: 'bo5' },
+            
+            // Grand Final
+            { stage: 'grand_final', team1: 'winner_wf_1', team2: 'winner_lf_1', format: 'bo5' },
+            
+            // Match for 3rd Place
+            { stage: 'third_place', team1: 'loser_wf_1', team2: 'loser_lf_1', format: 'bo3' }
+        ];
+
+        // Создаем только первые 4 матча (Winners Round 1)
+        const baseTime = Date.now();
+        for (let i = 0; i < 4; i++) {
+            const matchTemplate = bracketMatches[i];
+            const team1Id = teamIds[matchTemplate.team1];
+            const team2Id = teamIds[matchTemplate.team2];
+            
+            const matchData = {
+                team1Id: team1Id,
+                team2Id: team2Id,
+                team1Name: teams[team1Id].name,
+                team2Name: teams[team2Id].name,
+                time: new Date(baseTime + (i * 2 * 60 * 60 * 1000)).toLocaleString('ru-RU'),
+                timestamp: baseTime + (i * 2 * 60 * 60 * 1000),
+                stage: matchTemplate.stage,
+                format: matchTemplate.format,
+                score1: 0,
+                score2: 0,
+                createdAt: Date.now()
+            };
+            
+            await this.createMatch(matchData);
+        }
+
+        alert('✅ Double Elimination сетка создана! Добавлены матчи Winners Round 1');
+        this.updateDoubleEliminationBracket();
     }
 
     isMatchCompleted(match) {
@@ -1679,14 +1135,10 @@ class MatchManager {
             matchClass += ' grand-final';
         } else if (match.stage === 'third_place') {
             matchClass += ' third-place';
-        } else if (match.stage === 'quarter_final' || match.stage === 'semi_final') {
+        } else if (match.stage === 'winners_round_1' || match.stage === 'winners_round_2' || match.stage === 'winners_round_3' || match.stage === 'winners_final') {
             matchClass += ' playoff-stage';
-        } else if (match.stage === 'lower_bracket') {
+        } else if (match.stage === 'losers_round_1' || match.stage === 'losers_round_2' || match.stage === 'losers_round_3' || match.stage === 'losers_final') {
             matchClass += ' lower-bracket';
-        } else if (match.stage === 'winners_bracket') {
-            matchClass += ' winners-bracket';
-        } else if (match.stage === 'losers_bracket') {
-            matchClass += ' losers-bracket';
         } else {
             matchClass += ' group-stage';
         }
@@ -3092,7 +2544,7 @@ function closeAddMatchModal() {
 // ОБНОВЛЕННАЯ ФУНКЦИЯ НАСТРОЙКИ РЕДАКТИРОВАНИЯ МАТЧЕЙ
 function setupMatchEditing() {
     document.addEventListener('click', (e) => {
-        const matchCard = e.target.closest('.match-card, .playoff-grid-match, .bracket-match');
+        const matchCard = e.target.closest('.match-card, .double-elimination-match');
         if (matchCard) {
             const matchId = matchCard.getAttribute('data-match-id');
             if (matchId) {
@@ -3140,7 +2592,19 @@ function updateConnectionStatus(connected) {
     }
 }
 
-// === ОБНОВЛЕННАЯ ИНИЦИАЛИЗАЦИЯ ===
+// ФУНКЦИЯ ДЛЯ СОЗДАНИЯ DOUBLE ELIMINATION СЕТКИ
+window.createDoubleEliminationBracket = function() {
+    if (!securityManager || !securityManager.isAuthenticated) {
+        securityManager.showAuthModal();
+        return;
+    }
+    
+    if (matchManager && matchManager.createDoubleEliminationBracket) {
+        matchManager.createDoubleEliminationBracket();
+    }
+};
+
+// ОБНОВЛЕННАЯ ИНИЦИАЛИЗАЦИЯ
 async function initializeApp() {
     try {
         console.log('🚀 Инициализация Tournament App...');
@@ -3192,7 +2656,7 @@ function setupDeleteTeamHandler() {
     }
 }
 
-// === ОБНОВЛЕННАЯ ФУНКЦИЯ НАСТРОЙКИ ОБРАБОТЧИКОВ ===
+// ОБНОВЛЕННАЯ ФУНКЦИЯ НАСТРОЙКИ ОБРАБОТЧИКОВ
 function setupEventListeners() {
     console.log('🔧 Настройка основных обработчиков событий...');
     
@@ -3378,78 +2842,10 @@ function setupEventListeners() {
         });
     }
     
-    // ОБНОВЛЕННЫЕ ОБРАБОТЧИКИ ДЛЯ СИСТЕМЫ ДВОЙНОГО ВЫБЫВАНИЯ
-    const generateBracketBtn = document.getElementById('generateBracketBtn');
-    const resetBracketBtn = document.getElementById('resetBracketBtn');
-    
-    if (generateBracketBtn) {
-        generateBracketBtn.addEventListener('click', async () => {
-            if (!securityManager || !securityManager.isAuthenticated) {
-                securityManager.showAuthModal();
-                return;
-            }
-
-            const bestOf = parseInt(document.getElementById('bracketBestOf').value) || 1;
-            const teams = teamsManager.getAllTeams();
-            
-            console.log('🔍 Доступные команды для сетки:', teams);
-            
-            // Детальная проверка команд
-            const validTeams = Object.entries(teams).filter(([id, team]) => {
-                const isValid = team && team.name && id;
-                if (!isValid) {
-                    console.warn('❌ Невалидная команда:', id, team);
-                }
-                return isValid;
-            });
-            
-            console.log('✅ Валидные команды:', validTeams.length);
-            
-            if (validTeams.length < 2) {
-                alert('❌ Недостаточно валидных команд для создания сетки. Необходимо как минимум 2 команды с названиями.');
-                return;
-            }
-
-            try {
-                console.log('🚀 Начинаем создание сетки...');
-                const bracket = await matchManager.doubleElimination.generateBracket(teams, bestOf);
-                if (bracket) {
-                    alert('✅ Сетка двойного выбывания успешно создана!');
-                    console.log('🎉 Сетка создана:', bracket);
-                } else {
-                    alert('❌ Не удалось создать сетку');
-                }
-            } catch (error) {
-                console.error('❌ Критическая ошибка создания сетки:', error);
-                alert('❌ Ошибка создания сетки: ' + error.message);
-            }
-        });
-    }
-
-    if (resetBracketBtn) {
-        resetBracketBtn.addEventListener('click', async () => {
-            if (!confirm('❌ Вы уверены, что хотите сбросить всю сетку? Все данные матчей будут удалены.')) {
-                return;
-            }
-
-            try {
-                await database.ref('doubleEliminationBracket').remove();
-                // Удаляем все матчи сетки
-                const matchesSnapshot = await database.ref('noGroupMatches').once('value');
-                const matches = matchesSnapshot.val() || {};
-                
-                for (const matchId of Object.keys(matches)) {
-                    if (matchId.includes('winners_') || matchId.includes('losers_')) {
-                        await database.ref(`noGroupMatches/${matchId}`).remove();
-                    }
-                }
-                
-                alert('✅ Сетка успешно сброшена!');
-            } catch (error) {
-                console.error('❌ Ошибка сброса сетки:', error);
-                alert('❌ Ошибка сброса сетки');
-            }
-        });
+    // Обработчик для создания Double Elimination сетки
+    const createDoubleEliminationBtn = document.getElementById('createDoubleEliminationBtn');
+    if (createDoubleEliminationBtn) {
+        createDoubleEliminationBtn.addEventListener('click', window.createDoubleEliminationBracket);
     }
     
     document.addEventListener('click', (event) => {

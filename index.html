@@ -78,7 +78,7 @@
                 <div class="nav-item no-group-format-item hidden">
                     <button class="nav-btn playoff-btn" id="playoffGridBtn">
                         <span class="btn-icon">📊</span>
-                        Сетка Плей-офф
+                        Double Elimination
                     </button>
                 </div>
 
@@ -208,14 +208,14 @@
                     </div>
                 </div>
 
-                <!-- Сетка плей-офф для формата без группы -->
+                <!-- Double Elimination сетка для формата без группы -->
                 <div id="playoffGridContent" class="content-section hidden">
                     <div class="section-header">
-                        <h2>Сетка Плей-офф</h2>
-                        <p>Турнирная сетка двойного выбывания</p>
+                        <h2>Double Elimination Bracket</h2>
+                        <p>Турнирная сетка с системой двойного выбывания</p>
                     </div>
                     <div class="playoff-grid-container">
-                        <!-- Сетка плей-офф будет загружаться динамически -->
+                        <!-- Double Elimination сетка будет загружаться динамически -->
                     </div>
                 </div>
             </div>
@@ -356,7 +356,6 @@
                 <button class="tab-btn group-format-item" data-tab="scheduleTab">Расписание</button>
                 <button class="tab-btn no-group-format-item hidden" data-tab="rpofTab">РПОФ</button>
                 <button class="tab-btn group-format-item" data-tab="groupStageTab">Групповой этап</button>
-                <button class="tab-btn" data-tab="doubleEliminationTab">Двойное выбывание</button>
                 <button class="tab-btn" data-tab="audienceAwardTab">Редактирование ПриЗ</button>
                 <button class="tab-btn" data-tab="settingsTab">Настройки</button>
                 <button class="tab-btn" data-tab="accessTab">Доступы</button>
@@ -391,23 +390,30 @@
 
                 <!-- Вкладка РПОФ (Редактирование Плей-ОФФ) -->
                 <div id="rpofTab" class="tab-pane">
-                    <h3>🎯 Редактирование Плей-ОФФ (РПОФ)</h3>
+                    <h3>🎯 Double Elimination Bracket</h3>
+                    
+                    <div class="double-elimination-controls">
+                        <div class="form-group">
+                            <button id="createDoubleEliminationBtn" class="save-btn">
+                                🎯 Создать Double Elimination сетку (8 команд)
+                            </button>
+                            <div class="format-info">
+                                <p><strong>Double Elimination Logic:</strong></p>
+                                <p>• 🏆 Winners Bracket - Победители продолжают в верхней сетке</p>
+                                <p>• 💀 Losers Bracket - Проигравшие получают второй шанс</p>
+                                <p>• 🎯 Grand Final - Победители обеих сеток встречаются в финале</p>
+                                <p>• 🥉 Match for 3rd Place - Бой за третье место</p>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="schedule-settings-header">
-                        <h4>Матчи плей-офф</h4>
-                        <button id="addRPOFMatchBtn" class="add-btn">➕ Добавить матч плей-офф</button>
+                        <h4>Матчи Double Elimination</h4>
+                        <button id="addRPOFMatchBtn" class="add-btn">➕ Добавить матч</button>
                     </div>
                     
                     <div class="rpoff-edit-list" id="rpoffEditList">
-                        <!-- Матчи плей-офф будут загружаться динамически -->
-                    </div>
-                    
-                    <div class="format-info">
-                        <p><strong>Доступные этапы плей-офф:</strong></p>
-                        <p>• Четвертьфинал - первые матчи плей-офф</p>
-                        <p>• Полуфинал - матчи за выход в финал</p>
-                        <p>• Нижняя сетка - матчи за выход в гранд-финал</p>
-                        <p>• Гранд финал - финальный матч турнира</p>
+                        <!-- Матчи Double Elimination будут загружаться динамически -->
                     </div>
                 </div>
 
@@ -421,40 +427,6 @@
                     
                     <div class="form-actions">
                         <button id="saveGroupStageBtn" class="save-btn">💾 Сохранить настройки</button>
-                    </div>
-                </div>
-
-                <!-- Вкладка двойного выбывания -->
-                <div id="doubleEliminationTab" class="tab-pane">
-                    <h3>🎯 Управление двойным выбыванием</h3>
-                    
-                    <div class="form-group">
-                        <label>Формат матчей:</label>
-                        <select id="bracketBestOf" class="form-input">
-                            <option value="1">Bo1</option>
-                            <option value="3" selected>Bo3</option>
-                            <option value="5">Bo5</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button id="generateBracketBtn" class="save-btn">🎲 Сгенерировать сетку</button>
-                        <button id="resetBracketBtn" class="cancel-btn">🔄 Сбросить сетку</button>
-                    </div>
-                    
-                    <div class="bracket-info">
-                        <h4>Информация о сетке</h4>
-                        <div id="bracketStatus">
-                            <!-- Статус сетки будет отображаться здесь -->
-                        </div>
-                    </div>
-
-                    <div class="format-info">
-                        <p><strong>Как работает двойное выбывание:</strong></p>
-                        <p>• Команды играют в двух сетках: победителей и проигравших</p>
-                        <p>• Проигравший в сетке победителей переходит в сетку проигравших</p>
-                        <p>• Проигравший в сетке проигравших выбывает из турнира</p>
-                        <p>• Победители сеток встречаются в гранд-финале</p>
                     </div>
                 </div>
 
@@ -494,7 +466,7 @@
                     
                     <div class="format-info">
                         <p><strong>Формат "С группой":</strong> Групповой этап + Плей-офф</p>
-                        <p><strong>Формат "Без группы":</strong> Двойное выбывание</p>
+                        <p><strong>Формат "Без группы":</strong> Double Elimination (Прямой Плей-офф с системой двойного выбывания)</p>
                     </div>
                 </div>
 
