@@ -3305,6 +3305,7 @@ body {
     border-left: 3px solid var(--accent-primary);
     animation: pulseBorder 2s ease-in-out infinite;
 }
+}
 
 @keyframes pulseBorder {
     0%, 100% {
