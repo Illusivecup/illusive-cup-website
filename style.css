@@ -705,6 +705,49 @@ body {
     max-height: 90vh;
 }
 
+/* === СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА РЕДАКТИРОВАНИЯ МАТЧА === */
+#editMatchResultModal .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 500px;
+    max-width: 95%;
+}
+
+#editMatchResultModal .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* Стили для скроллбара */
+#editMatchResultModal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#editMatchResultModal .modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+#editMatchResultModal .modal-body::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+#editMatchResultModal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* Обеспечиваем видимость всех кнопок */
+#editMatchResultModal .form-actions {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    padding: 20px 0 0 0;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-light);
+}
+
 .modal-header {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(33, 150, 243, 0.2));
     padding: 25px;

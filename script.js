@@ -1485,6 +1485,12 @@ function showEditMatchTimeModal(matchId) {
         `;
     }
     
+    // Обновляем обработчик кнопки удаления
+    const deleteMatchBtn = document.getElementById('deleteMatchBtn');
+    if (deleteMatchBtn) {
+        deleteMatchBtn.onclick = () => window.deleteMatch(matchId);
+    }
+    
     appState.currentEditingMatchId = matchId;
     modal.classList.remove('hidden');
 }
@@ -1572,6 +1578,26 @@ async function saveMatchResultWithTime() {
     } catch (error) {
         console.error('❌ Ошибка сохранения результата:', error);
         alert('❌ Ошибка сохранения результата');
+    }
+}
+
+// === ФУНКЦИЯ ДЛЯ УДАЛЕНИЯ МАТЧА ===
+window.deleteMatch = function(matchId) {
+    if (!matchId || !matchManager) return;
+    
+    if (!confirm('❌ Вы уверены, что хотите удалить этот матч? Это действие нельзя отменить.')) {
+        return;
+    }
+    
+    matchManager.deleteMatch(matchId);
+};
+
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ ЗАКРЫТИЯ МОДАЛЬНОГО ОКНА РЕДАКТИРОВАНИЯ МАТЧА ===
+function closeEditMatchResultModal() {
+    const modal = document.getElementById('editMatchResultModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        appState.currentEditingMatchId = null;
     }
 }
 
@@ -2062,14 +2088,6 @@ function setupMatchEditing() {
     });
 }
 
-function closeEditMatchResultModal() {
-    const modal = document.getElementById('editMatchResultModal');
-    if (modal) {
-        modal.classList.add('hidden');
-        appState.currentEditingMatchId = null;
-    }
-}
-
 function updateConnectionStatus(connected) {
     const status = document.getElementById('connectionStatus');
     if (!status) return;
@@ -2225,6 +2243,7 @@ function setupEventListeners() {
     const saveMatchResultBtn = document.getElementById('saveMatchResultBtn');
     const cancelEditMatchResultBtn = document.getElementById('cancelEditMatchResultBtn');
     const closeEditMatchResultModal = document.getElementById('closeEditMatchResultModal');
+    const deleteMatchBtn = document.getElementById('deleteMatchBtn');
     
     if (saveMatchResultBtn) {
         saveMatchResultBtn.addEventListener('click', saveMatchResultWithTime);
@@ -2236,6 +2255,15 @@ function setupEventListeners() {
     
     if (closeEditMatchResultModal) {
         closeEditMatchResultModal.addEventListener('click', closeEditMatchResultModal);
+    }
+    
+    if (deleteMatchBtn) {
+        deleteMatchBtn.addEventListener('click', function() {
+            const matchId = appState.currentEditingMatchId;
+            if (matchId) {
+                window.deleteMatch(matchId);
+            }
+        });
     }
     
     const selectMatchForVote = document.getElementById('selectMatchForVote');
