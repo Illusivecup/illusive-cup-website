@@ -2193,7 +2193,7 @@ function createTeamCard(teamId, team) {
                 </div>
                 <div class="tournament-section-bublas">
                     <div class="tournament-text-bublas">играем на</div>
-                    <div class="tournament-badge-bublas">Illusive Cup</div>
+                    <div class="tournament-badge-bublas">Illusive Cup III</div>
                 </div>
             </div>
         </div>
