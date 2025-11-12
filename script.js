@@ -2675,6 +2675,34 @@ window.updateTeamsCount = async function() {
     }
 };
 
+// Универсальная функция для закрытия модальных окон по клику вне контента
+function setupModalCloseHandlers() {
+    // Закрытие по клику вне контента
+    document.addEventListener('click', (event) => {
+        if (event.target.classList.contains('modal')) {
+            const modalId = event.target.id;
+            if (modalId === 'bracketModal') {
+                closeBracketModal();
+            } else if (modalId === 'rulesModal') {
+                closeRulesModal();
+            } else if (modalId === 'authModal') {
+                securityManager.hideAuthModal();
+            }
+            // Добавьте другие модальные окна по необходимости
+        }
+    });
+
+    // Закрытие по Escape
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            if (!document.getElementById('bracketModal').classList.contains('hidden')) {
+                closeBracketModal();
+            }
+            // Добавьте проверки для других модальных окон
+        }
+    });
+}
+
 // ОБНОВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ МАТЧА
 function showAddMatchModal() {
     if (!securityManager || !securityManager.isAuthenticated) {
@@ -2695,6 +2723,315 @@ function showAddMatchModal() {
     }
     
     modal.classList.remove('hidden');
+}
+
+// ==================== СИСТЕМА НАГЛЯДНОЙ СЕТКИ ====================
+
+let bracketLink = '';
+
+// Главная функция инициализации системы сетки
+async function initBracketSystem() {
+    try {
+        console.log('🎯 Инициализация системы наглядной сетки...');
+        await loadBracketLink();
+        setupBracketButton();
+        setupBracketAdmin();
+        console.log('✅ Система наглядной сетки инициализирована');
+    } catch (error) {
+        console.error('❌ Ошибка инициализации системы сетки:', error);
+    }
+}
+// Загрузка ссылки из Firebase (исправленная версия)
+async function loadBracketLink() {
+    return new Promise((resolve, reject) => {
+        // Используем Compat версию Firebase
+        const bracketRef = database.ref('tournament/bracketLink');
+        bracketRef.on('value', (snapshot) => {
+            const link = snapshot.val();
+            if (link && isValidUrl(link)) {
+                bracketLink = link;
+                console.log('🎯 Загружена ссылка на сетку:', bracketLink);
+                showBracketButton();
+                updateBracketStatus(true, link);
+            } else {
+                bracketLink = '';
+                console.log('🎯 Ссылка на сетку не установлена');
+                hideBracketButton();
+                updateBracketStatus(false, '');
+            }
+            resolve();
+        }, (error) => {
+            console.error('❌ Ошибка загрузки ссылки на сетку:', error);
+            bracketLink = '';
+            hideBracketButton();
+            updateBracketStatus(false, '');
+            reject(error);
+        });
+    });
+}
+
+// Показать кнопку сетки
+function showBracketButton() {
+    const bracketNavItem = document.getElementById('bracketNavItem');
+    if (bracketNavItem) {
+        bracketNavItem.style.display = 'block';
+        setTimeout(() => {
+            bracketNavItem.style.opacity = '0';
+            bracketNavItem.style.transition = 'opacity 0.5s ease';
+            bracketNavItem.style.opacity = '1';
+        }, 100);
+    }
+}
+
+// Скрыть кнопку сетки
+function hideBracketButton() {
+    const bracketNavItem = document.getElementById('bracketNavItem');
+    if (bracketNavItem) {
+        bracketNavItem.style.display = 'none';
+    }
+}
+
+// Обновить статус в админке
+function updateBracketStatus(isActive, link) {
+    const statusElement = document.getElementById('bracketStatus');
+    const statusText = document.getElementById('bracketStatusText');
+    const currentLink = document.getElementById('currentBracketLink');
+    
+    if (statusElement && statusText && currentLink) {
+        if (isActive && link) {
+            statusText.textContent = 'Ссылка активна';
+            statusText.style.color = 'var(--accent-success)';
+            currentLink.textContent = link;
+            statusElement.style.display = 'block';
+        } else {
+            statusText.textContent = 'Ссылка не установлена';
+            statusText.style.color = 'var(--accent-danger)';
+            currentLink.textContent = 'не установлена';
+            statusElement.style.display = 'block';
+        }
+    }
+}
+// Настройка кнопки сетки
+// Настройка кнопки сетки
+function setupBracketButton() {
+    const bracketBtn = document.getElementById('bracketBtn');
+    const closeBracketModal = document.getElementById('closeBracketModal');
+    
+    if (bracketBtn) {
+        bracketBtn.addEventListener('click', openBracketModal);
+    }
+    
+    if (closeBracketModal) {
+        closeBracketModal.addEventListener('click', closeBracketModal);
+    }
+    
+    const bracketModal = document.getElementById('bracketModal');
+    if (bracketModal) {
+        bracketModal.addEventListener('click', function(event) {
+            if (event.target === bracketModal) {
+                closeBracketModal();
+            }
+        });
+    }
+}
+
+// Настройка админки для сетки
+function setupBracketAdmin() {
+    const saveBracketLink = document.getElementById('saveBracketLink');
+    const clearBracketLink = document.getElementById('clearBracketLink');
+    const bracketLinkInput = document.getElementById('bracketLink');
+    
+    if (saveBracketLink) {
+        saveBracketLink.addEventListener('click', saveBracketLinkHandler);
+    }
+    
+    if (clearBracketLink) {
+        clearBracketLink.addEventListener('click', clearBracketLinkHandler);
+    }
+    
+    if (bracketLinkInput && bracketLink) {
+        bracketLinkInput.value = bracketLink;
+    }
+}
+
+// Сохранение ссылки (исправленная версия)
+function saveBracketLinkHandler() {
+    const bracketLinkInput = document.getElementById('bracketLink');
+    const link = bracketLinkInput.value.trim();
+    
+    if (!link) {
+        alert('❌ Введите ссылку на сетку!');
+        return;
+    }
+    
+    if (!isValidUrl(link)) {
+        alert('❌ Введите корректную ссылку!');
+        return;
+    }
+    
+    // Используем Compat версию Firebase
+    const bracketRef = database.ref('tournament/bracketLink');
+    bracketRef.set(link)
+        .then(() => {
+            console.log('✅ Ссылка на сетку сохранена:', link);
+            alert('✅ Ссылка на сетку сохранена!');
+            bracketLink = link;
+            showBracketButton();
+            updateBracketStatus(true, link);
+        })
+        .catch((error) => {
+            console.error('❌ Ошибка сохранения ссылки:', error);
+            alert('❌ Ошибка сохранения ссылки!');
+        });
+}
+
+// Удаление ссылки (исправленная версия)
+function clearBracketLinkHandler() {
+    if (!confirm('🗑️ Удалить ссылку на наглядную сетку?')) {
+        return;
+    }
+    
+    // Используем Compat версию Firebase
+    const bracketRef = database.ref('tournament/bracketLink');
+    bracketRef.remove()
+        .then(() => {
+            console.log('✅ Ссылка на сетку удалена');
+            alert('✅ Ссылка на сетку удалена!');
+            bracketLink = '';
+            const bracketLinkInput = document.getElementById('bracketLink');
+            if (bracketLinkInput) {
+                bracketLinkInput.value = '';
+            }
+            hideBracketButton();
+            updateBracketStatus(false, '');
+        })
+        .catch((error) => {
+            console.error('❌ Ошибка удаления ссылки:', error);
+            alert('❌ Ошибка удаления ссылки!');
+        });
+}
+// Проверка валидности URL
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+// Открытие модального окна сетки (обновленная версия)
+// Обновленная функция открытия сетки
+function openBracketModal() {
+    if (!bracketLink) {
+        alert('❌ Ссылка на сетку не установлена!');
+        return;
+    }
+    
+    const bracketModal = document.getElementById('bracketModal');
+    const bracketContainer = document.getElementById('bracketContainer');
+    
+    if (bracketModal && bracketContainer) {
+        bracketModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Используем более безопасный iframe
+        bracketContainer.innerHTML = `
+            <div class="bracket-security-notice">
+                <p>⚠️ Если сетка не загружается, отключите AdBlocker для LVUP.GG или используйте кнопку "Открыть в новой вкладке"</p>
+            </div>
+            <iframe src="${bracketLink}" 
+                    class="bracket-iframe"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                    allow="fullscreen"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Турнирная сетка Illusive Cup 2025">
+            </iframe>
+        `;
+        
+        setTimeout(() => {
+            bracketModal.style.opacity = '0';
+            bracketModal.style.transition = 'opacity 0.3s ease';
+            bracketModal.style.opacity = '1';
+        }, 50);
+    }
+}
+
+// Закрытие модального окна сетки (обновленная версия)
+function closeBracketModal() {
+    const bracketModal = document.getElementById('bracketModal');
+    if (bracketModal) {
+        bracketModal.style.opacity = '0';
+        setTimeout(() => {
+            bracketModal.classList.add('hidden');
+            document.body.style.overflow = '';
+            
+            // Очищаем iframe при закрытии
+            const bracketContainer = document.getElementById('bracketContainer');
+            if (bracketContainer) {
+                bracketContainer.innerHTML = `
+                    <div class="bracket-loading">
+                        <div class="loading-spinner">⚡</div>
+                        <p>Загрузка турнирной сетки...</p>
+                    </div>
+                `;
+            }
+        }, 300);
+    }
+}
+
+// Открытие сетки в новой вкладке
+function openBracketInNewTab() {
+    if (bracketLink) {
+        window.open(bracketLink, '_blank');
+    }
+}
+
+// Альтернативная полноэкранная версия
+function openBracketFullscreen() {
+    if (!bracketLink) {
+        alert('❌ Ссылка на сетку не установлена!');
+        return;
+    }
+    
+    // Создаем полноэкранный контейнер
+    const fullscreenContainer = document.createElement('div');
+    fullscreenContainer.className = 'bracket-fullscreen';
+    fullscreenContainer.innerHTML = `
+        <div class="bracket-fullscreen-header">
+            <h3>🎯 Турнирная сетка - Illusive Cup 2025</h3>
+            <button class="close-fullscreen" onclick="closeBracketFullscreen()">×</button>
+        </div>
+        <iframe src="${bracketLink}" 
+                class="bracket-fullscreen-iframe" 
+                allowfullscreen
+                title="Турнирная сетка">
+        </iframe>
+    `;
+    
+    // Стили для полноэкранного режима
+    fullscreenContainer.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: white;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+    `;
+    
+    document.body.appendChild(fullscreenContainer);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBracketFullscreen() {
+    const fullscreen = document.querySelector('.bracket-fullscreen');
+    if (fullscreen) {
+        fullscreen.remove();
+        document.body.style.overflow = '';
+    }
 }
 
 function populateTeamSelects() {
@@ -2892,6 +3229,9 @@ async function initializeApp() {
         await tournamentFormatManager.initialize();
         await matchManager.initialize();
         await votingSystem.initialize();
+        
+        // ✅ ДОБАВЛЯЕМ ИНИЦИАЛИЗАЦИЮ СИСТЕМЫ СЕТКИ
+        await initBracketSystem();
         
         setupEventListeners();
         setupDeleteTeamHandler();
@@ -3133,7 +3473,32 @@ function setupEventListeners() {
     });
     
     console.log('✅ Основные обработчики событий настроены');
+
+    // Обработчики для системы сетки
+const saveBracketLink = document.getElementById('saveBracketLink');
+const clearBracketLink = document.getElementById('clearBracketLink');
+const bracketBtn = document.getElementById('bracketBtn');
+const closeBracketModal = document.getElementById('closeBracketModal');
+
+if (saveBracketLink) {
+    saveBracketLink.addEventListener('click', saveBracketLinkHandler);
 }
+
+if (clearBracketLink) {
+    clearBracketLink.addEventListener('click', clearBracketLinkHandler);
+}
+
+if (bracketBtn) {
+    bracketBtn.addEventListener('click', openBracketModal);
+}
+
+if (closeBracketModal) {
+    closeBracketModal.addEventListener('click', closeBracketModal);
+}
+}
+
+
+
 
 function createAnimatedBackground() {
     const bg = document.getElementById('animatedBg');

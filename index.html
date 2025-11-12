@@ -75,12 +75,21 @@
                     </button>
                 </div>
 
-                <div class="nav-item no-group-format-item hidden">
-                    <button class="nav-btn playoff-btn" id="playoffGridBtn">
-                        <span class="btn-icon">📊</span>
-                        Double Elimination
-                    </button>
-                </div>
+<!-- Кнопка Double Elimination и Наглядная сетка -->
+<div class="nav-item no-group-format-item hidden">
+    <button class="nav-btn playoff-btn" id="playoffGridBtn">
+        <span class="btn-icon">📊</span>
+        Double Elimination
+    </button>
+</div>
+
+<!-- Кнопка Наглядная сетка (появляется после Double Elimination) -->
+<div class="nav-item no-group-format-item hidden" id="bracketNavItem" style="display: none;">
+    <button class="nav-btn bracket-btn" id="bracketBtn">
+        <span class="btn-icon">🎯</span>
+        НАГЛЯДНАЯ СЕТКА
+    </button>
+</div>
 
                 <!-- Кнопка Приз зрительских симпатий -->
                 <div class="nav-item">
@@ -476,6 +485,34 @@
                         <p><strong>Формат "С группой":</strong> Групповой этап + Плей-офф</p>
                         <p><strong>Формат "Без группы":</strong> Double Elimination (Прямой Плей-офф с системой двойного выбывания)</p>
                     </div>
+
+                    <!-- В блоке #settingsTab добавьте этот код -->
+<div class="form-group">
+    <h4>🎯 Управление наглядной сеткой</h4>
+    <label>Ссылка на наглядную сетку (LVUP.GG):</label>
+    <input type="url" id="bracketLink" class="form-input" 
+           placeholder="https://lvup.gg/ru/easy/bracket/...">
+    <div class="form-actions" style="margin-top: 15px;">
+        <button id="saveBracketLink" class="save-btn" style="padding: 12px 20px;">
+            💾 Сохранить ссылку
+        </button>
+        <button id="clearBracketLink" class="cancel-btn" style="padding: 12px 20px;">
+            🗑️ Удалить ссылку
+        </button>
+    </div>
+    <div class="format-info" style="margin-top: 15px;">
+        <p><strong>Инструкция:</strong></p>
+        <p>• Вставьте ссылку на сетку с LVUP.GG</p>
+        <p>• Кнопка "НАГЛЯДНАЯ СЕТКА" появится после сохранения</p>
+        <p>• Для удаления нажмите "Удалить ссылку"</p>
+    </div>
+    
+    <!-- Статус ссылки -->
+    <div id="bracketStatus" class="format-info" style="display: none; margin-top: 15px;">
+        <p><strong>Статус:</strong> <span id="bracketStatusText">Ссылка не установлена</span></p>
+        <p><strong>Текущая ссылка:</strong> <span id="currentBracketLink" style="word-break: break-all;"></span></p>
+    </div>
+</div>
                 </div>
 
                 <!-- Вкладка управления доступом -->
@@ -598,6 +635,28 @@
         </div>
         <div class="modal-footer">
             <button class="save-btn" onclick="closeRulesModal()">✅ Закрыть правила</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно наглядной сетки -->
+<div id="bracketModal" class="modal hidden">
+    <div class="modal-content fullscreen-modal">
+        <div class="modal-header">
+            <h2>🎯 Наглядная турнирная сетка</h2>
+            <button class="close-modal" id="closeBracketModal">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="bracketContainer" class="bracket-container">
+                <div class="bracket-loading">
+                    <div class="loading-spinner">⚡</div>
+                    <p>Загрузка турнирной сетки...</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="save-btn" onclick="closeBracketModal()">✅ Закрыть</button>
+            <button class="add-btn" onclick="openBracketInNewTab()">🌐 Открыть в новой вкладке</button>
         </div>
     </div>
 </div>
