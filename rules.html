@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Правила турнира Illusive cup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0c0c0c, #1a1a2e);
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(25, 25, 35, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ff4655;
+        }
+
+        .logo {
+            font-size: 3em;
+            color: #ff4655;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 70, 85, 0.5);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #ff4655, #7a04eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #8899aa;
+            font-size: 1.2em;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .rule-card {
+            background: rgba(40, 40, 55, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #ff4655;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rule-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(255, 70, 85, 0.3);
+        }
+
+        .rule-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff4655, #7a04eb);
+        }
+
+        .rule-icon {
+            font-size: 2em;
+            color: #ff4655;
+            margin-bottom: 15px;
+        }
+
+        .rule-title {
+            font-size: 1.4em;
+            color: #ffffff;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .rule-content {
+            color: #ccd6dd;
+            font-size: 0.95em;
+        }
+
+        .rule-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .rule-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .rule-list li:before {
+            content: '▶️';
+            color: #ff4655;
+            position: absolute;
+            left: 0;
+            font-size: 0.8em;
+        }
+
+        .warning {
+            background: rgba(255, 70, 85, 0.1);
+            border: 1px solid #ff4655;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-title {
+            color: #ff4655;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            color: #8899aa;
+            font-size: 0.9em;
+        }
+
+        .highlight {
+            color: #ff4655;
+            font-weight: bold;
+        }
+
+@media (max-width: 768px) {
+            .rules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⚔️</div>
+            <h1>ПРАВИЛА ТУРНИРА Illusive cup</h1>
+            <div class="subtitle">Официальный регламент киберспортивных соревнований</div>
+        </div>
+
+        <div class="rules-grid">
+            <div class="rule-card">
+                <div class="rule-icon">👥</div>
+                <div class="rule-title">УЧАСТНИКИ И РЕГИСТРАЦИЯ</div>
+                <div class="rule-content">
+                    <ul class="rule-list">
+                        <li>5 основных + 1-2 запасных игрока</li>
+                        <li>Регистрация до дедлайна</li>
+                        <li>Подтвержденные аккаунты Steam</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-icon">🏆</div>
+                <div class="rule-title">ФОРМАТ ТУРНИРА</div>
+                <div class="rule-content">
+                    <ul class="rule-list">
+                        <li>Групповая стадия: BO1</li>
+                        <li>Плей-офф: BO1</li>
+                        <li>Финал: BO3</li>
+                        <li>Single/Double Elimination</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-icon">🎮</div>
+                <div class="rule-title">ИГРОВОЙ ПРОЦЕСС</div>
+                <div class="rule-content">
+                    <ul class="rule-list">
+                        <li>Режим: Captains Mode</li>
+                        <li>Время на готовность: 15 мин</li>
+                        <li>10 пауз по 2 минуты</li>
+                       
+                    </ul>
+                </div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-icon">⚡️</div>
+                <div class="rule-title">ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ</div>
+                <div class="rule-content">
+                    <ul class="rule-list">
+                        
+                        <li>Ремейк в первые 5 минут</li>
+                        <li>Запрещены макросы</li>
+                        <li>Стабильное подключение</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-icon">🚨</div>
+                <div class="rule-title">ПРАВИЛО GG</div>
+                <div class="rule-content">
+                    <ul class="rule-list">
+                        <li>Только капитан пишет "gg"</li>
+                        <li><span class="highlight">ОТЖИМ GG ЗАПРЕЩЕН</span></li>
+                        
+                        <li>Нарушение = предупреждение, затем техническое поражение</li>
+                    </ul>
+                </div>
+            </div>
+
+       
+
+        <div class="warning">
+            <div class="warning-title">⚠️ ВАЖНЫЕ ЗАПРЕТЫ</div>
+            <div class="rule-content">
+                <ul class="rule-list">
+                    <li>Токсичное поведение и оскорбления</li>
+                    <li>Использование читов и багов</li>
+                   
+                    <li>Отжим GG (строгие санкции)</li>
+                    <li>Опоздание более 15 минут</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Организатор оставляет за собой право вносить изменения в правила</p>
+            <p>Все споры решаются администрацией турнира • Контакты: Discord сервер</p>
+        </div>
+    </div>
+</body>
+</html>

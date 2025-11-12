@@ -2248,6 +2248,274 @@ function openAdminTab(tabName) {
     if (targetPane) targetPane.classList.add('active');
 }
 
+// Функция для загрузки и отображения правил
+// Функция для загрузки и отображения правил
+function loadRulesContent() {
+    const rulesContainer = document.getElementById('rulesContainer');
+    
+    // Красивый индикатор загрузки
+    rulesContainer.innerHTML = `
+        <div class="loading" style="
+            text-align: center; 
+            padding: 60px 20px; 
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        ">
+            <div style="font-size: 3em; margin-bottom: 20px; animation: spin 2s linear infinite;">⚡</div>
+            <div style="font-size: 1.2em; margin-bottom: 10px;">Загрузка правил турнира</div>
+            <div style="font-size: 0.9em; opacity: 0.7;">Illusive Cup 2025</div>
+        </div>
+    `;
+    
+    // Загружаем содержимое rules.html
+    fetch('rules.html')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Файл правил не найден');
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Создаем временный элемент для парсинга HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // Извлекаем содержимое body из rules.html
+            const rulesBody = tempDiv.querySelector('.container');
+            
+            if (rulesBody) {
+                // Создаем обертку с нашими стилями
+                const rulesContent = document.createElement('div');
+                rulesContent.className = 'rules-content';
+                rulesContent.innerHTML = rulesBody.innerHTML;
+                
+                // Адаптируем стили для интеграции
+                adaptRulesStyles(rulesContent);
+                
+                rulesContainer.innerHTML = '';
+                rulesContainer.appendChild(rulesContent);
+                
+                // Добавляем плавное появление
+                setTimeout(() => {
+                    rulesContent.style.opacity = '0';
+                    rulesContent.style.transition = 'opacity 0.5s ease';
+                    rulesContent.style.opacity = '1';
+                }, 100);
+            } else {
+                showRulesError('Не удалось загрузить правила турнира');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки правил:', error);
+            showRulesError(`Ошибка загрузки: ${error.message}`);
+        });
+}
+
+// Функция для показа ошибки
+function showRulesError(message) {
+    const rulesContainer = document.getElementById('rulesContainer');
+    rulesContainer.innerHTML = `
+        <div class="error-container" style="
+            text-align: center; 
+            padding: 60px 20px; 
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        ">
+            <div style="font-size: 4em; margin-bottom: 20px; color: var(--accent-danger);">❌</div>
+            <div style="font-size: 1.3em; margin-bottom: 15px; color: var(--text-primary);">${message}</div>
+            <button onclick="loadRulesContent()" class="save-btn" style="margin-top: 20px; padding: 12px 24px;">
+                🔄 Повторить загрузку
+            </button>
+        </div>
+    `;
+}
+
+// Функция для адаптации стилей правил под основной сайт
+function adaptRulesStyles(rulesContent) {
+    // Обновляем все элементы для соответствия стилю сайта
+    const elementsToUpdate = [
+        ...rulesContent.querySelectorAll('h1, h2, h3'),
+        ...rulesContent.querySelectorAll('.rule-card'),
+        ...rulesContent.querySelectorAll('.rule-title'),
+        ...rulesContent.querySelectorAll('.warning')
+    ];
+    
+    elementsToUpdate.forEach(element => {
+        element.style.fontFamily = "'Exo 2', sans-serif";
+    });
+    
+    // Особые стили для заголовков
+    const mainTitle = rulesContent.querySelector('h1');
+    if (mainTitle) {
+        mainTitle.style.fontFamily = "'Orbitron', sans-serif";
+        mainTitle.style.textTransform = "uppercase";
+        mainTitle.style.letterSpacing = "2px";
+    }
+}
+
+// Функция для открытия модального окна правил
+function openRulesModal() {
+    const rulesModal = document.getElementById('rulesModal');
+    if (rulesModal) {
+        rulesModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Блокируем скролл body
+        loadRulesContent();
+        
+        // Добавляем анимацию появления
+        setTimeout(() => {
+            rulesModal.style.opacity = '0';
+            rulesModal.style.transition = 'opacity 0.3s ease';
+            rulesModal.style.opacity = '1';
+        }, 50);
+    }
+}
+
+// Функция для закрытия модального окна правил
+function closeRulesModal() {
+    const rulesModal = document.getElementById('rulesModal');
+    if (rulesModal) {
+        rulesModal.style.opacity = '0';
+        setTimeout(() => {
+            rulesModal.classList.add('hidden');
+            document.body.style.overflow = ''; // Разблокируем скролл body
+        }, 300);
+    }
+}
+// Функция для адаптации стилей правил под основной сайт
+function adaptRulesStyles() {
+    const rulesContainer = document.getElementById('rulesContainer');
+    
+    // Обновляем заголовки для соответствия стилю сайта
+    const mainTitle = rulesContainer.querySelector('h1');
+    if (mainTitle) {
+        mainTitle.style.fontFamily = "'Orbitron', sans-serif";
+        mainTitle.style.textTransform = "uppercase";
+        mainTitle.style.letterSpacing = "1px";
+    }
+    
+    // Обновляем карточки правил
+    const ruleCards = rulesContainer.querySelectorAll('.rule-card');
+    ruleCards.forEach(card => {
+        card.style.fontFamily = "'Exo 2', sans-serif";
+    });
+}
+
+// Обработчик для кнопки правил
+function setupRulesButton() {
+    const rulesBtn = document.getElementById('rulesBtn');
+    const rulesContent = document.getElementById('rulesContent');
+    
+    if (rulesBtn && rulesContent) {
+        rulesBtn.addEventListener('click', function() {
+            // Скрываем все остальные секции
+            hideAllContentSections();
+            
+            // Показываем секцию правил
+            rulesContent.classList.remove('hidden');
+            
+            // Загружаем содержимое правил
+            loadRulesContent();
+            
+            // Обновляем активное состояние кнопки
+            updateActiveNavButton(this);
+        });
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    setupRulesButton();
+});
+
+// Функция для загрузки и отображения правил
+
+
+// Функция для адаптации стилей правил под основной сайт
+function adaptRulesStyles(rulesContent) {
+    // Обновляем заголовки для соответствия стилю сайта
+    const mainTitle = rulesContent.querySelector('h1');
+    if (mainTitle) {
+        mainTitle.style.fontFamily = "'Orbitron', sans-serif";
+        mainTitle.style.textTransform = "uppercase";
+        mainTitle.style.letterSpacing = "1px";
+    }
+    
+    // Обновляем карточки правил
+    const ruleCards = rulesContent.querySelectorAll('.rule-card');
+    ruleCards.forEach(card => {
+        card.style.fontFamily = "'Exo 2', sans-serif";
+    });
+    
+    // Обновляем предупреждения
+    const warnings = rulesContent.querySelectorAll('.warning');
+    warnings.forEach(warning => {
+        warning.style.border = "1px solid var(--accent-warning)";
+        warning.style.background = "rgba(255, 152, 0, 0.1)";
+    });
+}
+
+// Функция для открытия модального окна правил
+function openRulesModal() {
+    const rulesModal = document.getElementById('rulesModal');
+    if (rulesModal) {
+        rulesModal.classList.remove('hidden');
+        loadRulesContent();
+    }
+}
+
+// Функция для закрытия модального окна правил
+function closeRulesModal() {
+    const rulesModal = document.getElementById('rulesModal');
+    if (rulesModal) {
+        rulesModal.classList.add('hidden');
+    }
+}
+
+// Обработчики для кнопки правил
+function setupRulesButton() {
+    const rulesBtn = document.getElementById('rulesBtn');
+    const closeRulesModalBtn = document.getElementById('closeRulesModal');
+    
+    if (rulesBtn) {
+        rulesBtn.addEventListener('click', openRulesModal);
+    }
+    
+    if (closeRulesModalBtn) {
+        closeRulesModalBtn.addEventListener('click', closeRulesModal);
+    }
+    
+    // Закрытие по клику вне модального окна
+    const rulesModal = document.getElementById('rulesModal');
+    if (rulesModal) {
+        rulesModal.addEventListener('click', function(event) {
+            if (event.target === rulesModal) {
+                closeRulesModal();
+            }
+        });
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    setupRulesButton();
+});
+
+// Функция для скрытия всех модальных окон
+function hideAllModals() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.classList.add('hidden');
+    });
+}
+
 function updateAdminTeamsList() {
     const container = document.getElementById('adminTeamsList');
     if (!container || !teamsManager) return;
