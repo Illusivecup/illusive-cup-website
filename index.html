@@ -662,5 +662,49 @@
 </div>
 
     <script src="script.js"></script>
+
+<!-- Версия патча -->
+<div id="patchVersion" style="
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    border: 1px solid var(--border-color);
+    z-index: 1000;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+">
+    🚀 Работает на патче: <span id="patchNumber">Alpha 2.3</span>
+</div>
+
+<script>
+    // РУЧНАЯ НАСТРОЙКА ВЕРСИИ ПАТЧА - МЕНЯЙТЕ ЗДЕСЬ 👇
+    const MANUAL_PATCH_VERSION = "1.01";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const patchElement = document.getElementById('patchNumber');
+        if (patchElement) {
+            // Используем ручную версию
+            patchElement.textContent = MANUAL_PATCH_VERSION;
+            
+            // Добавляем hover эффект
+            const patchContainer = document.getElementById('patchVersion');
+            patchContainer.addEventListener('mouseenter', function() {
+                this.style.opacity = '1';
+            });
+            patchContainer.addEventListener('mouseleave', function() {
+                this.style.opacity = '0.8';
+            });
+            
+            console.log('✅ Patch version displayed:', MANUAL_PATCH_VERSION);
+        }
+    });
+</script>
+
+
 </body>
 </html>
