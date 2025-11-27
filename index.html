@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="microphone=(), geolocation=(), camera=()">
+    <meta http-equiv="Permissions-Policy" content="microphone=(), geolocation=(), camera=(), interest-cohort=()">
+    <meta name="google" content="notranslate">
     <title>Illusive Cup 2025 - Турнир</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -84,7 +87,7 @@
 </div>
 
 <!-- Кнопка Наглядная сетка (появляется после Double Elimination) -->
-<div class="nav-item no-group-format-item hidden" id="bracketNavItem" style="display: none;">
+<div class="nav-item" id="bracketNavItem" style="display: none;">
     <button class="nav-btn bracket-btn" id="bracketBtn">
         <span class="btn-icon">🎯</span>
         НАГЛЯДНАЯ СЕТКА
@@ -538,13 +541,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Сменить основной пароль:</label>
-                        <input type="password" id="newPassword" class="form-input" placeholder="Новый пароль">
-                        <input type="password" id="confirmPassword" class="form-input" placeholder="Подтвердите пароль">
-                        <button id="changePasswordBtn" class="save-btn">Сменить пароль</button>
-                    </div>
-                </div>
+ <div class="form-group">
+        <label>Сменить основной пароль:</label>
+        <form onsubmit="return false;"> <!-- Добавьте форму -->
+            <input type="password" id="newPassword" class="form-input" placeholder="Новый пароль">
+            <input type="password" id="confirmPassword" class="form-input" placeholder="Подтвердите пароль">
+        </form>
+        <button id="changePasswordBtn" class="save-btn">Сменить пароль</button>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -558,7 +563,9 @@
             </div>
             <div class="modal-body">
                 <p>Для доступа к панели управления введите пароль:</p>
+            <form onsubmit="return false;"> <!-- Добавьте форму -->
                 <input type="password" id="editorPassword" class="form-input" placeholder="Пароль">
+            </form>
                 <div class="form-actions">
                     <button id="confirmAuth" class="save-btn">Войти</button>
                     <button id="cancelAuth" class="cancel-btn">Отмена</button>
@@ -683,7 +690,7 @@
 
 <script>
     // РУЧНАЯ НАСТРОЙКА ВЕРСИИ ПАТЧА - МЕНЯЙТЕ ЗДЕСЬ 👇
-    const MANUAL_PATCH_VERSION = "1.01";
+    const MANUAL_PATCH_VERSION = "1.02";
     
     document.addEventListener('DOMContentLoaded', function() {
         const patchElement = document.getElementById('patchNumber');
@@ -704,7 +711,56 @@
         }
     });
 </script>
+<!-- 1.02 -->
+<!-- Кнопка обратной связи -->
+<div id="feedbackBtn" class="feedback-btn">
+    <span class="feedback-icon">🐛</span>
+    <span class="feedback-text">Баги и предложения</span>
+</div>
 
+<!-- Модальное окно обратной связи -->
+<div id="feedbackModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🐛 Обратная связь</h2>
+            <button class="close-modal" id="closeFeedbackModal">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="feedback-content">
+                <div class="feedback-section">
+                    <h3>Нашли баг?</h3>
+                    <p>Сообщите нам в Telegram:</p>
+                    <a href="https://t.me/grem1in3" target="_blank" class="telegram-link">
+                        <span class="tg-icon">✈️</span>
+                        @grem1in3
+                    </a>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3>Есть предложения?</h3>
+                    <p>Мы всегда рады улучшениям! Напишите нам:</p>
+                    <a href="https://t.me/grem1in3" target="_blank" class="telegram-link">
+                        <span class="tg-icon">💡</span>
+                        @grem1in3
+                    </a>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3>Хотите помочь?</h3>
+                    <p>Присоединяйтесь к разработке:</p>
+                    <a href="https://t.me/grem1in3" target="_blank" class="telegram-link">
+                        <span class="tg-icon">👨‍💻</span>
+                        @grem1in3
+                    </a>
+                </div>
+            </div>
+            
+            <div class="feedback-footer">
+                <p><small>Мы ответим в течение 24 часов</small></p>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

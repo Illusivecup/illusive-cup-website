@@ -17,6 +17,29 @@ let matchManager;
 let votingSystem;
 let tournamentFormatManager;
 
+// 1.02
+class ErrorHandler {
+    static init() {
+        window.addEventListener('error', this.handleError);
+        window.addEventListener('unhandledrejection', this.handlePromiseRejection);
+    }
+
+    static handleError(error) {
+        console.error('🚨 Global Error:', error);
+        this.showNotification('Произошла ошибка. Пожалуйста, обновите страницу.', 'error');
+    }
+
+    static handlePromiseRejection(event) {
+        console.error('🚨 Unhandled Promise Rejection:', event.reason);
+        this.showNotification('Ошибка загрузки данных', 'error');
+    }
+
+    static showNotification(message, type = 'error') {
+        // Реализация системы уведомлений
+    }
+}
+
+
 // === МЕНЕДЖЕР ФОРМАТА ТУРНИРА (ПОЛНОСТЬЮ ОБНОВЛЕННЫЙ) ===
 class TournamentFormatManager {
     constructor(database) {
@@ -182,6 +205,42 @@ class TournamentFormatManager {
         return stages[stage] || stage;
     }
 }
+
+/* 1.02
+class PerformanceOptimizer {
+    static debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    static throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+}
+
+
+
+// Применение к частым обновлениям
+matchManager.updateMatchUI = PerformanceOptimizer.debounce(
+    matchManager.updateMatchUI.bind(matchManager), 
+    500
+);
+*/
+
 
 // === СИСТЕМА БЕЗОПАСНОСТИ ===
 class SecurityManager {
@@ -2811,25 +2870,26 @@ function updateBracketStatus(isActive, link) {
         }
     }
 }
-// Настройка кнопки сетки
+
+// 1.02
 // Настройка кнопки сетки
 function setupBracketButton() {
     const bracketBtn = document.getElementById('bracketBtn');
-    const closeBracketModal = document.getElementById('closeBracketModal');
+    const closeBracketModalBtn = document.getElementById('closeBracketModal'); // ← переименовали переменную
     
     if (bracketBtn) {
         bracketBtn.addEventListener('click', openBracketModal);
     }
     
-    if (closeBracketModal) {
-        closeBracketModal.addEventListener('click', closeBracketModal);
+    if (closeBracketModalBtn) {
+        closeBracketModalBtn.addEventListener('click', closeBracketModal); // ← теперь работает
     }
     
     const bracketModal = document.getElementById('bracketModal');
     if (bracketModal) {
         bracketModal.addEventListener('click', function(event) {
             if (event.target === bracketModal) {
-                closeBracketModal();
+                closeBracketModal(); // ← вызов функции
             }
         });
     }
@@ -3228,6 +3288,7 @@ async function initializeApp() {
         await teamsManager.initialize();
         await tournamentFormatManager.initialize();
         await matchManager.initialize();
+       // PerformanceOptimizer.applyDebounceToMatchManager();
         await votingSystem.initialize();
         
         // ✅ ДОБАВЛЯЕМ ИНИЦИАЛИЗАЦИЮ СИСТЕМЫ СЕТКИ
@@ -3246,10 +3307,43 @@ async function initializeApp() {
         updateAudienceAwardsDisplay();
         
         console.log('✅ Tournament App успешно инициализирован');
+
+        // 1.02
+console.log('🔍 Проверка функциональности:');
+
+// Проверка основных компонентов
+const components = {
+    teamsManager: !!teamsManager,
+    matchManager: !!matchManager,
+    tournamentFormatManager: !!tournamentFormatManager,
+    votingSystem: !!votingSystem,
+    securityManager: !!securityManager,
+    bracketLink: !!bracketLink
+};
+
+console.log('📊 Статус компонентов:', components);
+
+// Проверка данных
+console.log('👥 Количество команд:', Object.keys(teamsManager.getAllTeams()).length);
+console.log('🎯 Количество матчей (без группы):', Object.keys(matchManager.noGroupMatches).length);
+console.log('📋 Формат турнира:', tournamentFormatManager.getCurrentFormat());
+console.log('🔗 Ссылка на сетку:', bracketLink || 'не установлена');
+
+// Проверка UI элементов
+const uiElements = {
+    navigation: !!document.querySelector('.navigation-grid'),
+    contentArea: !!document.querySelector('.content-area'),
+    adminBtn: !!document.getElementById('adminBtn'),
+    bracketBtn: !!document.getElementById('bracketBtn')
+};
+
+console.log('🎨 Статус UI элементов:', uiElements);
         
     } catch (error) {
         console.error('❌ Ошибка инициализации:', error);
     }
+
+
 }
 
 function setupDeleteTeamHandler() {
@@ -3495,6 +3589,61 @@ if (bracketBtn) {
 if (closeBracketModal) {
     closeBracketModal.addEventListener('click', closeBracketModal);
 }
+// 1.02
+    // === ОБРАТНАЯ СВЯЗЬ ===
+    const feedbackBtn = document.getElementById('feedbackBtn');
+    const closeFeedbackModal = document.getElementById('closeFeedbackModal');
+    const feedbackModal = document.getElementById('feedbackModal');
+    
+    if (feedbackBtn) {
+        feedbackBtn.addEventListener('click', openFeedbackModal);
+    }
+    
+    if (closeFeedbackModal) {
+        closeFeedbackModal.addEventListener('click', closeFeedbackModalFunc);
+    }
+    
+    if (feedbackModal) {
+        feedbackModal.addEventListener('click', function(event) {
+            if (event.target === feedbackModal) {
+                closeFeedbackModalFunc();
+            }
+        });
+    }
+
+    // Добавьте функции для управления модальным окном
+function openFeedbackModal() {
+    const modal = document.getElementById('feedbackModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        // Анимация появления
+        setTimeout(() => {
+            modal.style.opacity = '0';
+            modal.style.transition = 'opacity 0.3s ease';
+            modal.style.opacity = '1';
+        }, 50);
+    }
+}
+
+function closeFeedbackModalFunc() {
+    const modal = document.getElementById('feedbackModal');
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+}
+
+// Добавьте обработку Escape для закрытия
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const feedbackModal = document.getElementById('feedbackModal');
+        if (feedbackModal && !feedbackModal.classList.contains('hidden')) {
+            closeFeedbackModalFunc();
+        }
+    }
+});
 }
 
 
