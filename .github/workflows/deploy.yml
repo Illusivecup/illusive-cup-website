@@ -17,31 +17,27 @@ jobs:
         with:
           node-version: '18'
 
-      # 🔧 Копируем шаблон в рабочий файл
       - name: Create admin-config.js from template
         run: |
           cp admin-config.example.js admin-config.js
 
-      # 🔐 Подставляем секреты
-      - name: Replace secrets
+      - name: Replace secrets (using | delimiter to support special chars)
         run: |
-          sed -i "s/__ADMIN_PASSWORD__/${{ secrets.ADMIN_PASSWORD }}/g" admin-config.js
-          sed -i "s/__FIREBASE_API_KEY__/${{ secrets.FIREBASE_API_KEY }}/g" admin-config.js
-          sed -i "s/__FIREBASE_AUTH_DOMAIN__/${{ secrets.FIREBASE_AUTH_DOMAIN }}/g" admin-config.js
-          sed -i "s/__FIREBASE_DATABASE_URL__/${{ secrets.FIREBASE_DATABASE_URL }}/g" admin-config.js
-          sed -i "s/__FIREBASE_PROJECT_ID__/${{ secrets.FIREBASE_PROJECT_ID }}/g" admin-config.js
-          sed -i "s/__FIREBASE_STORAGE_BUCKET__/${{ secrets.FIREBASE_STORAGE_BUCKET }}/g" admin-config.js
-          sed -i "s/__FIREBASE_SENDER_ID__/${{ secrets.FIREBASE_SENDER_ID }}/g" admin-config.js
-          sed -i "s/__FIREBASE_APP_ID__/${{ secrets.FIREBASE_APP_ID }}/g" admin-config.js
+          sed -i "s|__ADMIN_PASSWORD__|${{ secrets.ADMIN_PASSWORD }}|g" admin-config.js
+          sed -i "s|__FIREBASE_API_KEY__|${{ secrets.FIREBASE_API_KEY }}|g" admin-config.js
+          sed -i "s|__FIREBASE_AUTH_DOMAIN__|${{ secrets.FIREBASE_AUTH_DOMAIN }}|g" admin-config.js
+          sed -i "s|__FIREBASE_DATABASE_URL__|${{ secrets.FIREBASE_DATABASE_URL }}|g" admin-config.js
+          sed -i "s|__FIREBASE_PROJECT_ID__|${{ secrets.FIREBASE_PROJECT_ID }}|g" admin-config.js
+          sed -i "s|__FIREBASE_STORAGE_BUCKET__|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g" admin-config.js
+          sed -i "s|__FIREBASE_SENDER_ID__|${{ secrets.FIREBASE_SENDER_ID }}|g" admin-config.js
+          sed -i "s|__FIREBASE_APP_ID__|${{ secrets.FIREBASE_APP_ID }}|g" admin-config.js
 
-      # 📦 Минификация JS (опционально)
-      - name: Minify JS
+      - name: Minify JS (optional)
         run: |
           npm install -g uglify-js
           uglifyjs script.js -o script.min.js
           mv script.min.js script.js
 
-      # 🚀 Деплой на GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
