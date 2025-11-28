@@ -691,9 +691,14 @@
         </div>
     </div>
 </div>
+    
 
+    <script src="admin-config.js"></script>
     <script src="script.js"></script>
     <script src="holiday-theme.js"></script>
+    
+    <!-- Добавляем модуль скрытых команд -->
+    <script src="hidden-teams.js"></script>
 
 <!-- Версия патча -->
 <div id="patchVersion" style="
@@ -786,6 +791,47 @@
         </div>
     </div>
 </div>
+
+
+<!-- Отладка конфигурации -->
+<script>
+    console.log('📌 Старт проверки конфигурации...');
+
+    // Проверка 1: Загрузился ли admin-config.js
+    if (typeof window.ADMIN_CONFIG === 'undefined') {
+        console.error('❌ ОШИБКА: admin-config.js НЕ загружен!');
+        alert('Критическая ошибка: admin-config.js не найден!\n\n1. Убедитесь, что файл admin-config.js существует в папке.\n2. Проверьте порядок скриптов в index.html.');
+    } else {
+        console.log('✅ admin-config.js загружен успешно');
+        
+        // Проверка 2: Есть ли пароль?
+        if (window.ADMIN_CONFIG.editorPassword) {
+            console.log('✅ Пароль установлен (длина:', window.ADMIN_CONFIG.editorPassword.length, 'символов)');
+        } else {
+            console.error('❌ Пароль не указан в admin-config.js');
+        }
+
+        // Проверка 3: Есть ли firebaseConfig?
+        const firebaseConfig = window.ADMIN_CONFIG.firebaseConfig;
+        if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.projectId) {
+            console.log('✅ Firebase Config найден:', {
+                projectId: firebaseConfig.projectId,
+                apiKeyLength: firebaseConfig.apiKey.length
+            });
+        } else {
+            console.error('❌ Firebase Config отсутствует или неполный');
+        }
+    }
+
+    // Проверка 4: Удостоверимся, что script.js ещё не запустился до конфига
+    if (typeof firebaseConfig !== 'undefined') {
+        console.warn('⚠️ Внимание: firebaseConfig уже определён ДО admin-config.js — возможно, неправильный порядок скриптов!');
+    }
+</script>
+
+
+
+
 
 </body>
 </html>

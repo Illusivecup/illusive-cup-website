@@ -1,13 +1,5 @@
-// === КОНФИГУРАЦИЯ FIREBASE ===
-const firebaseConfig = {
-    apiKey: "AIzaSyAjUOjB-mQTdI6G4jwsIXGOHGldGBmC6j4",
-    authDomain: "illusive-cup.firebaseapp.com",
-    databaseURL: "https://illusive-cup-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "illusive-cup",
-    storageBucket: "illusive-cup.firebasestorage.app",
-    messagingSenderId: "465786550229",
-    appId: "1:465786550229:web:9a1d4a3015b9cb0a3caf5c"
-};
+// удалить строку ниже
+// const firebaseConfig = window.ADMIN_CONFIG?.firebaseConfig;
 
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let database;
@@ -245,7 +237,7 @@ matchManager.updateMatchUI = PerformanceOptimizer.debounce(
 // === СИСТЕМА БЕЗОПАСНОСТИ ===
 class SecurityManager {
     constructor() {
-        this.EDITOR_PASSWORD = 'IllusiveCup2025!';
+        this.EDITOR_PASSWORD = window.ADMIN_CONFIG?.editorPassword;
         this.isAuthenticated = false;
         console.log('🔐 SecurityManager создан');
     }
@@ -560,6 +552,20 @@ class TeamsManager {
     getAllTeams() {
         return { ...this.teams };
     }
+
+        // Обновленный метод получения всех команд
+    getAllTeams(includeHidden = false) {
+        if (includeHidden && window.HiddenTeamsManager) {
+            return window.HiddenTeamsManager.getAllTeamsWithHidden(this.teams);
+        }
+        return { ...this.teams };
+    }
+
+    // Обновленный метод проверки скрытой команды
+    isTeamHidden(teamId) {
+        return window.HiddenTeamsManager ? window.HiddenTeamsManager.isHiddenTeam(teamId) : false;
+    }
+
 }
 
 // === ОБНОВЛЕННЫЙ МЕНЕДЖЕР МАТЧЕЙ С DOUBLE ELIMINATION ===
@@ -751,44 +757,53 @@ class MatchManager {
         container.innerHTML = content || '<div class="no-data">Нет данных о матчах плей-офф</div>';
     }
 
-    createDoubleEliminationMatchCard(match, matchId, bracketType) {
-        const isCompleted = this.isMatchCompleted(match);
-        const winner = this.getMatchWinner(match);
-        const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
-        const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
-        
-        let bracketClass = '';
-        if (bracketType === 'winners') bracketClass = 'winners-match';
-        else if (bracketType === 'losers') bracketClass = 'losers-match';
-        else if (bracketType === 'final') bracketClass = 'final-match';
-        
-        return `
-            <div class="double-elimination-match ${bracketClass}" data-match-id="${matchId}">
-                <div class="match-teams">
-                    <div class="team-name ${team1Class}">
-                        ${match.team1Name}
-                    </div>
-                    <div class="vs">
-                        ${isCompleted ? 
-                            `<div class="match-score">${match.score1 || 0}:${match.score2 || 0}</div>` : 
-                            '<div class="vs-text">VS</div>'
-                        }
-                    </div>
-                    <div class="team-name ${team2Class}">
-                        ${match.team2Name}
-                    </div>
-                </div>
-                <div class="match-info">
-                    <span class="match-time">${match.time || 'Время не указано'}</span>
-                    <span class="match-format">${this.getFormatName(match.format)}</span>
-                </div>
-                ${isCompleted ? 
-                    '<div class="match-status completed">✅ Завершен</div>' : 
-                    '<div class="match-status upcoming">⏳ Ожидается</div>'
-                }
-            </div>
-        `;
+createDoubleEliminationMatchCard(match, matchId, bracketType) {
+    const isCompleted = this.isMatchCompleted(match);
+    const winner = this.getMatchWinner(match);
+    const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
+    const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
+    
+    // Проверяем, являются ли команды заглушками
+    const isHiddenTeam1 = teamsManager.isTeamHidden(match.team1Id);
+    const isHiddenTeam2 = teamsManager.isTeamHidden(match.team2Id);
+    
+    let bracketClass = '';
+    if (bracketType === 'winners') bracketClass = 'winners-match';
+    else if (bracketType === 'losers') bracketClass = 'losers-match';
+    else if (bracketType === 'final') bracketClass = 'final-match';
+    
+    // Добавляем класс для матчей с заглушками
+    if (isHiddenTeam1 || isHiddenTeam2) {
+        bracketClass += ' has-hidden-teams';
     }
+    
+    return `
+        <div class="double-elimination-match ${bracketClass}" data-match-id="${matchId}">
+            <div class="match-teams">
+                <div class="team-name ${team1Class}">
+                    ${match.team1Name} ${isHiddenTeam1 ? '⏳' : ''}
+                </div>
+                <div class="vs">
+                    ${isCompleted ? 
+                        `<div class="match-score">${match.score1 || 0}:${match.score2 || 0}</div>` : 
+                        '<div class="vs-text">VS</div>'
+                    }
+                </div>
+                <div class="team-name ${team2Class}">
+                    ${match.team2Name} ${isHiddenTeam2 ? '⏳' : ''}
+                </div>
+            </div>
+            <div class="match-info">
+                <span class="match-time">${match.time || 'Время не указано'}</span>
+                <span class="match-format">${this.getFormatName(match.format)}</span>
+            </div>
+            ${isCompleted ? 
+                '<div class="match-status completed">✅ Завершен</div>' : 
+                '<div class="match-status upcoming">⏳ Ожидается</div>'
+            }
+        </div>
+    `;
+}
 
     // Автоматическое создание Double Elimination сетки для 8 команд
     async createDoubleEliminationBracket() {
@@ -1178,74 +1193,85 @@ class MatchManager {
         ).join('') || '<div class="no-data">Нет завершенных матчей</div>';
     }
 
-    createEnhancedScheduleMatchCard(match, isCompleted = false, matchId = '', isGroupFormat = true) {
-        const showScore = match.score1 !== undefined && match.score2 !== undefined;
-        const teams = teamsManager ? teamsManager.getAllTeams() : {};
-        const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
-        const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
-        
-        const winner = this.getMatchWinner(match);
-        const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
-        const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
-        
-        // Определяем класс стиля в зависимости от этапа турнира
-        let matchClass = 'match-card';
-        const stageName = tournamentFormatManager ? tournamentFormatManager.getStageName(match.stage) : match.stage;
-        
-        if (match.stage === 'grand_final') {
-            matchClass += ' grand-final';
-        } else if (match.stage === 'third_place') {
-            matchClass += ' third-place';
-        } else if (match.stage === 'winners_round_1' || match.stage === 'winners_round_2' || match.stage === 'winners_round_3' || match.stage === 'winners_final') {
-            matchClass += ' playoff-stage';
-        } else if (match.stage === 'losers_round_1' || match.stage === 'losers_round_2' || match.stage === 'losers_round_3' || match.stage === 'losers_final') {
-            matchClass += ' lower-bracket';
-        } else {
-            matchClass += ' group-stage';
-        }
-        
-        if (isCompleted) {
-            matchClass += ' completed';
-        }
-        
-        if (!team1Exists || !team2Exists) {
-            return `
-                <div class="${matchClass} deleted" data-match-id="${matchId}">
-                    <div class="match-time">${match.time || 'Время не указано'}</div>
-                    <div class="match-teams">
-                        <div class="team-name large deleted">${team1Exists ? match.team1Name : 'Команда удалена'}</div>
-                        <div class="vs">vs</div>
-                        <div class="team-name large deleted">${team2Exists ? match.team2Name : 'Команда удалена'}</div>
-                    </div>
-                    <div class="match-stage">${stageName}</div>
-                    <div class="match-format">${this.getFormatName(match.format)}</div>
-                    <div class="match-status">🗑️ Команда удалена</div>
-                </div>
-            `;
-        }
-        
-        const currentFormat = match.format || 'bo1';
-        const winnerIcon = winner ? '🏆' : '';
-        
+createEnhancedScheduleMatchCard(match, isCompleted = false, matchId = '', isGroupFormat = true) {
+    const showScore = match.score1 !== undefined && match.score2 !== undefined;
+    const teams = teamsManager ? teamsManager.getAllTeams(true) : {}; // Включаем заглушки
+    const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
+    const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+    
+    // Проверяем, являются ли команды заглушками
+    const isHiddenTeam1 = teamsManager.isTeamHidden(match.team1Id);
+    const isHiddenTeam2 = teamsManager.isTeamHidden(match.team2Id);
+    
+    const winner = this.getMatchWinner(match);
+    const team1Class = winner === 'team1' ? 'winner' : (winner === 'team2' ? 'loser' : '');
+    const team2Class = winner === 'team2' ? 'winner' : (winner === 'team1' ? 'loser' : '');
+    
+    // Определяем класс стиля в зависимости от этапа турнира
+    let matchClass = 'match-card';
+    const stageName = tournamentFormatManager ? tournamentFormatManager.getStageName(match.stage) : match.stage;
+    
+    if (match.stage === 'grand_final') {
+        matchClass += ' grand-final';
+    } else if (match.stage === 'third_place') {
+        matchClass += ' third-place';
+    } else if (match.stage === 'winners_round_1' || match.stage === 'winners_round_2' || match.stage === 'winners_round_3' || match.stage === 'winners_final') {
+        matchClass += ' playoff-stage';
+    } else if (match.stage === 'losers_round_1' || match.stage === 'losers_round_2' || match.stage === 'losers_round_3' || match.stage === 'losers_final') {
+        matchClass += ' lower-bracket';
+    } else {
+        matchClass += ' group-stage';
+    }
+    
+    if (isCompleted) {
+        matchClass += ' completed';
+    }
+    
+    // Добавляем класс для матчей с заглушками
+    if (isHiddenTeam1 || isHiddenTeam2) {
+        matchClass += ' has-hidden-teams';
+    }
+    
+    if (!team1Exists || !team2Exists) {
         return `
-            <div class="${matchClass}" data-match-id="${matchId}">
+            <div class="${matchClass} deleted" data-match-id="${matchId}">
                 <div class="match-time">${match.time || 'Время не указано'}</div>
                 <div class="match-teams">
-                    <div class="team-name large ${team1Class}">
-                        ${match.team1Name} ${winner === 'team1' ? winnerIcon : ''}
-                    </div>
+                    <div class="team-name large deleted">${team1Exists ? match.team1Name : 'Команда удалена'}</div>
                     <div class="vs">vs</div>
-                    <div class="team-name large ${team2Class}">
-                        ${match.team2Name} ${winner === 'team2' ? winnerIcon : ''}
-                    </div>
+                    <div class="team-name large deleted">${team2Exists ? match.team2Name : 'Команда удалена'}</div>
                 </div>
-                ${showScore ? createEnhancedProgressBar(match) : ''}
                 <div class="match-stage">${stageName}</div>
-                <div class="match-format">${this.getFormatName(currentFormat)}</div>
-                ${isCompleted ? '<div class="match-status">✅ Завершен</div>' : '<div class="match-status">⏳ Ожидается</div>'}
+                <div class="match-format">${this.getFormatName(match.format)}</div>
+                <div class="match-status">🗑️ Команда удалена</div>
             </div>
         `;
     }
+    
+    const currentFormat = match.format || 'bo1';
+    const winnerIcon = winner ? '🏆' : '';
+    const hiddenIcon = '⏳';
+    
+    return `
+        <div class="${matchClass}" data-match-id="${matchId}">
+            <div class="match-time">${match.time || 'Время не указано'}</div>
+            <div class="match-teams">
+                <div class="team-name large ${team1Class}">
+                    ${match.team1Name} ${winner === 'team1' ? winnerIcon : ''} ${isHiddenTeam1 ? hiddenIcon : ''}
+                </div>
+                <div class="vs">vs</div>
+                <div class="team-name large ${team2Class}">
+                    ${match.team2Name} ${winner === 'team2' ? winnerIcon : ''} ${isHiddenTeam2 ? hiddenIcon : ''}
+                </div>
+            </div>
+            ${showScore ? createEnhancedProgressBar(match) : ''}
+            <div class="match-stage">${stageName}</div>
+            <div class="match-format">${this.getFormatName(currentFormat)}</div>
+            ${isCompleted ? '<div class="match-status">✅ Завершен</div>' : '<div class="match-status">⏳ Ожидается</div>'}
+            ${(isHiddenTeam1 || isHiddenTeam2) ? '<div class="match-note">⚠️ Содержит команды-заглушки</div>' : ''}
+        </div>
+    `;
+}
 
     async createMatch(matchData) {
         const isGroupFormat = tournamentFormatManager ? tournamentFormatManager.isGroupFormat() : true;
@@ -1977,9 +2003,13 @@ function showEditMatchTimeModal(matchId) {
     const match = matchManager.getMatch(matchId);
     if (!match) return;
 
-    const teams = teamsManager ? teamsManager.getAllTeams() : {};
+    const teams = teamsManager ? teamsManager.getAllTeams(true) : {}; // Включаем заглушки
     const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
     const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+    
+    // Проверяем, являются ли команды заглушками
+    const isHiddenTeam1 = teamsManager.isTeamHidden(match.team1Id);
+    const isHiddenTeam2 = teamsManager.isTeamHidden(match.team2Id);
     
     if (!team1Exists || !team2Exists) {
         alert('❌ Нельзя редактировать матч с удаленными командами');
@@ -1989,15 +2019,20 @@ function showEditMatchTimeModal(matchId) {
     // Создаем поле для редактирования времени
     matchInfo.innerHTML = `
         <div class="match-teams">
-            <div class="team-name large">${match.team1Name}</div>
+            <div class="team-name large ${isHiddenTeam1 ? 'hidden-team' : ''}">
+                ${match.team1Name} ${isHiddenTeam1 ? '⏳' : ''}
+            </div>
             <div class="vs">vs</div>
-            <div class="team-name large">${match.team2Name}</div>
+            <div class="team-name large ${isHiddenTeam2 ? 'hidden-team' : ''}">
+                ${match.team2Name} ${isHiddenTeam2 ? '⏳' : ''}
+            </div>
         </div>
         <div class="form-group">
             <label>Время матча:</label>
             <input type="datetime-local" id="editMatchTime" class="form-input" value="${getDateTimeForInput(match.timestamp)}">
         </div>
         <div class="match-stage">${tournamentFormatManager ? tournamentFormatManager.getStageName(match.stage) : match.stage}</div>
+        ${(isHiddenTeam1 || isHiddenTeam2) ? '<div class="match-warning">⚠️ Матч содержит команды-заглушки</div>' : ''}
     `;
     
     score1Input.value = match.score1 || 0;
@@ -2026,6 +2061,7 @@ function showEditMatchTimeModal(matchId) {
     appState.currentEditingMatchId = matchId;
     modal.classList.remove('hidden');
 }
+
 
 // Функция для преобразования времени в формат datetime-local
 function getDateTimeForInput(timestamp) {
@@ -3105,7 +3141,8 @@ function populateTeamSelects() {
     team1Select.innerHTML = '<option value="">-- Выберите команду --</option>';
     team2Select.innerHTML = '<option value="">-- Выберите команду --</option>';
     
-    const teams = teamsManager.getAllTeams();
+    // Получаем все команды, включая заглушки
+    const teams = teamsManager.getAllTeams(true);
     
     Object.keys(teams).forEach(teamId => {
         const team = teams[teamId];
@@ -3114,9 +3151,15 @@ function populateTeamSelects() {
         
         option1.value = teamId;
         option1.textContent = team.name || 'Без названия';
+        if (teamsManager.isTeamHidden(teamId)) {
+            option1.textContent += ' ⏳';
+        }
         
         option2.value = teamId;
         option2.textContent = team.name || 'Без названия';
+        if (teamsManager.isTeamHidden(teamId)) {
+            option2.textContent += ' ⏳';
+        }
         
         team1Select.appendChild(option1);
         team2Select.appendChild(option2);
@@ -3216,9 +3259,13 @@ function setupMatchEditing() {
             const matchId = matchCard.getAttribute('data-match-id');
             if (matchId) {
                 const match = matchManager.getMatch(matchId);
-                const teams = teamsManager.getAllTeams();
+                const teams = teamsManager ? teamsManager.getAllTeams(true) : {}; // Включаем заглушки
                 const team1Exists = teams[match.team1Id] && teams[match.team1Id].name;
                 const team2Exists = teams[match.team2Id] && teams[match.team2Id].name;
+                
+                // Разрешаем редактирование даже если команды-заглушки
+                const isHiddenTeam1 = teamsManager.isTeamHidden(match.team1Id);
+                const isHiddenTeam2 = teamsManager.isTeamHidden(match.team2Id);
                 
                 if (!team1Exists || !team2Exists) {
                     if (securityManager && securityManager.isAuthenticated && confirm('🗑️ Этот матч содержит удаленные команды. Хотите удалить этот матч?')) {
@@ -3226,6 +3273,7 @@ function setupMatchEditing() {
                     }
                 } else {
                     if (securityManager && securityManager.isAuthenticated) {
+                        // Разрешаем редактирование для матчей с командами-заглушками
                         showEditMatchTimeModal(matchId);
                     }
                 }
@@ -3275,11 +3323,24 @@ window.createDoubleEliminationBracket = function() {
 async function initializeApp() {
     try {
         console.log('🚀 Инициализация Tournament App...');
-        
+
+        // === 🔥 ПРАВИЛЬНОЕ МЕСТО ДЛЯ ИНИЦИАЛИЗАЦИИ FIREBASE ===
+        if (!window.ADMIN_CONFIG) {
+            throw new Error('❌ admin-config.js не загружен!');
+        }
+
+        const firebaseConfig = window.ADMIN_CONFIG.firebaseConfig;
+        if (!firebaseConfig || !firebaseConfig.projectId) {
+            throw new Error('❌ Некорректный firebaseConfig в admin-config.js');
+        }
+
         firebase.initializeApp(firebaseConfig);
         database = firebase.database();
         window.database = database;
         console.log('🔥 Firebase успешно инициализирован');
+
+         // Инициализируем модуль скрытых команд ПЕРВЫМ
+        await window.HiddenTeamsManager.initialize(database);
         
         securityManager = new SecurityManager();
         teamsManager = new TeamsManager(database);
