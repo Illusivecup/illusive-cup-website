@@ -720,7 +720,7 @@
 
 <script>
     // РУЧНАЯ НАСТРОЙКА ВЕРСИИ ПАТЧА - МЕНЯЙТЕ ЗДЕСЬ 👇
-    const MANUAL_PATCH_VERSION = "1.05";
+    const MANUAL_PATCH_VERSION = "1.05b";
     
     document.addEventListener('DOMContentLoaded', function() {
         const patchElement = document.getElementById('patchNumber');
@@ -829,7 +829,156 @@
     }
 </script>
 
+<script>
+// ============= МОБИЛЬНЫЕ УЛУЧШЕНИЯ =============
 
+document.addEventListener('DOMContentLoaded', function () {
+    // Улучшенный поиск targetId
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            let contentId = null;
+
+            // Определяем, какую вкладку открыть
+            if (this.id === 'scheduleBtn') contentId = 'scheduleContent';
+            if (this.id === 'teamsDropdownBtn') contentId = 'teamsContent';
+            if (this.id === 'playoffBtn') contentId = 'playoffContent';
+            if (this.id === 'audienceAwardBtn') contentId = 'audienceAwardContent';
+            if (this.id === 'groupStageBtn') contentId = 'groupStageContent';
+            if (this.id === 'scheduleNoGroupBtn') contentId = 'scheduleNoGroupContent';
+            if (this.id === 'playoffGridBtn') contentId = 'playoffGridContent';
+            if (this.id === 'rulesBtn') contentId = 'rulesContent';
+
+            if (contentId) {
+                const content = document.getElementById(contentId);
+                if (content) {
+                    // Показываем контент
+                    document.querySelectorAll('.content-section').forEach(sec => {
+                        sec.classList.add('hidden');
+                    });
+                    content.classList.remove('hidden');
+
+                    // Плавная прокрутка
+                    content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    // Скроллим чуть выше, чтобы шапка не закрывала
+                    setTimeout(() => {
+                        window.scrollBy(0, -80);
+                    }, 300);
+                }
+            }
+        });
+    });
+
+    // 2. СВАЙП ПО КАРТОЧКАМ КОМАНД (вправо/влево)
+    let touchStartX = 0;
+    const teamsContent = document.getElementById('teamsContent');
+    if (teamsContent) {
+        teamsContent.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        teamsContent.addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    showNextSection();
+                } else {
+                    showPrevSection();
+                }
+            }
+        }, { passive: true });
+    }
+
+    // Секции
+    const sections = [
+        'teamsContent',
+        'scheduleContent',
+        'groupStageContent',
+        'playoffContent',
+        'audienceAwardContent',
+        'scheduleNoGroupContent',
+        'playoffGridContent'
+    ];
+
+    function getCurrentSection() {
+        for (let id of sections) {
+            const el = document.getElementById(id);
+            if (el && !el.classList.contains('hidden')) return id;
+        }
+        return 'teamsContent';
+    }
+
+    function showNextSection() {
+        const current = getCurrentSection();
+        const index = sections.indexOf(current);
+        const next = sections[(index + 1) % sections.length];
+        showSection(next);
+    }
+
+    function showPrevSection() {
+        const current = getCurrentSection();
+        const index = sections.indexOf(current);
+        const prev = sections[(index - 1 + sections.length) % sections.length];
+        showSection(prev);
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.content-section').forEach(sec => {
+            sec.classList.add('hidden');
+        });
+        const target = document.getElementById(id);
+        if (target) {
+            target.classList.remove('hidden');
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => window.scrollBy(0, -80), 300);
+        }
+    }
+
+    // 3. АВТО-СКРЫТИЕ КЛАВИАТУРЫ
+    document.querySelectorAll('.form-input, .reason-input, #editorPassword, #newPassword').forEach(input => {
+        input.addEventListener('blur', function () {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+            }, 100);
+        });
+    });
+
+    // 4. ПЛАВАЮЩАЯ КНОПКА НА МАЛЫХ ЭКРАНАХ
+    function updateBracketButton() {
+        const btn = document.getElementById('bracketBtn');
+        if (!btn) return;
+
+        if (window.innerWidth <= 480 && window.getComputedStyle(btn).display !== 'none') {
+            btn.classList.add('mobile-floating');
+        } else {
+            btn.classList.remove('mobile-floating');
+        }
+    }
+
+    window.addEventListener('resize', updateBracketButton);
+    updateBracketButton();
+
+    // 5. ФИКСИРОВАННАЯ ШАПКА ПРИ СКРОЛЛЕ
+    let lastScroll = 0;
+    const header = document.querySelector('.main-header');
+    if (header) {
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            if (currentScroll <= 0) {
+                header.style.transform = 'translateY(0)';
+            }
+            if (currentScroll > lastScroll && !header.classList.contains('hidden')) {
+                header.style.transform = 'translateY(-100%)';
+            } else if (currentScroll < lastScroll) {
+                header.style.transform = 'translateY(0)';
+            }
+            lastScroll = currentScroll;
+        });
+    }
+});
+</script>
 
 
 
