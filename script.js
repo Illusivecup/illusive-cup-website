@@ -439,19 +439,21 @@ class SecurityManager {
         }
     }
 
-    showAdminPanel() {
-        console.log('🖥️ Показ админ панели');
-        const panel = document.getElementById('adminPanel');
-        if (panel) {
-            panel.classList.remove('hidden');
-            if (window.updateAdminTeamsList) {
-                updateAdminTeamsList();
-            }
-            // Заполняем список матчей для голосования
-            populateVoteMatchSelect();
+ showAdminPanel() {
+    console.log('🖥️ Показ админ панели');
+    const panel = document.getElementById('adminPanel');
+    if (panel) {
+        panel.classList.remove('hidden');
+        if (window.updateAdminTeamsList) {
+            updateAdminTeamsList();
         }
+        // Заполняем список матчей для голосования
+        populateVoteMatchSelect();
+        
+        // НАСТРАИВАЕМ ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ - ДОБАВЛЯЕМ ЭТУ СТРОЧКУ
+        setupHolidayThemeToggle();
     }
-
+}
     hideAdminPanel() {
         console.log('🖥️ Скрытие админ панели');
         const panel = document.getElementById('adminPanel');
@@ -3337,13 +3339,19 @@ const uiElements = {
     bracketBtn: !!document.getElementById('bracketBtn')
 };
 
-console.log('🎨 Статус UI элементов:', uiElements);
+
+        // === ДОБАВЛЯЕМ ЭТОТ БЛОК ДЛЯ ПРОВЕРКИ НОВОГОДНЕЙ ТЕМЫ ===
+        // Проверяем наличие новогодней темы
+        if (window.holidayTheme) {
+            console.log('🎄 Новогодняя тема доступна');
+        } else {
+            console.log('⚠️ Новогодняя тема не загружена');
+        }
+        // === КОНЕЦ ДОБАВЛЕННОГО БЛОКА ===
         
     } catch (error) {
         console.error('❌ Ошибка инициализации:', error);
     }
-
-
 }
 
 function setupDeleteTeamHandler() {
@@ -3677,3 +3685,116 @@ document.addEventListener('DOMContentLoaded', function() {
     createAnimatedBackground();
     initializeApp();
 });
+
+
+// === УПРАВЛЕНИЕ НОВОГОДНЕЙ ТЕМОЙ ===
+function setupHolidayThemeToggle() {
+    console.log('🎄 Настройка переключателя новогодней темы...');
+    
+    const themeToggle = document.getElementById('holidayThemeToggle');
+    const themeStatus = document.getElementById('themeStatus');
+    const themeStatusText = document.getElementById('themeStatusText');
+    
+    if (themeToggle && database) {
+        // Загружаем текущее состояние темы
+        const themeRef = database.ref('systemSettings/holidayThemeEnabled');
+        themeRef.on('value', (snapshot) => {
+            const isEnabled = snapshot.val() || false;
+            themeToggle.checked = isEnabled;
+            if (themeStatus) {
+                themeStatus.style.display = 'block';
+            }
+            if (themeStatusText) {
+                themeStatusText.textContent = isEnabled ? 'Тема включена 🎄' : 'Тема отключена';
+                themeStatusText.style.color = isEnabled ? 'var(--accent-success)' : 'var(--accent-danger)';
+            }
+            console.log('🎄 Статус темы:', isEnabled);
+        });
+        
+        // Обработчик изменения переключателя
+        themeToggle.addEventListener('change', function() {
+            const isEnabled = this.checked;
+            themeRef.set(isEnabled)
+                .then(() => {
+                    console.log('🎄 Theme state updated:', isEnabled);
+                    if (themeStatusText) {
+                        themeStatusText.textContent = isEnabled ? 'Тема включена 🎄' : 'Тема отключена';
+                        themeStatusText.style.color = isEnabled ? 'var(--accent-success)' : 'var(--accent-danger)';
+                    }
+                    
+                    // Показываем уведомление
+                    showNotification(isEnabled ? 
+                        '🎄 Новогодняя тема включена для всех пользователей!' : 
+                        '❄️ Новогодняя тема отключена'
+                    );
+                })
+                .catch((error) => {
+                    console.error('❌ Error updating theme:', error);
+                    showNotification('❌ Ошибка при обновлении темы', 'error');
+                });
+        });
+        
+        console.log('✅ Переключатель темы настроен');
+    } else {
+        console.error('❌ Не найден переключатель темы или база данных');
+    }
+}
+
+// Функция для показа уведомлений
+function showNotification(message, type = 'success') {
+    // Создаем элемент уведомления
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">${type === 'success' ? '✅' : '❌'}</span>
+            <span class="notification-text">${message}</span>
+        </div>
+    `;
+    
+    // Стили для уведомления
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? 'var(--accent-success)' : 'var(--accent-danger)'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: var(--radius-medium);
+        z-index: 10001;
+        box-shadow: var(--shadow-medium);
+        animation: slideIn 0.3s ease;
+        font-family: 'Exo 2', sans-serif;
+        font-size: 14px;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое скрытие через 3 секунды
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Добавьте анимации для уведомлений в CSS
+const notificationStyles = `
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+`;
+
+// Добавьте стили в head
+const style = document.createElement('style');
+style.textContent = notificationStyles;
+document.head.appendChild(style);

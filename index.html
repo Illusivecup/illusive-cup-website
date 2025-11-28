@@ -515,6 +515,30 @@
         <p><strong>Статус:</strong> <span id="bracketStatusText">Ссылка не установлена</span></p>
         <p><strong>Текущая ссылка:</strong> <span id="currentBracketLink" style="word-break: break-all;"></span></p>
     </div>
+
+<!-- В блоке #settingsTab добавьте этот код -->
+<div class="form-group">
+    <h4>🎄 Новогодняя тема</h4>
+    <div class="theme-toggle-container">
+        <label class="toggle-label">
+            <input type="checkbox" id="holidayThemeToggle" class="toggle-input">
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Включить новогоднее оформление</span>
+        </label>
+        <div class="theme-info">
+            <p><strong>Включите для всех пользователей:</strong></p>
+            <p>• ❄️ Анимированные снежинки</p>
+            <p>• 🎄 Праздничное оформление</p>
+            <p>• ✨ Специальные эффекты</p>
+        </div>
+    </div>
+    
+    <!-- Статус темы -->
+    <div id="themeStatus" class="format-info" style="display: none; margin-top: 15px;">
+        <p><strong>Статус:</strong> <span id="themeStatusText">Тема отключена</span></p>
+    </div>
+</div>
+
 </div>
                 </div>
 
@@ -669,6 +693,7 @@
 </div>
 
     <script src="script.js"></script>
+    <script src="holiday-theme.js"></script>
 
 <!-- Версия патча -->
 <div id="patchVersion" style="
