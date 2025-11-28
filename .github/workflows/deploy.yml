@@ -7,21 +7,16 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
       - name: Create admin-config.js from template
         run: |
           cp admin-config.example.js admin-config.js
+          echo "✅ admin-config.js created"
 
-      - name: Replace secrets (safe delimiter)
+      - name: Replace secrets
         run: |
           sed -i "s|__ADMIN_PASSWORD__|${{ secrets.ADMIN_PASSWORD }}|g" admin-config.js
           sed -i "s|__FIREBASE_API_KEY__|${{ secrets.FIREBASE_API_KEY }}|g" admin-config.js
@@ -31,17 +26,24 @@ jobs:
           sed -i "s|__FIREBASE_STORAGE_BUCKET__|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g" admin-config.js
           sed -i "s|__FIREBASE_SENDER_ID__|${{ secrets.FIREBASE_SENDER_ID }}|g" admin-config.js
           sed -i "s|__FIREBASE_APP_ID__|${{ secrets.FIREBASE_APP_ID }}|g" admin-config.js
+          echo "✅ Secrets replaced"
 
-      - name: Check if admin-config.js exists and has content
+      - name: Verify admin-config.js
         run: |
-          ls -la admin-config.js
           cat admin-config.js
+          if grep -q "__.*__" admin-config.js; then
+            echo "❌ Placeholders not replaced!"
+            exit 1
+          else
+            echo "✅ No placeholders left"
+          fi
 
-      - name: Minify JS (optional)
+      - name: Minify script.js
         run: |
           npm install -g uglify-js
           uglifyjs script.js -o script.min.js
           mv script.min.js script.js
+          echo "✅ Minified script.js"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
