@@ -1,5 +1,5 @@
 # === Секреты и локальные файлы ===
-# === admin-config.js ===
+admin-config.js 
 *.env
 node_modules/
 dist/
