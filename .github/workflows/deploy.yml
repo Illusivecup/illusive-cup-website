@@ -13,15 +13,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 🔎 Checkout code
         uses: actions/checkout@v4
 
-      - name: Create admin-config.js from template
+      - name: 📋 Create admin-config.js from template
         run: |
           cp admin-config.example.js admin-config.js
-          echo "✅ admin-config.js created"
+          echo "✅ admin-config.js created from template"
 
-      - name: Replace secrets
+      - name: 🔐 Replace secrets in admin-config.js
         run: |
           sed -i "s|__ADMIN_PASSWORD__|${{ secrets.ADMIN_PASSWORD }}|g" admin-config.js
           sed -i "s|__FIREBASE_API_KEY__|${{ secrets.FIREBASE_API_KEY }}|g" admin-config.js
@@ -31,31 +31,36 @@ jobs:
           sed -i "s|__FIREBASE_STORAGE_BUCKET__|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g" admin-config.js
           sed -i "s|__FIREBASE_SENDER_ID__|${{ secrets.FIREBASE_SENDER_ID }}|g" admin-config.js
           sed -i "s|__FIREBASE_APP_ID__|${{ secrets.FIREBASE_APP_ID }}|g" admin-config.js
-          echo "✅ Secrets replaced"
+          echo "✅ Secrets replaced in admin-config.js"
 
-      - name: Verify admin-config.js
+      - name: ✅ Verify no placeholders remain
         run: |
+          echo "📄 Contents of admin-config.js:"
           cat admin-config.js
+          echo ""
           if grep -q "__.*__" admin-config.js; then
-            echo "❌ Placeholders not replaced!"
+            echo "❌ ERROR: Some placeholders were not replaced!"
             exit 1
           else
-            echo "✅ No placeholders left"
+            echo "✅ All placeholders successfully replaced"
           fi
 
-      - name: Minify script.js
+      - name: 📦 Minify script.js
         run: |
           npm install -g uglify-js
           uglifyjs script.js -o script.min.js
           mv script.min.js script.js
-          echo "✅ Minified script.js"
+          echo "✅ script.js minified"
 
-      - name: Check files
+      - name: 📂 Check files before deploy
         run: |
-          ls -la index.html style.css admin-config.js
+          ls -la index.html style.css script.js admin-config.js
 
-      - name: Deploy to GitHub Pages
+      - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
+          publish_branch: gh-pages
+          force_orphan: true    # ← Пересоздаёт ветку, игнорируя защиту
+          keep_files: false     # ← Не сохраняет старые файлы
