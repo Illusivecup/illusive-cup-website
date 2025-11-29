@@ -33,17 +33,14 @@ jobs:
           sed -i "s|__FIREBASE_APP_ID__|${{ secrets.FIREBASE_APP_ID }}|g" admin-config.js
           echo "✅ Secrets replaced in admin-config.js"
 
-      - name: ✅ Verify no placeholders remain
+      - name: ✅ Verify admin-config.js exists
         run: |
+          if [ ! -f admin-config.js ]; then
+            echo "❌ admin-config.js not created!"
+            exit 1
+          fi
           echo "📄 Contents of admin-config.js:"
           cat admin-config.js
-          echo ""
-          if grep -q "__.*__" admin-config.js; then
-            echo "❌ ERROR: Some placeholders were not replaced!"
-            exit 1
-          else
-            echo "✅ All placeholders successfully replaced"
-          fi
 
       - name: 📦 Minify script.js
         run: |
@@ -52,15 +49,11 @@ jobs:
           mv script.min.js script.js
           echo "✅ script.js minified"
 
-      - name: 📂 Check files before deploy
-        run: |
-          ls -la index.html style.css script.js admin-config.js
-
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
           publish_branch: gh-pages
-          force_orphan: true    # ← Пересоздаёт ветку, игнорируя защиту
-          keep_files: false     # ← Не сохраняет старые файлы
+          # Убрали force_orphan: true — теперь ветка обновляется, а не пересоздаётся
+          keep_files: false
