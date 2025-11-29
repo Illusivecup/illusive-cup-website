@@ -1988,7 +1988,7 @@ async function updateAudienceAwardsDisplay() {
                                 ` : ''}
                                 ${matchesArray.length > 0 ? `
                                     <div class="player-matches">
-                                        <strong>Отличился в матчах:</strong>
+                                        <strong>Отличился во встречах:</strong>
                                         <div class="matches-list">
                                             ${matchesArray.slice(0, 2).map(match => `
                                                 <div class="match-info-small">
