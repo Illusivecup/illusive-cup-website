@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="microphone=(), geolocation=(), camera=()">
+    <meta http-equiv="Permissions-Policy" content="microphone=(), geolocation=(), camera=(), interest-cohort=()">
+    <meta name="google" content="notranslate">
+    <title>Illusive Cup 2025 - Турнир</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Анимированный фон -->
+        <div class="animated-bg" id="animatedBg"></div>
+        
+        <!-- Статус подключения -->
+        <div id="connectionStatus" class="connection-status hidden">
+            <span class="status-dot"></span>
+            <span class="status-text">Подключение к турниру...</span>
+        </div>
+        
+        <header class="main-header">
+            <h1 class="main-title">
+                <span class="title-main">Место встречи</span>
+                <span class="title-highlight">Illusive Cup III</span>
+                <span class="title-date">29.11.2025</span>
+            </h1>
+        </header>
+
+        <main class="main-content">
+            <!-- Обновленная сетка навигации -->
+            <div class="navigation-grid">
+                <!-- Кнопка Команды с выпадающим списком -->
+                <div class="nav-item dropdown">
+                    <button class="nav-btn teams-btn" id="teamsDropdownBtn">
+                        <span class="btn-icon">🏆</span>
+                        Команды
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-content" id="teamsDropdown">
+                        <!-- Команды будут загружаться из Firebase -->
+                    </div>
+                </div>
+
+                <!-- Кнопка Расписание матчей -->
+                <div class="nav-item group-format-item">
+                    <button class="nav-btn schedule-btn" id="scheduleBtn">
+                        <span class="btn-icon">⏰</span>
+                        Расписание матчей
+                    </button>
+                </div>
+
+                <!-- Кнопка Групповой этап -->
+                <div class="nav-item group-format-item">
+                    <button class="nav-btn group-stage-btn" id="groupStageBtn">
+                        <span class="btn-icon">📈</span>
+                        Групповой этап
+                    </button>
+                </div>
+
+                <!-- Кнопка Плей-офф -->
+                <div class="nav-item group-format-item">
+                    <button class="nav-btn playoff-btn" id="playoffBtn">
+                        <span class="btn-icon">📊</span>
+                        Плей-офф
+                    </button>
+                </div>
+
+                <!-- Кнопки для формата "Без группы" -->
+                <div class="nav-item no-group-format-item hidden">
+                    <button class="nav-btn schedule-btn" id="scheduleNoGroupBtn">
+                        <span class="btn-icon">⏰</span>
+                        Расписание
+                    </button>
+                </div>
+
+<!-- Кнопка Double Elimination и Наглядная сетка -->
+<div class="nav-item no-group-format-item hidden">
+    <button class="nav-btn playoff-btn" id="playoffGridBtn">
+        <span class="btn-icon">📊</span>
+        Double Elimination
+    </button>
+</div>
+
+<!-- Кнопка Наглядная сетка (появляется после Double Elimination) -->
+<div class="nav-item" id="bracketNavItem" style="display: none;">
+    <button class="nav-btn bracket-btn" id="bracketBtn">
+        <span class="btn-icon">🎯</span>
+        НАГЛЯДНАЯ СЕТКА
+    </button>
+</div>
+
+                <!-- Кнопка Приз зрительских симпатий -->
+                <div class="nav-item">
+                    <button class="nav-btn audience-award-btn" id="audienceAwardBtn">
+                        <span class="btn-icon">🎭</span>
+                        Приз зрительских симпатий
+                    </button>
+                </div>
+
+                <!-- Кнопка Управление (менее заметная, справа от Приза зрительских симпатий) -->
+                <div class="nav-item admin-nav-item">
+                    <button id="adminBtn" class="nav-btn admin-btn">
+                        <span class="btn-icon">⚙️</span>
+                        Управление
+                    </button>
+                </div>
+            </div>
+
+            <!-- Кнопка Правила -->
+                <div class="nav-item">
+                    <button class="nav-btn rules-btn" id="rulesBtn">
+                         <span class="btn-icon">📋</span>
+                         Правила
+                     </button>
+            </div>
+
+            <!-- Контентные блоки -->
+            <div class="content-area">
+                <!-- Визитки команд -->
+                <div id="teamsContent" class="content-section hidden">
+                    <div id="singleTeamCard"></div>
+                </div>
+
+                <!-- Расписание матчей -->
+                <div id="scheduleContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Расписание матчей</h2>
+                        <p>Все матчи турнира</p>
+                    </div>
+                    <div class="schedule-container">
+                        <div class="schedule-columns">
+                            <div class="schedule-column">
+                                <h3>🟢 Запланированные</h3>
+                                <div class="schedule-list" id="upcomingMatches">
+                                    <!-- Запланированные матчи -->
+                                </div>
+                            </div>
+                            <div class="schedule-column">
+                                <h3>🔴 Проведённые</h3>
+                                <div class="schedule-list" id="completedMatches">
+                                    <!-- Завершенные матчи -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Групповой этап -->
+                <div id="groupStageContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Групповой этап</h2>
+                        <p>Турнирная таблица команд</p>
+                    </div>
+                    <div id="groupStageContainer">
+                        <!-- Обновленная таблица группового этапа -->
+                    </div>
+                </div>
+
+                <!-- Плей-офф -->
+                <div id="playoffContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Плей-офф</h2>
+                        <p>Финальная стадия турнира</p>
+                    </div>
+                    <div class="playoff-container">
+                        <div class="playoff-sections">
+                            <div class="playoff-section">
+                                <h3>🥉 Матч за 3 место</h3>
+                                <div id="thirdPlaceMatch" class="playoff-match">
+                                    <!-- Матч за 3 место -->
+                                </div>
+                            </div>
+                            <div class="playoff-section">
+                                <h3>🏆 Грандфинал</h3>
+                                <div id="grandFinalMatch" class="playoff-match">
+                                    <!-- Грандфинал -->
+                                </div>
+                            </div>
+                            <div class="playoff-section">
+                                <h3>👑 Победитель</h3>
+                                <div id="winnerSection" class="winner-container">
+                                    <!-- Победитель -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Приз зрительских симпатий -->
+                <div id="audienceAwardContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Приз зрительских симпатий</h2>
+                        <p>Лучшие игроки по мнению зрителей</p>
+                    </div>
+                    <div class="audience-awards-container">
+                        <div id="audienceAwardsContent">
+                            <!-- Данные приза зрительских симпатий -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Расписание для формата без группы -->
+                <div id="scheduleNoGroupContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Расписание</h2>
+                        <p>Все матчи турнира</p>
+                    </div>
+                    <div class="schedule-container">
+                        <div class="schedule-columns">
+                            <div class="schedule-column">
+                                <h3>🟢 Запланированные</h3>
+                                <div class="schedule-list" id="upcomingMatchesNoGroup">
+                                    <!-- Запланированные матчи -->
+                                </div>
+                            </div>
+                            <div class="schedule-column">
+                                <h3>🔴 Проведённые</h3>
+                                <div class="schedule-list" id="completedMatchesNoGroup">
+                                    <!-- Завершенные матчи -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Double Elimination сетка для формата без группы -->
+                <div id="playoffGridContent" class="content-section hidden">
+                    <div class="section-header">
+                        <h2>Double Elimination Bracket</h2>
+                        <p>Турнирная сетка с системой двойного выбывания</p>
+                    </div>
+                    <div class="playoff-grid-container">
+                        <!-- Double Elimination сетка будет загружаться динамически -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно редактирования команды -->
+    <div id="editTeamModal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>✏️ Редактирование команды</h2>
+                <button class="close-modal" id="closeEditTeamModal">×</button>
+            </div>
+            
+            <div class="edit-form">
+                <div class="form-group">
+                    <label>Название команды:</label>
+                    <input type="text" id="editTeamName" class="form-input" placeholder="Введите название команды">
+                </div>
+                
+                <div class="form-group">
+                    <label>Слоган:</label>
+                    <input type="text" id="editTeamSlogan" class="form-input" placeholder="Введите слоган команды">
+                </div>
+                
+                <div class="form-group">
+                    <label>Игроки (5 человек):</label>
+                    <div id="playersEditContainer">
+                        <!-- Игроки будут добавляться здесь -->
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button id="saveTeamBtn" class="save-btn">💾 Сохранить команду</button>
+                    <button id="deleteTeamBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить команду</button>
+                    <button id="cancelEditTeamBtn" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления матча -->
+    <div id="addMatchModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Добавить матч</h2>
+                <button class="close-modal" id="closeAddMatchModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Команда 1:</label>
+                    <select id="newMatchTeam1" class="form-input">
+                        <option value="">-- Выберите команду --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Команда 2:</label>
+                    <select id="newMatchTeam2" class="form-input">
+                        <option value="">-- Выберите команду --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Время матча:</label>
+                    <input type="datetime-local" id="newMatchTime" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Этап турнира:</label>
+                    <select id="newMatchStage" class="form-input">
+                        <!-- Опции будут заполняться динамически в зависимости от формата -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Формат матча:</label>
+                    <select id="newMatchFormat" class="form-input">
+                        <option value="bo1">Bo1 (1 победа)</option>
+                        <option value="bo3">Bo3 (2 победы)</option>
+                        <option value="bo5">Bo5 (3 победы)</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button id="saveNewMatchBtn" class="save-btn">💾 Сохранить матч</button>
+                    <button id="cancelAddMatchBtn" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования результата матча -->
+    <div id="editMatchResultModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Редактирование результата</h2>
+                <button class="close-modal" id="closeEditMatchResultModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="editMatchInfo" class="match-info"></div>
+                <div class="form-group">
+                    <label>Счет команды 1:</label>
+                    <input type="number" id="editMatchScore1" class="form-input" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Счет команды 2:</label>
+                    <input type="number" id="editMatchScore2" class="form-input" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Формат матча:</label>
+                    <select id="editMatchFormat" class="form-input">
+                        <option value="bo1">Bo1 (1 победа)</option>
+                        <option value="bo3">Bo3 (2 победы)</option>
+                        <option value="bo5">Bo5 (3 победы)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Этап турнира:</label>
+                    <select id="editMatchStage" class="form-input">
+                        <!-- Опции будут заполняться динамически в зависимости от формата -->
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button id="saveMatchResultBtn" class="save-btn">💾 Сохранить результат</button>
+                    <button id="deleteMatchBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить матч</button>
+                    <button id="cancelEditMatchResultBtn" class="cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно управления -->
+    <div id="adminPanel" class="modal hidden">
+        <div class="modal-content large-modal admin-panel">
+            <div class="modal-header">
+                <h2>⚙️ Управление турниром</h2>
+                <button class="close-modal" id="closeAdminPanel">×</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-tab="teamsTab">Команды</button>
+                <button class="tab-btn group-format-item" data-tab="scheduleTab">Расписание</button>
+                <button class="tab-btn no-group-format-item hidden" data-tab="rpofTab">РПОФ</button>
+                <button class="tab-btn group-format-item" data-tab="groupStageTab">Групповой этап</button>
+                <button class="tab-btn" data-tab="audienceAwardTab">Редактирование ПриЗ</button>
+                <button class="tab-btn" data-tab="settingsTab">Настройки</button>
+                <button class="tab-btn" data-tab="accessTab">Доступы</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Вкладка управления командами -->
+                <div id="teamsTab" class="tab-pane active">
+                    <h3>Управление командами</h3>
+                    <div class="form-group">
+                        <label>Количество команд:</label>
+                        <input type="number" id="totalTeams" min="2" max="16" class="form-input" value="4">
+                        <button id="applyTeamsCountBtn" class="save-btn">Применить</button>
+                    </div>
+                    
+                    <div class="teams-list" id="adminTeamsList">
+                        <!-- Список команд для редактирования -->
+                    </div>
+                </div>
+                
+                <!-- Вкладка редактирования расписания -->
+                <div id="scheduleTab" class="tab-pane">
+                    <h3>Редактирование расписания</h3>
+                    <div class="schedule-settings-header">
+                        <h4>Матчи расписания</h4>
+                        <button id="addScheduleMatchBtn" class="add-btn">➕ Добавить матч</button>
+                    </div>
+                    <div class="schedule-edit-list" id="scheduleEditList">
+                        <!-- Расписание будет загружаться динамически -->
+                    </div>
+                </div>
+
+                <!-- Вкладка РПОФ (Редактирование Плей-ОФФ) -->
+                <div id="rpofTab" class="tab-pane">
+                    <h3>🎯 Double Elimination Bracket</h3>
+                    
+                    <div class="double-elimination-controls">
+                        <div class="form-group">
+                            <button id="createDoubleEliminationBtn" class="save-btn">
+                                🎯 Создать Double Elimination сетку (8 команд)
+                            </button>
+                            <div class="format-info">
+                                <p><strong>Double Elimination Logic:</strong></p>
+                                <p>• 🏆 Winners Bracket - Победители продолжают в верхней сетке</p>
+                                <p>• 💀 Losers Bracket - Проигравшие получают второй шанс</p>
+                                <p>• 🎯 Grand Final - Победители обеих сеток встречаются в финале</p>
+                                <p>• 🥉 Match for 3rd Place - Бой за третье место</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="schedule-settings-header">
+                        <h4>Матчи Double Elimination</h4>
+                        <button id="addRPOFMatchBtn" class="add-btn">➕ Добавить матч</button>
+                    </div>
+                    
+                    <div class="rpoff-edit-list" id="rpoffEditList">
+                        <!-- Матчи Double Elimination будут загружаться динамически -->
+                    </div>
+                </div>
+
+                <!-- Вкладка управления групповым этапом -->
+                <div id="groupStageTab" class="tab-pane">
+                    <h3>Управление групповой стадией</h3>
+                    <div class="form-group">
+                        <label>Количество групп:</label>
+                        <input type="number" id="groupsCount" min="1" max="4" class="form-input" value="1">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button id="saveGroupStageBtn" class="save-btn">💾 Сохранить настройки</button>
+                    </div>
+                </div>
+
+                <!-- Вкладка редактирования приза зрительских симпатий -->
+                <div id="audienceAwardTab" class="tab-pane">
+                    <h3>🎭 Редактирование Приза Зрительских Симпатий</h3>
+                    
+                    <div class="form-group">
+                        <h4>Голосование</h4>
+                        <label>Выберите матч для голосования:</label>
+                        <select id="voteMatchSelect" class="form-input">
+                            <option value="">-- Выберите матч --</option>
+                        </select>
+                        <button id="selectMatchForVote" class="save-btn">🎯 Выбрать матч</button>
+                    </div>
+                    
+                    <div id="voteResults" class="vote-results-section">
+                        <h4>Результаты голосования</h4>
+                        <div id="voteResultsContent">
+                            <!-- Результаты будут отображаться здесь -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Вкладка настроек турнира -->
+                <div id="settingsTab" class="tab-pane">
+                    <h3>⚙️ Настройки турнира</h3>
+                    
+                    <div class="form-group">
+                        <label>Формат турнира:</label>
+                        <select id="tournamentFormat" class="form-input">
+                            <option value="with_groups">С группой</option>
+                            <option value="without_groups">Без группы</option>
+                        </select>
+                        <button id="saveTournamentFormat" class="save-btn">💾 Сохранить</button>
+                    </div>
+                    
+                    <div class="format-info">
+                        <p><strong>Формат "С группой":</strong> Групповой этап + Плей-офф</p>
+                        <p><strong>Формат "Без группы":</strong> Double Elimination (Прямой Плей-офф с системой двойного выбывания)</p>
+                    </div>
+
+                    <!-- В блоке #settingsTab добавьте этот код -->
+<div class="form-group">
+    <h4>🎯 Управление наглядной сеткой</h4>
+    <label>Ссылка на наглядную сетку (LVUP.GG):</label>
+    <input type="url" id="bracketLink" class="form-input" 
+           placeholder="https://lvup.gg/ru/easy/bracket/...">
+    <div class="form-actions" style="margin-top: 15px;">
+        <button id="saveBracketLink" class="save-btn" style="padding: 12px 20px;">
+            💾 Сохранить ссылку
+        </button>
+        <button id="clearBracketLink" class="cancel-btn" style="padding: 12px 20px;">
+            🗑️ Удалить ссылку
+        </button>
+    </div>
+    <div class="format-info" style="margin-top: 15px;">
+        <p><strong>Инструкция:</strong></p>
+        <p>• Вставьте ссылку на сетку с LVUP.GG</p>
+        <p>• Кнопка "НАГЛЯДНАЯ СЕТКА" появится после сохранения</p>
+        <p>• Для удаления нажмите "Удалить ссылку"</p>
+    </div>
+    
+    <!-- Статус ссылки -->
+    <div id="bracketStatus" class="format-info" style="display: none; margin-top: 15px;">
+        <p><strong>Статус:</strong> <span id="bracketStatusText">Ссылка не установлена</span></p>
+        <p><strong>Текущая ссылка:</strong> <span id="currentBracketLink" style="word-break: break-all;"></span></p>
+    </div>
+
+<!-- В блоке #settingsTab добавьте этот код -->
+<div class="form-group">
+    <h4>🎄 Новогодняя тема</h4>
+    <div class="theme-toggle-container">
+        <label class="toggle-label">
+            <input type="checkbox" id="holidayThemeToggle" class="toggle-input">
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Включить новогоднее оформление</span>
+        </label>
+        <div class="theme-info">
+            <p><strong>Включите для всех пользователей:</strong></p>
+            <p>• ❄️ Анимированные снежинки</p>
+            <p>• 🎄 Праздничное оформление</p>
+            <p>• ✨ Специальные эффекты</p>
+        </div>
+    </div>
+    
+    <!-- Статус темы -->
+    <div id="themeStatus" class="format-info" style="display: none; margin-top: 15px;">
+        <p><strong>Статус:</strong> <span id="themeStatusText">Тема отключена</span></p>
+    </div>
+</div>
+
+</div>
+                </div>
+
+                <!-- Вкладка управления доступом -->
+                <div id="accessTab" class="tab-pane">
+                    <h3>🔄 Управление доступом</h3>
+                    <div class="form-group">
+                        <label>Создать временную ссылку:</label>
+                        <select id="accessDuration" class="form-input">
+                            <option value="1">1 час</option>
+                            <option value="6">6 часов</option>
+                            <option value="24" selected>24 часа</option>
+                            <option value="168">7 дней</option>
+                        </select>
+                        <button id="generateAccessLink" class="save-btn">Создать ссылку</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Ссылка для доступа:</label>
+                        <div id="generatedLinkContainer" class="hidden">
+                            <input type="text" id="generatedLink" class="form-input" readonly>
+                            <button id="copyLinkBtn" class="add-btn">📋 Копировать</button>
+                            <div class="link-info">
+                                <small>Ссылка действительна: <span id="linkExpires"></span></small>
+                            </div>
+                        </div>
+                    </div>
+ <div class="form-group">
+        <label>Сменить основной пароль:</label>
+        <form onsubmit="return false;"> <!-- Добавьте форму -->
+            <input type="password" id="newPassword" class="form-input" placeholder="Новый пароль">
+            <input type="password" id="confirmPassword" class="form-input" placeholder="Подтвердите пароль">
+        </form>
+        <button id="changePasswordBtn" class="save-btn">Сменить пароль</button>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно авторизации -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Авторизация редактора</h2>
+                <button class="close-modal" id="closeAuthModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Для доступа к панели управления введите пароль:</p>
+            <form onsubmit="return false;"> <!-- Добавьте форму -->
+                <input type="password" id="editorPassword" class="form-input" placeholder="Пароль">
+            </form>
+                <div class="form-actions">
+                    <button id="confirmAuth" class="save-btn">Войти</button>
+                    <button id="cancelAuth" class="cancel-btn">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно голосования -->
+    <div id="votingModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎭 Голосование за лучшего игрока</h2>
+                <button class="close-modal" id="closeVotingModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="votingMatchInfo" class="match-info compact"></div>
+                
+                <div class="voting-instructions">
+                    <p>💡 <strong>Выберите лучших игроков матча</strong></p>
+                </div>
+                
+                <div class="voting-columns">
+                    <div class="voting-column compact" id="team1Voting">
+                        <!-- Игроки команды 1 -->
+                    </div>
+                    <div class="voting-column compact" id="team2Voting">
+                        <!-- Игроки команды 2 -->
+                    </div>
+                </div>
+                
+                <div class="voting-submit-section">
+                    <button id="submitVote" class="voting-submit-btn">✅ Отправить голос</button>
+                    <button id="cancelVote" class="voting-cancel-btn">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования голосования -->
+    <div id="editVoteModal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>✏️ Редактирование голосования</h2>
+                <button class="close-modal" id="closeEditVoteModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="editVoteInfo" class="match-info"></div>
+                <div class="existing-votes-container">
+                    <h4>Текущие голоса:</h4>
+                    <div id="existingVotesList">
+                        <!-- Существующие голоса будут здесь -->
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="deleteAllVotesBtn" class="cancel-btn" style="background: linear-gradient(135deg, #ff4444, #cc0000);">🗑️ Удалить все голоса за этот матч</button>
+                    <button id="closeEditVoteBtn" class="cancel-btn">❌ Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Модальное окно правил турнира -->
+<div id="rulesModal" class="modal hidden">
+    <div class="modal-content fullscreen-modal">
+        <div class="modal-header">
+            <h2>📋 Правила турнира Illusive Cup 2025</h2>
+            <button class="close-modal" id="closeRulesModal">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="rulesContainer" class="rules-container">
+                <div class="loading">Загрузка правил...</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="save-btn" onclick="closeRulesModal()">✅ Закрыть правила</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно наглядной сетки -->
+<div id="bracketModal" class="modal hidden">
+    <div class="modal-content fullscreen-modal">
+        <div class="modal-header">
+            <h2>🎯 Наглядная турнирная сетка</h2>
+            <button class="close-modal" id="closeBracketModal">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="bracketContainer" class="bracket-container">
+                <div class="bracket-loading">
+                    <div class="loading-spinner">⚡</div>
+                    <p>Загрузка турнирной сетки...</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="save-btn" onclick="closeBracketModal()">✅ Закрыть</button>
+            <button class="add-btn" onclick="openBracketInNewTab()">🌐 Открыть в новой вкладке</button>
+        </div>
+    </div>
+</div>
+    
+
+    <script src="admin-config.js"></script>
+    <script src="script.js"></script>
+    <script src="holiday-theme.js"></script>
+    
+    <!-- Добавляем модуль скрытых команд -->
+    <script src="hidden-teams.js"></script>
+
+<!-- Версия патча -->
+<div id="patchVersion" style="
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    border: 1px solid var(--border-color);
+    z-index: 1000;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+">
+    🚀 Работает на патче: <span id="patchNumber">Alpha 2.3</span>
+</div>
+
+<script>
+    // РУЧНАЯ НАСТРОЙКА ВЕРСИИ ПАТЧА - МЕНЯЙТЕ ЗДЕСЬ 👇
+    const MANUAL_PATCH_VERSION = "1.05b";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const patchElement = document.getElementById('patchNumber');
+        if (patchElement) {
+            // Используем ручную версию
+            patchElement.textContent = MANUAL_PATCH_VERSION;
+            
+            // Добавляем hover эффект
+            const patchContainer = document.getElementById('patchVersion');
+            patchContainer.addEventListener('mouseenter', function() {
+                this.style.opacity = '1';
+            });
+            patchContainer.addEventListener('mouseleave', function() {
+                this.style.opacity = '0.8';
+            });
+            
+            console.log('✅ Patch version displayed:', MANUAL_PATCH_VERSION);
+        }
+    });
+</script>
+<!-- 1.02 -->
+<!-- Кнопка обратной связи -->
+<div id="feedbackBtn" class="feedback-btn">
+    <span class="feedback-icon">🐛</span>
+    <span class="feedback-text">Баги и предложения</span>
+</div>
+
+<!-- Модальное окно обратной связи -->
+<div id="feedbackModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🐛 Обратная связь</h2>
+            <button class="close-modal" id="closeFeedbackModal">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="feedback-content">
+                <div class="feedback-section">
+                    <h3>Нашли баг?</h3>
+                    <p>Сообщите нам в Telegram:</p>
+                    <a href="https://t.me/grem1in3" target="_blank" class="telegram-link">
+                        <span class="tg-icon">✈️</span>
+                        @grem1in3
+                    </a>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3>Есть предложения?</h3>
+                    <p>Мы всегда рады улучшениям! Напишите нам:</p>
+                    <a href="https://t.me/grem1in3" target="_blank" class="telegram-link">
+                        <span class="tg-icon">💡</span>
+                        @grem1in3
+                    </a>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3>Хотите помочь?</h3>
+                    <p>Присоединяйтесь к разработке:</p>
+                    <a href="https://t.me/grem1in3" target="_blank" class="telegram-link">
+                        <span class="tg-icon">👨‍💻</span>
+                        @grem1in3
+                    </a>
+                </div>
+            </div>
+            
+            <div class="feedback-footer">
+                <p><small>Мы ответим в течение 24 часов</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Отладка конфигурации -->
+<script>
+    console.log('📌 Старт проверки конфигурации...');
+
+    // Проверка 1: Загрузился ли admin-config.js
+    if (typeof window.ADMIN_CONFIG === 'undefined') {
+        console.error('❌ ОШИБКА: admin-config.js НЕ загружен!');
+        alert('Критическая ошибка: admin-config.js не найден!\n\n1. Убедитесь, что файл admin-config.js существует в папке.\n2. Проверьте порядок скриптов в index.html.');
+    } else {
+        console.log('✅ admin-config.js загружен успешно');
+        
+        // Проверка 2: Есть ли пароль?
+        if (window.ADMIN_CONFIG.editorPassword) {
+            console.log('✅ Пароль установлен (длина:', window.ADMIN_CONFIG.editorPassword.length, 'символов)');
+        } else {
+            console.error('❌ Пароль не указан в admin-config.js');
+        }
+
+        // Проверка 3: Есть ли firebaseConfig?
+        const firebaseConfig = window.ADMIN_CONFIG.firebaseConfig;
+        if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.projectId) {
+            console.log('✅ Firebase Config найден:', {
+                projectId: firebaseConfig.projectId,
+                apiKeyLength: firebaseConfig.apiKey.length
+            });
+        } else {
+            console.error('❌ Firebase Config отсутствует или неполный');
+        }
+    }
+
+    // Проверка 4: Удостоверимся, что script.js ещё не запустился до конфига
+    if (typeof firebaseConfig !== 'undefined') {
+        console.warn('⚠️ Внимание: firebaseConfig уже определён ДО admin-config.js — возможно, неправильный порядок скриптов!');
+    }
+</script>
+
+<script>
+// ============= МОБИЛЬНЫЕ УЛУЧШЕНИЯ =============
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Улучшенный поиск targetId
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            let contentId = null;
+
+            // Определяем, какую вкладку открыть
+            if (this.id === 'scheduleBtn') contentId = 'scheduleContent';
+            if (this.id === 'teamsDropdownBtn') contentId = 'teamsContent';
+            if (this.id === 'playoffBtn') contentId = 'playoffContent';
+            if (this.id === 'audienceAwardBtn') contentId = 'audienceAwardContent';
+            if (this.id === 'groupStageBtn') contentId = 'groupStageContent';
+            if (this.id === 'scheduleNoGroupBtn') contentId = 'scheduleNoGroupContent';
+            if (this.id === 'playoffGridBtn') contentId = 'playoffGridContent';
+            if (this.id === 'rulesBtn') contentId = 'rulesContent';
+
+            if (contentId) {
+                const content = document.getElementById(contentId);
+                if (content) {
+                    // Показываем контент
+                    document.querySelectorAll('.content-section').forEach(sec => {
+                        sec.classList.add('hidden');
+                    });
+                    content.classList.remove('hidden');
+
+                    // Плавная прокрутка
+                    content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    // Скроллим чуть выше, чтобы шапка не закрывала
+                    setTimeout(() => {
+                        window.scrollBy(0, -80);
+                    }, 300);
+                }
+            }
+        });
+    });
+
+    // 2. СВАЙП ПО КАРТОЧКАМ КОМАНД (вправо/влево)
+    let touchStartX = 0;
+    const teamsContent = document.getElementById('teamsContent');
+    if (teamsContent) {
+        teamsContent.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        teamsContent.addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    showNextSection();
+                } else {
+                    showPrevSection();
+                }
+            }
+        }, { passive: true });
+    }
+
+    // Секции
+    const sections = [
+        'teamsContent',
+        'scheduleContent',
+        'groupStageContent',
+        'playoffContent',
+        'audienceAwardContent',
+        'scheduleNoGroupContent',
+        'playoffGridContent'
+    ];
+
+    function getCurrentSection() {
+        for (let id of sections) {
+            const el = document.getElementById(id);
+            if (el && !el.classList.contains('hidden')) return id;
+        }
+        return 'teamsContent';
+    }
+
+    function showNextSection() {
+        const current = getCurrentSection();
+        const index = sections.indexOf(current);
+        const next = sections[(index + 1) % sections.length];
+        showSection(next);
+    }
+
+    function showPrevSection() {
+        const current = getCurrentSection();
+        const index = sections.indexOf(current);
+        const prev = sections[(index - 1 + sections.length) % sections.length];
+        showSection(prev);
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.content-section').forEach(sec => {
+            sec.classList.add('hidden');
+        });
+        const target = document.getElementById(id);
+        if (target) {
+            target.classList.remove('hidden');
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => window.scrollBy(0, -80), 300);
+        }
+    }
+
+    // 3. АВТО-СКРЫТИЕ КЛАВИАТУРЫ
+    document.querySelectorAll('.form-input, .reason-input, #editorPassword, #newPassword').forEach(input => {
+        input.addEventListener('blur', function () {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+            }, 100);
+        });
+    });
+
+    // 4. ПЛАВАЮЩАЯ КНОПКА НА МАЛЫХ ЭКРАНАХ
+    function updateBracketButton() {
+        const btn = document.getElementById('bracketBtn');
+        if (!btn) return;
+
+        if (window.innerWidth <= 480 && window.getComputedStyle(btn).display !== 'none') {
+            btn.classList.add('mobile-floating');
+        } else {
+            btn.classList.remove('mobile-floating');
+        }
+    }
+
+    window.addEventListener('resize', updateBracketButton);
+    updateBracketButton();
+
+    // 5. ФИКСИРОВАННАЯ ШАПКА ПРИ СКРОЛЛЕ
+    let lastScroll = 0;
+    const header = document.querySelector('.main-header');
+    if (header) {
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            if (currentScroll <= 0) {
+                header.style.transform = 'translateY(0)';
+            }
+            if (currentScroll > lastScroll && !header.classList.contains('hidden')) {
+                header.style.transform = 'translateY(-100%)';
+            } else if (currentScroll < lastScroll) {
+                header.style.transform = 'translateY(0)';
+            }
+            lastScroll = currentScroll;
+        });
+    }
+});
+</script>
+
+
+
+</body>
+</html>
