@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.10-4CAF50.svg?style=for-the-badge&logo=github)
+![Version](https://img.shields.io/badge/version-1.10b-4CAF50.svg?style=for-the-badge&logo=github)
 ![Firebase](https://img.shields.io/badge/Firebase-Realtime--Database-FFCA28?style=for-the-badge&logo=firebase)
 ![License](https://img.shields.io/badge/license-MIT-2196F3?style=for-the-badge&logo=opensourceinitiative)
 
