@@ -2,7 +2,12 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   deploy:
@@ -45,10 +50,9 @@ jobs:
           mv script.min.js script.js
           echo "✅ Minified script.js"
 
-      - name: Check files before deploy
+      - name: Check files
         run: |
-          ls -la admin-config.js script.js
-          head -n 10 admin-config.js
+          ls -la index.html style.css admin-config.js
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
